@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\StripeCredentials;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Stripe\StripeClient;
 
@@ -20,15 +22,17 @@ class StripeConnectController extends Controller
 
         $tenant = $request->user()->tenant;
 
-        if (!config('services.stripe.secret')) {
+        $stripeSecret = StripeCredentials::secret();
+
+        if (! $stripeSecret) {
             return back()->with('error', 'O Stripe ainda não foi configurado na plataforma. Acesse Configurações > Gateways para cadastrar suas credenciais criptografadas.');
         }
 
         try {
-            $stripe = new StripeClient(config('services.stripe.secret'));
+            $stripe = new StripeClient($stripeSecret);
             $email = $tenant->primary_contact_email ?: $request->user()->email;
 
-            if (!$tenant->stripe_account_id) {
+            if (! $tenant->stripe_account_id) {
                 try {
                     // Stripe Accounts v2 API (padrão oficial moderno para novas integrações Connect)
                     $account = @$stripe->v2->core->accounts->create([
@@ -59,7 +63,7 @@ class StripeConnectController extends Controller
                         ],
                     ]);
                 } catch (\Throwable $v2Error) {
-                    \Illuminate\Support\Facades\Log::info('Fallback para Stripe Accounts v1: ' . $v2Error->getMessage());
+                    Log::info('Fallback para Stripe Accounts v1: '.$v2Error->getMessage());
                     // Fallback para Accounts v1 caso a conta da plataforma utilize v1 legado
                     $account = @$stripe->accounts->create([
                         'type' => 'express',
@@ -84,13 +88,13 @@ class StripeConnectController extends Controller
 
             return redirect($accountLink->url);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erro ao conectar conta Stripe Connect: ' . $e->getMessage(), [
+            Log::error('Erro ao conectar conta Stripe Connect: '.$e->getMessage(), [
                 'tenant_id' => $tenant->id,
                 'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->route('stripe-connect.index')
-                ->with('error', 'Não foi possível iniciar a conexão com o Stripe: ' . $e->getMessage());
+                ->with('error', 'Não foi possível iniciar a conexão com o Stripe: '.$e->getMessage());
         }
     }
 
@@ -99,8 +103,9 @@ class StripeConnectController extends Controller
         $tenant = $request->user()->tenant;
 
         try {
-            if ($tenant->stripe_account_id && config('services.stripe.secret')) {
-                $stripe = new StripeClient(config('services.stripe.secret'));
+            $stripeSecret = StripeCredentials::secret();
+            if ($tenant->stripe_account_id && $stripeSecret) {
+                $stripe = new StripeClient($stripeSecret);
                 $account = @$stripe->accounts->retrieve($tenant->stripe_account_id);
 
                 $tenant->update([
@@ -114,12 +119,12 @@ class StripeConnectController extends Controller
             return redirect()->route('stripe-connect.index')
                 ->with('success', 'Status da conta Stripe atualizado!');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erro ao atualizar status da conta Stripe: ' . $e->getMessage(), [
+            Log::error('Erro ao atualizar status da conta Stripe: '.$e->getMessage(), [
                 'tenant_id' => $tenant->id,
             ]);
 
             return redirect()->route('stripe-connect.index')
-                ->with('error', 'Não foi possível verificar o status no Stripe: ' . $e->getMessage());
+                ->with('error', 'Não foi possível verificar o status no Stripe: '.$e->getMessage());
         }
     }
 }

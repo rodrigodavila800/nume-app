@@ -15,6 +15,7 @@ use App\Services\Payment\PackPaymentConfirmer;
 use App\Services\Payment\RedsysService;
 use App\Services\SofiSalesConsultantService;
 use App\Support\Money;
+use App\Support\StripeCredentials;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -295,7 +296,7 @@ class StorefrontController extends Controller
 
         // B) Stripe Checkout
         try {
-            $stripe = new StripeClient(config('services.stripe.secret'));
+            $stripe = new StripeClient(StripeCredentials::secret());
             $currency = strtolower($pack->currency ?: 'eur');
             $addonsSummary = ! empty($selectedAddonNames) ? (' + Opcionais: '.implode(', ', $selectedAddonNames)) : '';
 
@@ -546,9 +547,9 @@ class StorefrontController extends Controller
 
         // Ainda pendente (webhook não chegou): consulta a sessão na API. O checkout usa destination
         // charges, então a sessão está na conta da plataforma (sem cabeçalho Stripe-Account).
-        if ($purchase && $purchase->status === 'pending' && config('services.stripe.secret')) {
+        if ($purchase && $purchase->status === 'pending' && StripeCredentials::secret()) {
             try {
-                $session = (new StripeClient(config('services.stripe.secret')))->checkout->sessions->retrieve($sessionId);
+                $session = (new StripeClient(StripeCredentials::secret()))->checkout->sessions->retrieve($sessionId);
                 $confirmer->confirmStripeSession($purchase, $session);
             } catch (\Throwable $e) {
                 Log::warning("Retorno da Stripe: não foi possível consultar a sessão da compra #{$purchase->id}: ".get_class($e));

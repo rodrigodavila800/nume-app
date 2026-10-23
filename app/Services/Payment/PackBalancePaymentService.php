@@ -3,11 +3,11 @@
 namespace App\Services\Payment;
 
 use App\Models\PackPurchase;
-use App\Models\Setting;
+use App\Support\StripeCredentials;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Stripe\StripeClient;
-use Exception;
 
 /**
  * Gerencia a liquidação do saldo remanescente (50%) de pacotes com modelo 50/50
@@ -18,8 +18,7 @@ class PackBalancePaymentService
     /**
      * Cobra o saldo de 50% pendente do pacote.
      *
-     * @param PackPurchase $purchase
-     * @param string|null $newPaymentMethodId Opcional: novo cartão informado pelo cliente
+     * @param  string|null  $newPaymentMethodId  Opcional: novo cartão informado pelo cliente
      * @return array ['success' => bool, 'message' => string, 'payment_intent_id' => string|null]
      */
     public function chargeBalance(PackPurchase $purchase, ?string $newPaymentMethodId = null): array
@@ -55,7 +54,7 @@ class PackBalancePaymentService
         }
 
         $paymentMethodId = $newPaymentMethodId ?: $purchase->stripe_payment_method_id;
-        $stripeSecret = config('services.stripe.secret');
+        $stripeSecret = StripeCredentials::secret();
 
         // Modo simulado SÓ na suíte de testes. Fora dela, sem chave válida, nada é cobrado nem
         // marcado como pago (antes, chave vazia ou "mock" quitava o saldo sem cobrança).
@@ -70,7 +69,7 @@ class PackBalancePaymentService
         }
 
         if (app()->environment('testing')) {
-            $mockPiId = 'pi_balance_mock_' . Str::random(16);
+            $mockPiId = 'pi_balance_mock_'.Str::random(16);
             $purchase->markBalancePaid($mockPiId);
 
             return [
@@ -105,7 +104,7 @@ class PackBalancePaymentService
             }
 
             // Chave de idempotência para garantir que clique duplo nunca duplique o débito
-            $idempotencyKey = 'pack_balance_' . $purchase->id . '_' . ((int) round($balanceAmount * 100));
+            $idempotencyKey = 'pack_balance_'.$purchase->id.'_'.((int) round($balanceAmount * 100));
 
             $paymentIntent = $stripe->paymentIntents->create($params, [
                 'idempotency_key' => $idempotencyKey,
@@ -131,7 +130,7 @@ class PackBalancePaymentService
                 'payment_intent_id' => $paymentIntent->id,
             ];
         } catch (Exception $e) {
-            Log::error('Falha ao debitar saldo do pacote 50/50: ' . $e->getMessage(), [
+            Log::error('Falha ao debitar saldo do pacote 50/50: '.$e->getMessage(), [
                 'pack_purchase_id' => $purchase->id,
             ]);
 

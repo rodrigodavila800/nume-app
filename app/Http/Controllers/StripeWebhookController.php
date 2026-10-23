@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PackPurchase;
 use App\Models\StripeCustomer;
 use App\Models\Tenant;
-use App\Models\PackPurchase;
 use App\Services\Payment\PackPaymentConfirmer;
+use App\Support\StripeCredentials;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -19,7 +20,7 @@ class StripeWebhookController extends Controller
 {
     public function handle(Request $request): Response
     {
-        $secret = config('services.stripe.webhook_secret');
+        $secret = StripeCredentials::webhookSecret();
 
         try {
             $event = Webhook::constructEvent(
@@ -74,14 +75,15 @@ class StripeWebhookController extends Controller
 
         $tenant = Tenant::find($session->metadata->tenant_id ?? null);
 
-        if (!$tenant) {
+        if (! $tenant) {
             return;
         }
 
         $subscription = null;
 
-        if ($session->subscription && config('services.stripe.secret')) {
-            $subscription = (new StripeClient(config('services.stripe.secret')))
+        $stripeSecret = StripeCredentials::secret();
+        if ($session->subscription && $stripeSecret) {
+            $subscription = (new StripeClient($stripeSecret))
                 ->subscriptions
                 ->retrieve($session->subscription);
         }
@@ -140,7 +142,7 @@ class StripeWebhookController extends Controller
     {
         $stripeCustomer = StripeCustomer::where('stripe_subscription_id', $subscription->id)->first();
 
-        if (!$stripeCustomer) {
+        if (! $stripeCustomer) {
             return;
         }
 
@@ -182,7 +184,7 @@ class StripeWebhookController extends Controller
 
     private function handlePaymentFailed(object $invoice): void
     {
-        if (!empty($invoice->subscription)) {
+        if (! empty($invoice->subscription)) {
             StripeCustomer::where('stripe_subscription_id', $invoice->subscription)
                 ->update(['subscription_status' => 'past_due']);
         }

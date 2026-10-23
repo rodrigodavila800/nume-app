@@ -11,6 +11,7 @@ use App\Services\Billing\TaxCalculationService;
 use App\Services\Payment\PackCheckoutPricing;
 use App\Services\Payment\RedsysService;
 use App\Support\Money;
+use App\Support\StripeCredentials;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -241,7 +242,7 @@ class PackController extends Controller
         }
 
         // B) Stripe
-        $stripeSecret = Setting::get('stripe_secret', config('services.stripe.secret'));
+        $stripeSecret = StripeCredentials::secret();
         if (empty($stripeSecret)) {
             if ($isEmbedded) {
                 return response()->json([
@@ -387,7 +388,7 @@ class PackController extends Controller
                     'status' => 'success',
                     'gateway' => 'stripe_embedded',
                     'client_secret' => $session->client_secret,
-                    'publishable_key' => Setting::get('stripe_key', config('services.stripe.key')),
+                    'publishable_key' => StripeCredentials::publishableKey(),
                     'purchase_id' => $purchase->id,
                 ]);
             }

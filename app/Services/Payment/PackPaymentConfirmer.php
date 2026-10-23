@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Models\PackPurchase;
 use App\Services\Billing\InvoiceService;
 use App\Support\Money;
+use App\Support\StripeCredentials;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Stripe\StripeClient;
@@ -219,9 +220,10 @@ class PackPaymentConfirmer
     {
         $updateData = ['deposit_paid_at' => now()];
 
-        if (config('services.stripe.secret') && $paymentIntentId !== '') {
+        $stripeSecret = StripeCredentials::secret();
+        if ($stripeSecret && $paymentIntentId !== '') {
             try {
-                $paymentIntent = (new StripeClient(config('services.stripe.secret')))->paymentIntents->retrieve($paymentIntentId);
+                $paymentIntent = (new StripeClient($stripeSecret))->paymentIntents->retrieve($paymentIntentId);
                 if (! empty($paymentIntent->payment_method)) {
                     $updateData['stripe_payment_method_id'] = is_string($paymentIntent->payment_method)
                         ? $paymentIntent->payment_method

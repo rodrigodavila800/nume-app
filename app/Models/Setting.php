@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\StripeCredentials;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
@@ -121,7 +122,7 @@ class Setting extends Model
         $bizumActive = $isEur && $redsysGeneral && (bool) static::get('redsys_bizum_enabled', true);
         $redsysCardActive = $isEur && $redsysGeneral && (bool) static::get('redsys_card_enabled', true);
 
-        $stripeConfigured = ! empty(config('services.stripe.secret')) || ! empty(static::get('stripe_secret'));
+        $stripeConfigured = ! empty(StripeCredentials::secret());
         $stripeGeneral = (bool) static::get('stripe_enabled', true);
         $stripeTenantReady = $tenant ? $tenant->canReceivePayments() : true;
         $stripeActive = $stripeGeneral && $stripeConfigured && $stripeTenantReady;

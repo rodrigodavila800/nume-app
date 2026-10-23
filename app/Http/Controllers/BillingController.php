@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\StripeCustomer;
+use App\Support\StripeCredentials;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,13 +23,13 @@ class BillingController extends Controller
 
     public function checkout(Request $request): RedirectResponse
     {
-        $tenant = $request->user()->tenant;
+        $stripeSecret = StripeCredentials::secret();
 
-        if (!config('services.stripe.secret') || !config('services.stripe.price_id')) {
+        if (! $stripeSecret || ! config('services.stripe.price_id')) {
             return back()->with('error', 'O Stripe ainda não foi configurado na plataforma. Acesse Configurações > Gateways para cadastrar suas credenciais criptografadas.');
         }
 
-        $stripe = new StripeClient(config('services.stripe.secret'));
+        $stripe = new StripeClient($stripeSecret);
 
         $customerId = $tenant->stripeCustomer?->stripe_customer_id;
 
