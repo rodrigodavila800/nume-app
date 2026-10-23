@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Ai\Agents\SofiSalesConsultantAgent;
+use App\Ai\SofiProvider;
 use App\Models\Pack;
 use App\Models\Setting;
 use App\Models\Tenant;
@@ -58,6 +60,12 @@ class SofiSalesConsultantService
             }
         }
 
+        // Laravel AI SDK (SOFI_USE_AI_SDK=true): catálogo via tool; qualquer falha cai no fallback heurístico.
+        if (config('sofi.use_ai_sdk')) {
+            return $this->consultViaSdk($tenant, $message, $history, $isSpanish, $availablePacks)
+                ?? $this->heuristicSalesReply($tenant, $availablePacks, $message, $isSpanish);
+        }
+
         // 1. Constrói o Prompt de Sistema com foco em Vendas B2B, DNA de Marca, Catálogo e Inteligência de Mercado
         $systemPrompt = $this->buildSalesPrompt($tenant, $availablePacks, $isSpanish, $message);
 
@@ -77,7 +85,7 @@ class SofiSalesConsultantService
      */
     protected function buildSalesPrompt(Tenant $tenant, $packs, bool $isEs, string $lastMessage = ''): string
     {
-        $lang = $isEs ? 'Español (España / Zaragoza)' : 'Português do Brasil';
+        $parts = $this->salesPromptParts($tenant, $isEs, $lastMessage);
 
         $packsCatalog = '';
         foreach ($packs as $p) {
@@ -88,6 +96,36 @@ class SofiSalesConsultantService
         if (empty($packsCatalog)) {
             $packsCatalog = "Pacote sob medida para empresas (consulte valores personalizados).\n";
         }
+
+        $formatJson = "{\n"
+                    . "  \"reply\": \"Sua resposta de consultoria ao visitante...\",\n"
+                    . "  \"recommended_pack_id\": ID_DO_PACOTE_OU_NULL,\n"
+                    . "  \"call_to_action\": \"open_pack_modal\" OU \"register_dna\" OU null,\n"
+                    . "  \"suggested_quick_replies\": [\"Opção 1\", \"Opção 2\", \"Opção 3\"]\n"
+                    . "}";
+
+        $catalogLabel = $isEs ? 'CATÁLOGO DE PAQUETES ACTIVOS:' : 'CATÁLOGO DE PACOTES ATIVOS:';
+        $formatLabel  = $isEs ? 'FORMATO DE RESPUESTA (JSON estricto):' : 'FORMATO DE RESPOSTA (JSON estrito):';
+
+        return $parts['persona']
+             . "\n" . $parts['mission']
+             . "\n" . $parts['market_trends']
+             . "\n" . $parts['anti_patterns']
+             . $parts['niche_section']
+             . "\n{$catalogLabel}\n" . $packsCatalog
+             . "\n" . $parts['directives']
+             . "\n{$formatLabel}\n" . $formatJson;
+    }
+
+    /**
+     * Regras comerciais da Sofi (persona, missão, mercado, nicho e diretrizes), sem catálogo
+     * nem formato de saída. Compartilhadas pelo prompt antigo e pelo SofiSalesConsultantAgent.
+     *
+     * @return array{persona: string, mission: string, market_trends: string, anti_patterns: string, niche_section: string, directives: string}
+     */
+    public function salesPromptParts(Tenant $tenant, bool $isEs, string $lastMessage = ''): array
+    {
+        $lang = $isEs ? 'Español (España / Zaragoza)' : 'Português do Brasil';
 
         // Detecta nicho para injeção de inteligência específica
         $detectedNiche = SofiMarketIntelligence::detectNiche($lastMessage);
@@ -139,24 +177,54 @@ class SofiSalesConsultantService
             ? "\n" . $nicheInsight . "\n"
             : '';
 
-        $formatJson = "{\n"
-                    . "  \"reply\": \"Sua resposta de consultoria ao visitante...\",\n"
-                    . "  \"recommended_pack_id\": ID_DO_PACOTE_OU_NULL,\n"
-                    . "  \"call_to_action\": \"open_pack_modal\" OU \"register_dna\" OU null,\n"
-                    . "  \"suggested_quick_replies\": [\"Opção 1\", \"Opção 2\", \"Opção 3\"]\n"
-                    . "}";
+        return [
+            'persona' => $persona,
+            'mission' => $mission,
+            'market_trends' => $marketTrends,
+            'anti_patterns' => $antiPatterns,
+            'niche_section' => $nicheSection,
+            'directives' => $directives,
+        ];
+    }
 
-        $catalogLabel = $isEs ? 'CATÁLOGO DE PAQUETES ACTIVOS:' : 'CATÁLOGO DE PACOTES ATIVOS:';
-        $formatLabel  = $isEs ? 'FORMATO DE RESPUESTA (JSON estricto):' : 'FORMATO DE RESPOSTA (JSON estrito):';
+    /**
+     * Consultoria via SofiSalesConsultantAgent (tool de catálogo + saída estruturada).
+     * Null em qualquer falha. O tenant é o da vitrine (slug), nunca o do usuário logado.
+     */
+    protected function consultViaSdk(Tenant $tenant, string $message, array $history, bool $isEs, $packs): ?array
+    {
+        $sofiProvider = app(SofiProvider::class);
 
-        return $persona
-             . "\n" . $mission
-             . "\n" . $marketTrends
-             . "\n" . $antiPatterns
-             . $nicheSection
-             . "\n{$catalogLabel}\n" . $packsCatalog
-             . "\n" . $directives
-             . "\n{$formatLabel}\n" . $formatJson;
+        try {
+            $options = $sofiProvider->options($tenant);
+
+            if ($options === null) {
+                return null;
+            }
+
+            $parts = $this->salesPromptParts($tenant, $isEs, $message);
+            $salesRules = $parts['persona']
+                ."\n".$parts['mission']
+                ."\n".$parts['market_trends']
+                ."\n".$parts['anti_patterns']
+                .$parts['niche_section']
+                ."\n".$parts['directives'];
+
+            $response = (new SofiSalesConsultantAgent($tenant->id, $salesRules, $isEs, $history))
+                ->prompt($message, ...$options);
+            $data = $response->structured ?? [];
+
+            if (! isset($data['reply']) || ! is_string($data['reply']) || trim($data['reply']) === '') {
+                return null;
+            }
+
+            return $this->formatResult($data, $packs, $isEs);
+        } catch (\Throwable $e) {
+            // Só o tipo da exceção: a mensagem pode conter URL ou credenciais.
+            Log::warning('SofiSalesConsultantService AI SDK falhou ('.$sofiProvider->driver().'): '.get_class($e));
+
+            return null;
+        }
     }
 
     /**
