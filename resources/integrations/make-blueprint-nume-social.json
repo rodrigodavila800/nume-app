@@ -1,0 +1,55 @@
+{
+  "name": "Nume Social Engine - Disparo Multi-Rede de Vídeos",
+  "version": 1,
+  "description": "Blueprint oficial da NUME para publicar vídeos verticais (Instagram Reels, TikTok, YouTube Shorts, etc.) automaticamente a partir de um webhook ou novo vídeo renderizado.",
+  "modules": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "Novo Vídeo Renderizado (Webhook)"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "http:ActionMakeRequest",
+      "version": 3,
+      "parameters": {
+        "url": "{{url}}/api/v1/social/publish",
+        "method": "POST",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{api_key}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\n  \"email\": \"{{1.client_email}}\",\n  \"video_url\": \"{{1.video_url}}\",\n  \"title\": \"{{1.title}}\",\n  \"platforms\": [\"instagram\", \"tiktok\", \"youtube\"]\n}",
+        "responseType": "json"
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "NUME Social Engine API (Publish)"
+        }
+      }
+    }
+  ]
+}

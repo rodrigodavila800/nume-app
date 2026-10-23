@@ -1,0 +1,47 @@
+/* 
+--------------------------------------------------
+NUME Creative — Brand Theme
+Apenas ajustes essenciais para o template Liberty Market
+Cores principais já aplicadas em templatemo-liberty-market.css (#ea580c / #f97316)
+-------------------------------------------------- 
+*/
+
+/* Logo NUME no Header */
+.header-area .main-nav .logo {
+  display: flex;
+  align-items: center;
+}
+
+.header-area .main-nav .logo img {
+  max-height: 42px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Lightbox Player Magnific Popup para Shorts 9:16 e Vídeos 16:9 */
+.mfp-iframe-holder .mfp-content {
+  max-width: 900px;
+  height: 85vh;
+}
+
+.mfp-iframe-scaler {
+  height: 100%;
+  padding-top: 0;
+}
+
+.mfp-iframe-scaler iframe {
+  box-shadow: 0 0 35px rgba(234, 88, 12, 0.25);
+  border-radius: 16px;
+  border: 1px solid rgba(234, 88, 12, 0.4);
+}
+
+/* Destaque para cards de pacotes */
+#pacotes .item {
+  transition: all 0.3s ease;
+}
+
+#pacotes .item:hover {
+  border-color: #ea580c !important;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}

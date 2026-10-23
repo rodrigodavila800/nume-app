@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan test*)",
+      "Bash(php artisan route:list*)",
+      "Bash(php artisan optimize:clear)",
+      "Bash(vendor/bin/phpunit*)",
+      "Bash(vendor/bin/pint*)",
+      "Bash(npm run build)",
+      "Bash(npm.cmd run build)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.backup)",
+      "Read(./.env.production)",
+      "Edit(./.env)",
+      "Edit(./.env.backup)",
+      "Edit(./.env.production)",
+      "Read(./node_modules/**)"
+    ]
+  }
+}

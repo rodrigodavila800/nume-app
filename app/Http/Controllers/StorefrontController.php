@@ -1,0 +1,547 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Cliente;
+use App\Models\Pack;
+use App\Models\PackPurchase;
+use App\Models\Tenant;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
+use Stripe\StripeClient;
+use Exception;
+
+class StorefrontController extends Controller
+{
+    /**
+     * Exibe a vitrine oficial. Se chamada via /vitrine/nume, redireciona canonicamente para /.
+     */
+    public function show(Tenant $tenant, Request $request): View|RedirectResponse
+    {
+        abort_unless($tenant->isActive(), 404);
+
+        // Redirecionamento canônico: se acessar /vitrine/nume, redireciona para a raiz /
+        if ($tenant->slug === 'nume' && $request->routeIs('storefront.show') && $request->path() !== '/') {
+            return redirect()->route('marketplace.index');
+        }
+
+        return view('storefront.show', [
+            'tenant' => $tenant,
+            'categories' => $tenant->categories()
+                ->where('is_active', true)
+                ->get(),
+            'videos' => $tenant->showcaseVideos()
+                ->with('category')
+                ->where('is_published', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get(),
+            'packs' => $tenant->packs()
+                ->with(['category', 'addons', 'showcaseVideo'])
+                ->where('status', 'active')
+                ->orderBy('price')
+                ->get(),
+            'recurringPlans' => $tenant->packs()
+                ->with(['category', 'addons', 'showcaseVideo'])
+                ->where('status', 'active')
+                ->where('billing_type', 'subscription')
+                ->orderBy('price')
+                ->get(),
+            'oneOffPacks' => $tenant->packs()
+                ->with(['category', 'addons', 'showcaseVideo'])
+                ->where('status', 'active')
+                ->where(function ($q) {
+                    $q->where('billing_type', '!=', 'subscription')
+                      ->orWhereNull('billing_type');
+                })
+                ->orderBy('price')
+                ->get(),
+            'currentCliente' => auth('cliente')->user(),
+            'activePaymentMethods' => \App\Models\Setting::getActivePaymentMethods($tenant),
+            'fiscalSettings' => [
+                'regime' => \App\Models\Setting::get('fiscal_regime', 'autonomo'),
+                'irpf_rate' => (\App\Models\Setting::get('fiscal_regime', 'autonomo') === 'autonomo') ? (float) \App\Models\Setting::get('fiscal_irpf_rate', 15.00) : 0.00,
+                'iva_rate' => (float) \App\Models\Setting::get('tax_default_iva_rate', 21.00),
+            ],
+        ]);
+    }
+
+    /**
+     * Checkout de pacotes com verificação estrita de cadastro prévio, motor fiscal (IVA 21%) e múltiplos gateways.
+     */
+    public function checkout(
+        Request $request,
+        Tenant $tenant,
+        Pack $pack,
+        \App\Services\Billing\TaxCalculationService $taxService,
+        \App\Services\Payment\RedsysService $redsysService
+    ): \Illuminate\Http\Response|RedirectResponse|View {
+        abort_unless($tenant->isActive() && $pack->tenant_id === $tenant->id && $pack->isActive(), 404);
+
+        $paymentMethod = $request->input('payment_method', 'bizum'); // 'bizum', 'redsys_card', 'stripe'
+        if (! in_array($paymentMethod, ['bizum', 'redsys_card', 'stripe'], true)) {
+            $paymentMethod = 'bizum';
+        }
+
+        // Valida se o método escolhido está ativo no tenant / sistema
+        if (! \App\Models\Setting::isPaymentMethodActive($paymentMethod, $tenant)) {
+            return back()->withInput()->with('error', __('O método de pagamento selecionado não está disponível no momento.'));
+        }
+
+        $email = Str::lower($request->input('email', ''));
+
+        // Se o cliente já estiver autenticado na sessão atual
+        if (auth('cliente')->check()) {
+            $cliente = auth('cliente')->user();
+        } else {
+            // Validação de credenciais do cliente
+            $validated = $request->validate([
+                'email' => ['required', 'email', 'max:255'],
+                'password' => ['required', 'string', 'min:6'],
+                'name' => ['nullable', 'string', 'max:255'],
+                'company_name' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            // 1. Verifica se o cliente JÁ TEM CADASTRO no banco de dados
+            $cliente = Cliente::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->where('email', $email)
+                ->first();
+
+            if ($cliente) {
+                // Cliente existente: valida credencial de segurança (senha) para evitar personificação
+                if (! Hash::check($validated['password'], $cliente->password)) {
+                    return back()->withInput()->with('error', __('Este e-mail já possui cadastro. Informe a senha correta da sua conta de cliente para prosseguir com a compra.'));
+                }
+
+                // Atualiza nome/empresa se informados
+                if (! empty($validated['name'])) {
+                    $cliente->update([
+                        'name' => $validated['name'],
+                        'company_name' => $validated['company_name'] ?? $cliente->company_name,
+                    ]);
+                }
+            } else {
+                // 2. Cliente NÃO TEM CADASTRO: exige nome para criar nova conta
+                if (empty($validated['name'])) {
+                    return back()->withInput()->with('error', __('Informe seu nome completo para criar sua conta de cliente.'));
+                }
+
+                $cliente = Cliente::withoutGlobalScope('tenant')->create([
+                    'tenant_id' => $tenant->id,
+                    'name' => $validated['name'],
+                    'email' => $email,
+                    'company_name' => $validated['company_name'] ?? null,
+                    'password' => Hash::make($validated['password']),
+                ]);
+            }
+
+            // Autentica o cliente na sessão com segurança
+            auth('cliente')->login($cliente);
+        }
+
+        // 3. Dados Fiscais de Faturamento (IVA / Hacienda)
+        $billingType = $request->input('billing_type', 'particular');
+        $billingTaxId = trim($request->input('billing_tax_id', ''));
+        $billingLegalName = trim($request->input('billing_legal_name', $cliente->company_name ?? $cliente->name));
+        $billingAddress = trim($request->input('billing_address', ''));
+        $billingPostalCode = trim($request->input('billing_postal_code', ''));
+        $billingCity = trim($request->input('billing_city', ''));
+        $billingCountry = strtoupper(trim($request->input('billing_country', 'ES'))) ?: 'ES';
+
+        // 4. Cálculo da Base Imponible com Add-ons
+        $selectedAddons = $request->input('selected_addons', []);
+        if (! is_array($selectedAddons)) {
+            $selectedAddons = [];
+        }
+
+        $effectiveAddons = collect($pack->effective_addons);
+        $addonsTotal = 0;
+        $selectedAddonNames = [];
+
+        foreach ($selectedAddons as $selected) {
+            $matched = $effectiveAddons->first(function ($addon) use ($selected) {
+                return (isset($addon['id']) && (string) $addon['id'] === (string) $selected)
+                    || (isset($addon['name']) && (string) $addon['name'] === (string) $selected)
+                    || (isset($addon['slug']) && (string) $addon['slug'] === (string) $selected);
+            });
+
+            if ($matched) {
+                $addonsTotal += (float) ($matched['price'] ?? 0);
+                $selectedAddonNames[] = $matched['name'];
+            } else {
+                $selectedAddonNames[] = (string) $selected;
+            }
+        }
+
+        $subtotal = round((float) $pack->price + $addonsTotal, 2);
+
+        $fiscalRegime = \App\Models\Setting::get('fiscal_regime', 'autonomo');
+        $irpfRate = ($fiscalRegime === 'autonomo') ? (float) \App\Models\Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
+
+        // 5. Execução do Motor Fiscal (IVA 21%, IRPF e Isenções)
+        $taxData = $taxService->calculate(
+            subtotal: $subtotal,
+            countryCode: $billingCountry,
+            postalCode: $billingPostalCode,
+            taxId: $billingTaxId,
+            isCompany: ($billingType === 'empresa_autonomo'),
+            irpfRate: $irpfRate
+        );
+
+        $feePercent = (float) config('services.stripe.platform_fee_percent', 10);
+        $feeAmount = round($taxData['subtotal'] * ($feePercent / 100), 2);
+
+        // 6. Registro Seguro do PackPurchase no Banco de Dados
+        $isSubscription = ($pack->billing_type === 'subscription');
+        $isSplit5050 = (! $isSubscription && $pack->isSplit5050());
+        $billingMode = $isSubscription ? 'subscription' : ($pack->billing_mode ?: 'full_upfront');
+
+        $totalAmount = (float) $taxData['total_amount'];
+        $depositAmount = $isSplit5050 ? $pack->calculateDepositAmount($totalAmount) : $totalAmount;
+        $balanceAmount = $isSplit5050 ? $pack->calculateBalanceAmount($totalAmount) : 0.00;
+        $balanceStatus = $isSplit5050 ? 'pending' : 'not_applicable';
+        $initialChargedAmount = $isSplit5050 ? $depositAmount : $totalAmount;
+
+        $commitmentMonths = $isSubscription ? max(1, (int) ($pack->commitment_months ?: 3)) : 1;
+        $billingInterval = $isSubscription ? ($pack->billing_interval ?: 'month') : 'month';
+        $intervalMonths = ($billingInterval === 'quarter') ? 3 : 1;
+        $cyclesTotal = ($billingInterval === 'quarter') ? (int) ceil($commitmentMonths / 3) : $commitmentMonths;
+
+        $purchase = PackPurchase::create([
+            'tenant_id' => $tenant->id,
+            'cliente_id' => $cliente->id,
+            'pack_id' => $pack->id,
+            'payment_gateway' => $paymentMethod,
+            'subtotal' => $taxData['subtotal'],
+            'tax_rate' => $taxData['tax_rate'],
+            'tax_amount' => $taxData['tax_amount'],
+            'irpf_rate' => $taxData['irpf_rate'],
+            'irpf_amount' => $taxData['irpf_amount'],
+            'total_amount' => $taxData['total_amount'],
+            'amount' => $initialChargedAmount, // Valor líquido cobrado no ato
+            'billing_mode' => $billingMode,
+            'deposit_amount' => $depositAmount,
+            'balance_amount' => $balanceAmount,
+            'balance_status' => $balanceStatus,
+            'billing_type' => $billingType,
+            'billing_tax_id' => $billingTaxId ?: null,
+            'billing_legal_name' => $billingLegalName ?: null,
+            'billing_address' => $billingAddress ?: null,
+            'billing_postal_code' => $billingPostalCode ?: null,
+            'billing_city' => $billingCity ?: null,
+            'billing_country' => $billingCountry,
+            'application_fee_amount' => $feeAmount,
+            'video_quantity' => $pack->video_quantity,
+            'addons_purchased' => $selectedAddonNames,
+            'status' => 'pending',
+            'subscription_status' => $isSubscription ? 'active' : null,
+            'subscription_interval' => $billingInterval,
+            'commitment_months' => $commitmentMonths,
+            'subscription_cycle_current' => 1,
+            'subscription_cycles_total' => $cyclesTotal,
+            'subscription_renews_at' => $isSubscription ? now()->addMonths($intervalMonths) : null,
+            'subscription_ends_at' => $isSubscription ? now()->addMonths($commitmentMonths) : null,
+        ]);
+
+        // 7. Roteamento de Gateway
+        // A) BBVA / Redsys (Bizum ou Cartão de Crédito/Débito)
+        if (in_array($paymentMethod, ['bizum', 'redsys_card'], true)) {
+            $orderNumber = $redsysService->generateOrderNumber();
+            $purchase->update(['gateway_order_reference' => $orderNumber]);
+
+            $payMethodCode = ($paymentMethod === 'bizum') ? 'z' : 'T';
+
+            $productDesc = $isSubscription
+                ? "{$pack->name} (Contrato {$commitmentMonths}M) - {$tenant->name}"
+                : "{$pack->name} - {$tenant->name}";
+
+            $payload = $redsysService->createPaymentPayload(
+                amountInEuros: $initialChargedAmount,
+                orderNumber: $orderNumber,
+                urlOk: route('redsys.success', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),
+                urlKo: route('redsys.cancel', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),
+                notificationUrl: url('/webhooks/redsys'),
+                payMethod: $payMethodCode,
+                productDescription: $productDesc,
+                titular: $cliente->name
+            );
+
+            return view('storefront.redsys_redirect', compact('payload', 'purchase', 'pack', 'tenant'));
+        }
+
+        // B) Stripe Checkout
+        try {
+            $stripe = new StripeClient(config('services.stripe.secret'));
+            $currency = strtolower($pack->currency ?: 'eur');
+            $addonsSummary = ! empty($selectedAddonNames) ? (' + Opcionais: ' . implode(', ', $selectedAddonNames)) : '';
+
+            $recurringConfig = $isSubscription ? [
+                'interval' => 'month',
+                'interval_count' => ($billingInterval === 'quarter' ? 3 : 1),
+            ] : null;
+
+            if ($isSplit5050) {
+                $depPct = $pack->getEffectiveDepositPercentage();
+                $lineItems = [
+                    [
+                        'price_data' => [
+                            'currency' => $currency,
+                            'product_data' => [
+                                'name' => "{$pack->name} — Sinal ({$depPct}%)",
+                                'description' => "Entrada de {$depPct}%. Saldo de " . number_format($balanceAmount, 2, ',', '.') . " {$pack->currency} a pagar na aprovação do corte final.",
+                            ],
+                            'unit_amount' => (int) round($depositAmount * 100),
+                        ],
+                        'quantity' => 1,
+                    ],
+                ];
+            } else {
+                $mainPriceData = [
+                    'currency' => $currency,
+                    'product_data' => [
+                        'name' => $pack->name . ($isSubscription ? " (Contrato {$commitmentMonths} Meses)" : ''),
+                        'description' => "Pacote de {$pack->video_quantity} vídeos/ciclo — {$tenant->name}{$addonsSummary}",
+                    ],
+                    'unit_amount' => (int) round($pack->price * 100),
+                ];
+                if ($recurringConfig) {
+                    $mainPriceData['recurring'] = $recurringConfig;
+                }
+
+                $lineItems = [
+                    [
+                        'price_data' => $mainPriceData,
+                        'quantity' => 1,
+                    ],
+                ];
+
+                foreach ($selectedAddons as $selected) {
+                    $matched = $effectiveAddons->first(function ($addon) use ($selected) {
+                        return (isset($addon['id']) && (string) $addon['id'] === (string) $selected)
+                            || (isset($addon['name']) && (string) $addon['name'] === (string) $selected)
+                            || (isset($addon['slug']) && (string) $addon['slug'] === (string) $selected);
+                    });
+
+                    if ($matched && (float) ($matched['price'] ?? 0) > 0) {
+                        $addonPriceData = [
+                            'currency' => $currency,
+                            'product_data' => [
+                                'name' => '+ ' . $matched['name'],
+                                'description' => "Add-on opcional para {$pack->name}",
+                            ],
+                            'unit_amount' => (int) round((float) $matched['price'] * 100),
+                        ];
+                        if ($recurringConfig) {
+                            $addonPriceData['recurring'] = $recurringConfig;
+                        }
+
+                        $lineItems[] = [
+                            'price_data' => $addonPriceData,
+                            'quantity' => 1,
+                        ];
+                    }
+                }
+
+                // Item fiscal de IVA se aplicável
+                if ($taxData['tax_amount'] > 0) {
+                    $taxPriceData = [
+                        'currency' => $currency,
+                        'product_data' => [
+                            'name' => "IVA ({$taxData['tax_rate']}%)",
+                            'description' => "Cota tributária legal (Agencia Tributaria)",
+                        ],
+                        'unit_amount' => (int) round($taxData['tax_amount'] * 100),
+                    ];
+                    if ($recurringConfig) {
+                        $taxPriceData['recurring'] = $recurringConfig;
+                    }
+
+                    $lineItems[] = [
+                        'price_data' => $taxPriceData,
+                        'quantity' => 1,
+                    ];
+                }
+            }
+
+            $sessionPayload = [
+                'mode' => $isSubscription ? 'subscription' : 'payment',
+                'customer_email' => $cliente->email,
+                'line_items' => $lineItems,
+                'success_url' => route('storefront.success', $tenant).'?session_id={CHECKOUT_SESSION_ID}&purchase_id='.$purchase->id,
+                'cancel_url' => url('/#pacotes'),
+                'metadata' => [
+                    'type' => 'pack_purchase',
+                    'tenant_id' => $tenant->id,
+                    'pack_purchase_id' => $purchase->id,
+                    'cliente_id' => $cliente->id,
+                    'is_subscription' => $isSubscription ? '1' : '0',
+                    'is_split_50_50' => $isSplit5050 ? '1' : '0',
+                    'commitment_months' => (string) $commitmentMonths,
+                    'addons' => json_encode($selectedAddonNames),
+                ],
+            ];
+
+            // Dedução Oficial de IRPF (Autônomo B2B na Espanha)
+            if (! $isSplit5050 && ($taxData['irpf_amount'] ?? 0) > 0) {
+                $irpfCoupon = $stripe->coupons->create([
+                    'amount_off' => (int) round($taxData['irpf_amount'] * 100),
+                    'currency' => $currency,
+                    'duration' => 'once',
+                    'name' => "Retención IRPF ({$taxData['irpf_rate']}%)",
+                ]);
+                $sessionPayload['discounts'] = [
+                    ['coupon' => $irpfCoupon->id],
+                ];
+            }
+
+            if ($isSubscription) {
+                $sessionPayload['subscription_data'] = [
+                    'application_fee_percent' => (float) config('services.stripe.platform_fee_percent', 10),
+                    'transfer_data' => ['destination' => $tenant->stripe_account_id],
+                    'metadata' => [
+                        'tenant_id' => $tenant->id,
+                        'pack_purchase_id' => $purchase->id,
+                        'commitment_months' => (string) $commitmentMonths,
+                    ],
+                ];
+            } else {
+                $paymentIntentData = [
+                    'application_fee_amount' => (int) round(($feeAmount * ($isSplit5050 ? ($pack->getEffectiveDepositPercentage() / 100) : 1)) * 100),
+                    'transfer_data' => ['destination' => $tenant->stripe_account_id],
+                ];
+
+                if ($isSplit5050) {
+                    $paymentIntentData['setup_future_usage'] = 'off_session';
+                }
+
+                $sessionPayload['payment_intent_data'] = $paymentIntentData;
+            }
+
+            $session = $stripe->checkout->sessions->create($sessionPayload);
+
+            $purchase->update(['stripe_checkout_session_id' => $session->id]);
+
+            return redirect($session->url);
+        } catch (Exception $e) {
+            return back()->withInput()->with('error', 'Erro ao iniciar checkout: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Retorno de sucesso após pagamento no BBVA Redsys (Bizum/Cartão).
+     */
+    public function redsysSuccess(Request $request): View
+    {
+        $purchaseId = $request->query('purchase_id');
+        $order = $request->query('order');
+
+        $purchase = null;
+        if ($purchaseId) {
+            $purchase = PackPurchase::withoutGlobalScope('tenant')->find($purchaseId);
+        } elseif ($order) {
+            $purchase = PackPurchase::withoutGlobalScope('tenant')
+                ->where('gateway_order_reference', $order)
+                ->first();
+        }
+
+        if ($purchase && $purchase->status === 'pending') {
+            $purchase->markAsPaidViaGateway($purchase->payment_gateway, (string) $order, ['verified_at_return' => true]);
+        }
+
+        $tenant = $purchase ? $purchase->tenant : Tenant::where('slug', 'nume')->first();
+
+        return view('storefront.success', compact('tenant', 'purchase'));
+    }
+
+    /**
+     * Retorno de cancelamento do BBVA Redsys.
+     */
+    public function redsysCancel(Request $request): RedirectResponse
+    {
+        return redirect('/#pacotes')->with(
+            'warning',
+            __('O pagamento via BBVA / Redsys não foi finalizado. Você pode tentar novamente ou escolher outro meio.')
+        );
+    }
+
+    public function success(Request $request, Tenant $tenant): View
+    {
+        abort_unless($tenant->isActive(), 404);
+
+        $purchaseId = $request->query('purchase_id');
+        $purchase = null;
+
+        if ($purchaseId) {
+            $purchase = PackPurchase::withoutGlobalScope('tenant')->find($purchaseId);
+            if ($purchase && $purchase->status === 'pending') {
+                $purchase->markAsPaid('session_verified_' . ($request->query('session_id') ?? time()));
+            }
+        }
+
+        return view('storefront.success', compact('tenant', 'purchase'));
+    }
+
+    /**
+     * Atendimento comercial e consultoria da Sofi na vitrine pública.
+     */
+    public function sofiChat(
+        Request $request,
+        Tenant $tenant,
+        \App\Services\SofiSalesConsultantService $salesService
+    ): \Illuminate\Http\JsonResponse {
+        abort_unless($tenant->isActive(), 404);
+
+        $validated = $request->validate([
+            'message' => 'required|string|max:500',
+        ]);
+
+        $message = trim($validated['message']);
+        $sessionKey = 'sofi_sales_history_' . $tenant->id;
+        $history = session()->get($sessionKey, []);
+        $locale = session('locale', app()->getLocale() ?: 'pt_BR');
+
+        $result = $salesService->consult($tenant, $message, $history, $locale);
+
+        if (! empty($result['is_reset'])) {
+            session()->forget($sessionKey);
+        } else {
+            // Atualiza histórico em sessão (mantém últimas 6 mensagens)
+            $history[] = ['role' => 'user', 'text' => $message];
+            $history[] = ['role' => 'model', 'text' => $result['reply']];
+            if (count($history) > 6) {
+                $history = array_slice($history, -6);
+            }
+            session()->put($sessionKey, $history);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'agent' => 'Sofi Sales Copilot',
+            'reply' => $result['reply'],
+            'call_to_action' => $result['call_to_action'] ?? null,
+            'recommended_pack' => $result['recommended_pack'] ?? null,
+            'dna_register_url' => $result['dna_register_url'] ?? route('portal.register'),
+            'quick_replies' => $result['quick_replies'] ?? [],
+        ]);
+    }
+
+    /**
+     * Reinicia o histórico de atendimento no chat da Sofi para permitir novo diagnóstico ou nicho.
+     */
+    public function resetSofiChat(Tenant $tenant): \Illuminate\Http\JsonResponse
+    {
+        abort_unless($tenant->isActive(), 404);
+
+        $sessionKey = 'sofi_sales_history_' . $tenant->id;
+        session()->forget($sessionKey);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('Atendimento reiniciado com sucesso!'),
+        ]);
+    }
+}

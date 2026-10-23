@@ -1,0 +1,245 @@
+<?php
+
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\MarketplaceController;
+use App\Http\Controllers\PackController;
+use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\RoteiroController;
+use App\Http\Controllers\ShowcaseVideoController;
+use App\Http\Controllers\StripeConnectController;
+use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\StorefrontController;
+use App\Http\Controllers\VideoController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/lang/{locale}', function ($locale) {
+    if (in_array($locale, ['pt_BR', 'es'])) {
+        session()->put('locale', $locale);
+    }
+    return back();
+})->name('lang.switch');
+
+Route::get('/locale/{locale}', function ($locale) {
+    if (in_array($locale, ['pt_BR', 'es'])) {
+        session()->put('locale', $locale);
+    }
+    return back();
+})->name('locale.change');
+
+Route::get('/privacidade', function () {
+    return view('legal.privacy');
+})->name('legal.privacy');
+
+Route::get('/', [MarketplaceController::class, 'index'])->name('marketplace.index');
+
+// Vitrine pÃºblica de cada produtora: portfÃ³lio, pacotes e checkout para visitantes.
+Route::get('/vitrine/{tenant:slug}', [StorefrontController::class, 'show'])->name('storefront.show');
+Route::post('/vitrine/{tenant:slug}/sofi-chat', [StorefrontController::class, 'sofiChat'])
+    ->middleware('throttle:30,1')
+    ->name('storefront.sofi-chat');
+Route::post('/vitrine/{tenant:slug}/sofi-chat/reset', [StorefrontController::class, 'resetSofiChat'])
+    ->name('storefront.sofi-chat.reset');
+Route::post('/vitrine/{tenant:slug}/pacotes/{pack}/checkout', [StorefrontController::class, 'checkout'])
+    ->middleware('throttle:10,1')
+    ->name('storefront.checkout');
+Route::get('/vitrine/{tenant:slug}/compra-confirmada', [StorefrontController::class, 'success'])
+    ->name('storefront.success');
+
+// Rotas autenticadas - apenas para usuários logados
+Route::middleware('auth')->group(function () {
+
+    Route::get('/dashboard', function () {
+        return redirect()->route('productions.index');
+    })->name('dashboard');
+
+    // Analytics & BI (Sofi Intelligence Feed)
+    Route::get('/analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
+    Route::get('/analytics/sofi-data-feed', [\App\Http\Controllers\AnalyticsController::class, 'sofiDataFeed'])->name('analytics.sofi-feed');
+
+    // Billing / Stripe
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+    Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
+    Route::get('/billing/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
+
+    // Clientes da produtora (compradores de pacotes)
+    Route::resource('clientes', ClienteController::class)->except(['show']);
+
+    // Taxonomia e Categorias
+    Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['show']);
+
+    // Catálogo de Serviços Opcionais e Add-ons
+    Route::post('addons/{addon}/toggle', [\App\Http\Controllers\AddonController::class, 'toggleActive'])->name('addons.toggle');
+    Route::resource('addons', \App\Http\Controllers\AddonController::class)->except(['show']);
+
+    // Pacotes de vídeos vendidos pela produtora
+    Route::post('/packs/sofi-generate', [PackController::class, 'sofiGenerate'])->name('packs.sofi_generate');
+    Route::resource('packs', PackController::class)->except(['show']);
+    Route::resource('showcase-videos', ShowcaseVideoController::class)->except(['show']);
+
+    // Admin Planos de Assinatura Recorrente (Retainers / Modo Criador)
+    Route::get('/admin/planos', [\App\Http\Controllers\Admin\PlanController::class, 'index'])
+        ->name('admin.plans.index');
+    Route::get('/admin/planos/criar', [\App\Http\Controllers\Admin\PlanController::class, 'create'])
+        ->name('admin.plans.create');
+    Route::post('/admin/planos', [\App\Http\Controllers\Admin\PlanController::class, 'store'])
+        ->name('admin.plans.store');
+    Route::get('/admin/planos/{plan}/editar', [\App\Http\Controllers\Admin\PlanController::class, 'edit'])
+        ->name('admin.plans.edit');
+    Route::put('/admin/planos/{plan}', [\App\Http\Controllers\Admin\PlanController::class, 'update'])
+        ->name('admin.plans.update');
+    Route::delete('/admin/planos/{plan}', [\App\Http\Controllers\Admin\PlanController::class, 'destroy'])
+        ->name('admin.plans.destroy');
+
+    // Admin Assinaturas & Contratos dos Clientes (MRR & Cotas)
+    Route::get('/admin/assinaturas', [\App\Http\Controllers\Admin\SubscriptionManagementController::class, 'index'])
+        ->name('admin.subscriptions.index');
+    Route::get('/admin/assinaturas/{subscription}', [\App\Http\Controllers\Admin\SubscriptionManagementController::class, 'show'])
+        ->name('admin.subscriptions.show');
+    Route::post('/admin/assinaturas/{subscription}/cancel', [\App\Http\Controllers\Admin\SubscriptionManagementController::class, 'cancel'])
+        ->name('admin.subscriptions.cancel');
+    Route::post('/admin/assinaturas/{subscription}/renew', [\App\Http\Controllers\Admin\SubscriptionManagementController::class, 'renew'])
+        ->name('admin.subscriptions.renew');
+
+    // Stripe Connect (onboarding da produtora para receber pagamentos)
+    Route::get('/stripe-connect', [StripeConnectController::class, 'index'])->name('stripe-connect.index');
+    Route::get('/stripe-connect/connect', [StripeConnectController::class, 'connect'])->name('stripe-connect.connect');
+    Route::get('/stripe-connect/return', [StripeConnectController::class, 'return'])->name('stripe-connect.return');
+
+    // Admin Settings / Gateways (Criptografados no Banco)
+    Route::get('/admin/settings/gateways', [\App\Http\Controllers\Admin\GatewaySettingController::class, 'index'])
+        ->name('admin.settings.gateways');
+    Route::post('/admin/settings/gateways', [\App\Http\Controllers\Admin\GatewaySettingController::class, 'update'])
+        ->name('admin.settings.gateways.update');
+
+    // Admin Faturamento & Faturas Oficiais AEAT (Gestoría)
+    Route::get('/admin/invoices', [\App\Http\Controllers\Admin\InvoiceManagementController::class, 'index'])
+        ->name('admin.invoices.index');
+    Route::get('/admin/invoices/export', [\App\Http\Controllers\Admin\InvoiceManagementController::class, 'export'])
+        ->name('admin.invoices.export');
+    Route::get('/admin/invoices/{purchase}/download', [\App\Http\Controllers\Admin\InvoiceManagementController::class, 'download'])
+        ->name('admin.invoices.download');
+
+    // Orçamentos & Propostas de Produção (Presupuestos)
+    Route::post('/orcamentos/estimar', [\App\Http\Controllers\QuoteController::class, 'estimate'])
+        ->middleware('throttle:30,1')
+        ->name('quotes.estimate');
+    Route::get('/orcamentos/{quote}/pdf', [\App\Http\Controllers\QuoteController::class, 'pdf'])
+        ->name('quotes.pdf');
+    Route::post('/orcamentos/{quote}/enviar', [\App\Http\Controllers\QuoteController::class, 'send'])
+        ->middleware('throttle:10,1')
+        ->name('quotes.send');
+    Route::patch('/orcamentos/{quote}/status', [\App\Http\Controllers\QuoteController::class, 'updateStatus'])
+        ->name('quotes.update-status');
+    Route::resource('orcamentos', \App\Http\Controllers\QuoteController::class)
+        ->parameters(['orcamentos' => 'quote'])
+        ->names('quotes');
+
+    // Admin Settings / Redes Sociais & SEO Sofi
+    Route::get('/admin/settings/platform', [\App\Http\Controllers\Admin\TenantSettingsController::class, 'index'])
+        ->name('admin.settings.platform');
+    Route::post('/admin/settings/platform', [\App\Http\Controllers\Admin\TenantSettingsController::class, 'update'])
+        ->name('admin.settings.platform.update');
+    Route::post('/admin/settings/platform/regenerate-seo', [\App\Http\Controllers\Admin\TenantSettingsController::class, 'regenerateSeo'])
+        ->name('admin.settings.platform.regenerate-seo');
+
+    // Productions
+    Route::resource('productions', ProductionController::class);
+    Route::post('productions/{production}/mark-approved', [ProductionController::class, 'markAsApproved'])
+        ->name('productions.mark-approved');
+    Route::patch('productions/{production}/status', [ProductionController::class, 'updateStatus'])
+        ->name('productions.update-status');
+
+    // Monitoramento e Auditoria de Distribuição Social
+    Route::get('/productions-distribuicoes', [\App\Http\Controllers\SocialDistributionManagementController::class, 'index'])
+        ->name('distributions.index');
+    Route::post('/productions-distribuicoes/{videoPublication}/refresh', [\App\Http\Controllers\SocialDistributionManagementController::class, 'refresh'])
+        ->name('distributions.refresh');
+
+    // Calendário Geral de Conteúdo e Prazos (Modo Criador Moat)
+    Route::get('/calendario', [\App\Http\Controllers\CalendarController::class, 'index'])
+        ->name('calendar.index');
+
+    // Sofi Batch Content Planner (Planejador Mensal em Lote)
+    Route::get('/batch-planner', [\App\Http\Controllers\BatchContentPlannerController::class, 'index'])
+        ->name('batch_planner.index');
+    Route::post('/batch-planner/generate', [\App\Http\Controllers\BatchContentPlannerController::class, 'generate'])
+        ->name('batch_planner.generate');
+    Route::post('/batch-planner/commit', [\App\Http\Controllers\BatchContentPlannerController::class, 'commit'])
+        ->name('batch_planner.commit');
+
+    // Gestão de Chaves de API para Desenvolvedores (B2B API)
+    Route::get('/configuracoes/api-keys', [\App\Http\Controllers\ApiKeyController::class, 'index'])
+        ->name('api_keys.index');
+    Route::post('/configuracoes/api-keys', [\App\Http\Controllers\ApiKeyController::class, 'store'])
+        ->name('api_keys.store');
+    Route::delete('/configuracoes/api-keys/{apiKey}', [\App\Http\Controllers\ApiKeyController::class, 'destroy'])
+        ->name('api_keys.destroy');
+
+    // Roteiros
+    Route::scopeBindings()->prefix('productions/{production}')->group(function () {
+        Route::post('generate-sofi-script', [RoteiroController::class, 'generateSofiScript'])
+            ->name('roteiros.generate-sofi');
+        Route::resource('roteiros', RoteiroController::class);
+        Route::post('roteiros/{roteiro}/submit', [RoteiroController::class, 'submit'])
+            ->name('roteiros.submit');
+        Route::post('roteiros/{roteiro}/approve', [RoteiroController::class, 'approve'])
+            ->name('roteiros.approve');
+        Route::post('roteiros/{roteiro}/reject', [RoteiroController::class, 'reject'])
+            ->name('roteiros.reject');
+        Route::post('roteiros/{roteiro}/mark-in-production', [RoteiroController::class, 'markAsInProduction'])
+            ->name('roteiros.mark-in-production');
+    });
+
+    // Videos
+    Route::scopeBindings()->prefix('productions/{production}')->group(function () {
+        Route::resource('videos', VideoController::class);
+        Route::post('videos/{video}/mark-ready', [VideoController::class, 'markAsReady'])
+            ->name('videos.mark-ready');
+        Route::post('videos/{video}/publish', [VideoController::class, 'publish'])
+            ->name('videos.publish');
+        Route::post('videos/{video}/register-platform', [VideoController::class, 'registerPlatformId'])
+            ->name('videos.register-platform');
+        Route::post('videos/{video}/distribute', [VideoController::class, 'distribute'])
+            ->name('videos.distribute');
+        Route::post('videos/{video}/notify-cliente', [VideoController::class, 'notifyCliente'])
+            ->name('videos.notify-cliente');
+    });
+});
+
+// Sofi Magic Links (Assinados / 1 Toque sem Senha)
+Route::get('/m/videos/{video}', [\App\Http\Controllers\MagicVideoController::class, 'show'])
+    ->name('magic.videos.show')
+    ->middleware('signed');
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
+Route::post('/webhooks/redsys', [\App\Http\Controllers\Webhooks\RedsysWebhookController::class, 'handle'])->name('redsys.webhook');
+Route::post('/webhooks/upload-post', [\App\Http\Controllers\Webhooks\UploadPostWebhookController::class, 'handle'])->name('upload-post.webhook');
+Route::get('/pagamento/redsys/sucesso', [\App\Http\Controllers\StorefrontController::class, 'redsysSuccess'])->name('redsys.success');
+Route::get('/pagamento/redsys/cancelado', [\App\Http\Controllers\StorefrontController::class, 'redsysCancel'])->name('redsys.cancel');
+
+// API Sofi Translator (Motor Próprio de Tradução)
+Route::post('/api/v1/translate', [\App\Http\Controllers\Api\TranslationController::class, 'translate'])->name('api.translate');
+
+// API Sofi Copilot Chat & Atendimento
+Route::post('/api/v1/sofi/chat', [\App\Http\Controllers\Api\SofiChatController::class, 'chat'])->name('api.sofi.chat');
+Route::get('/api/v1/sofi/conversations/{conversation}/messages', [\App\Http\Controllers\Api\SofiChatController::class, 'messages'])->name('api.sofi.messages');
+
+// Magic Links de Aprovação Sem Senha (Zero Friction) - Assinatura Criptográfica HMAC SHA-256
+Route::prefix('magic')->name('magic.')->middleware('signed')->group(function () {
+    Route::get('/roteiros/{roteiro}', [\App\Http\Controllers\MagicApprovalController::class, 'showRoteiro'])
+        ->name('roteiros.show');
+    Route::post('/roteiros/{roteiro}/approve', [\App\Http\Controllers\MagicApprovalController::class, 'approveRoteiro'])
+        ->name('roteiros.approve');
+    Route::post('/roteiros/{roteiro}/reject', [\App\Http\Controllers\MagicApprovalController::class, 'rejectRoteiro'])
+        ->name('roteiros.reject');
+
+    Route::get('/videos/{video}', [\App\Http\Controllers\MagicApprovalController::class, 'showVideo'])
+        ->name('videos.show');
+    Route::post('/videos/{video}/approve', [\App\Http\Controllers\MagicApprovalController::class, 'approveVideo'])
+        ->name('videos.approve');
+});
+
+require __DIR__.'/auth.php';
+require __DIR__.'/portal.php';
