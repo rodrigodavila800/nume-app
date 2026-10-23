@@ -7,6 +7,7 @@ use App\Support\StripeCredentials;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 
 /**
@@ -130,17 +131,17 @@ class PackBalancePaymentService
                 'payment_intent_id' => $paymentIntent->id,
             ];
         } catch (Exception $e) {
-            Log::error('Falha ao debitar saldo do pacote 50/50: '.$e->getMessage(), [
+            $stripeCode = ($e instanceof ApiErrorException) ? $e->getStripeCode() : null;
+            Log::error('Falha ao debitar saldo do pacote 50/50: '.get_class($e), [
                 'pack_purchase_id' => $purchase->id,
+                'stripe_code' => $stripeCode,
             ]);
 
             $purchase->update(['balance_status' => 'failed']);
 
             return [
                 'success' => false,
-                'message' => __('Erro ao processar cobrança do saldo: :error', [
-                    'error' => $e->getMessage(),
-                ]),
+                'message' => __('Não foi possível processar a cobrança do saldo. Verifique os dados do cartão ou entre em contato com seu banco.'),
                 'payment_intent_id' => null,
             ];
         }

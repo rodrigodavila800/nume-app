@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 
 class StripeConnectController extends Controller
@@ -63,7 +64,7 @@ class StripeConnectController extends Controller
                         ],
                     ]);
                 } catch (\Throwable $v2Error) {
-                    Log::info('Fallback para Stripe Accounts v1: '.$v2Error->getMessage());
+                    Log::info('Fallback para Stripe Accounts v1: '.get_class($v2Error));
                     // Fallback para Accounts v1 caso a conta da plataforma utilize v1 legado
                     $account = @$stripe->accounts->create([
                         'type' => 'express',
@@ -88,13 +89,14 @@ class StripeConnectController extends Controller
 
             return redirect($accountLink->url);
         } catch (\Throwable $e) {
-            Log::error('Erro ao conectar conta Stripe Connect: '.$e->getMessage(), [
+            $stripeCode = ($e instanceof ApiErrorException) ? $e->getStripeCode() : null;
+            Log::error('Erro ao conectar conta Stripe Connect: '.get_class($e), [
                 'tenant_id' => $tenant->id,
-                'trace' => $e->getTraceAsString(),
+                'stripe_code' => $stripeCode,
             ]);
 
             return redirect()->route('stripe-connect.index')
-                ->with('error', 'Não foi possível iniciar a conexão com o Stripe: '.$e->getMessage());
+                ->with('error', __('Não foi possível iniciar a conexão com o Stripe. Tente novamente em instantes.'));
         }
     }
 
@@ -119,12 +121,14 @@ class StripeConnectController extends Controller
             return redirect()->route('stripe-connect.index')
                 ->with('success', 'Status da conta Stripe atualizado!');
         } catch (\Throwable $e) {
-            Log::error('Erro ao atualizar status da conta Stripe: '.$e->getMessage(), [
+            $stripeCode = ($e instanceof ApiErrorException) ? $e->getStripeCode() : null;
+            Log::error('Erro ao atualizar status da conta Stripe: '.get_class($e), [
                 'tenant_id' => $tenant->id,
+                'stripe_code' => $stripeCode,
             ]);
 
             return redirect()->route('stripe-connect.index')
-                ->with('error', 'Não foi possível verificar o status no Stripe: '.$e->getMessage());
+                ->with('error', __('Não foi possível verificar o status no Stripe. Tente novamente em instantes.'));
         }
     }
 }

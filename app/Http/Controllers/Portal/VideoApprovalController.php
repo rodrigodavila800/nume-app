@@ -9,6 +9,7 @@ use App\Services\Notification\SofiVideoNotificationService;
 use App\Services\Payment\PackBalancePaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class VideoApprovalController extends Controller
 {
@@ -52,14 +53,14 @@ class VideoApprovalController extends Controller
             try {
                 $this->invoiceService->issueAndNotify($purchase);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("[InvoiceService] Falha ao emitir fatura do saldo: " . $e->getMessage());
+                Log::warning('[InvoiceService] Falha ao emitir fatura do saldo: '.get_class($e));
             }
 
             // 2. Notificação reversa para a equipe da produtora (editor e administradores do tenant)
             try {
                 $this->notificationService->notifyProducerVideoApproved($video, $purchase);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("[SofiNotification] Falha ao alertar produtora sobre aprovação: " . $e->getMessage());
+                Log::warning('[SofiNotification] Falha ao alertar produtora sobre aprovação: '.get_class($e));
             }
 
             return redirect()->back()
@@ -75,7 +76,7 @@ class VideoApprovalController extends Controller
         try {
             $this->notificationService->notifyProducerVideoApproved($video, $purchase);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning("[SofiNotification] Falha ao alertar produtora sobre aprovação: " . $e->getMessage());
+            Log::warning('[SofiNotification] Falha ao alertar produtora sobre aprovação: '.get_class($e));
         }
 
         return redirect()->back()

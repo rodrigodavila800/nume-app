@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 
 class PackController extends Controller
@@ -395,16 +396,21 @@ class PackController extends Controller
 
             return redirect($session->url);
         } catch (\Exception $e) {
-            Log::error('Erro ao criar sessão de checkout da Stripe: '.$e->getMessage());
+            $stripeCode = ($e instanceof ApiErrorException) ? $e->getStripeCode() : null;
+            Log::error('Erro ao criar sessão de checkout da Stripe: '.get_class($e), [
+                'stripe_code' => $stripeCode,
+            ]);
+
+            $genericMessage = __('Não foi possível iniciar o checkout seguro da Stripe. Tente novamente em instantes.');
 
             if ($isEmbedded) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Não foi possível iniciar o checkout seguro da Stripe: '.$e->getMessage(),
+                    'message' => $genericMessage,
                 ], 422);
             }
 
-            return back()->with('error', 'Erro ao conectar com a Stripe: '.$e->getMessage());
+            return back()->with('error', $genericMessage);
         }
     }
 

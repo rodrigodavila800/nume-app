@@ -39,7 +39,7 @@ class Setting extends Model
                 try {
                     return Crypt::decryptString($setting->value);
                 } catch (Exception $e) {
-                    Log::warning("Could not decrypt setting '{$key}': ".$e->getMessage());
+                    Log::warning("Could not decrypt setting '{$key}': ".get_class($e));
 
                     return $default;
                 }

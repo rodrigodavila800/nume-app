@@ -2,10 +2,13 @@
 
 namespace App\Services\Billing;
 
+use App\Mail\InvoiceIssuedMail;
 use App\Models\PackPurchase;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdfInstance;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class InvoiceService
@@ -15,14 +18,14 @@ class InvoiceService
      */
     public function generateInvoiceNumber(PackPurchase $purchase): string
     {
-        $series = Setting::get('fiscal_invoice_series', 'NUM-' . date('Y') . '-');
+        $series = Setting::get('fiscal_invoice_series', 'NUM-'.date('Y').'-');
 
         $count = PackPurchase::withoutGlobalScope('tenant')
             ->whereNotNull('invoice_number')
             ->where('invoice_series', $series)
             ->count() + 1;
 
-        return $series . str_pad((string) $count, 5, '0', STR_PAD_LEFT);
+        return $series.str_pad((string) $count, 5, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -32,7 +35,7 @@ class InvoiceService
     {
         // Atribui numeração se ainda não tiver
         if (empty($purchase->invoice_number)) {
-            $series = Setting::get('fiscal_invoice_series', 'NUM-' . date('Y') . '-');
+            $series = Setting::get('fiscal_invoice_series', 'NUM-'.date('Y').'-');
             $purchase->update([
                 'invoice_series' => $series,
                 'invoice_number' => $this->generateInvoiceNumber($purchase),
@@ -141,7 +144,7 @@ class InvoiceService
     public function saveInvoiceFile(PackPurchase $purchase): string
     {
         $pdf = $this->renderPdf($purchase);
-        $fileName = 'invoices/' . $purchase->invoice_number . '.pdf';
+        $fileName = 'invoices/'.$purchase->invoice_number.'.pdf';
 
         Storage::disk('local')->put($fileName, $pdf->output());
 
@@ -164,12 +167,13 @@ class InvoiceService
             $pdf = $this->renderPdf($purchase);
             $pdfBinary = $pdf->output();
 
-            \Illuminate\Support\Facades\Mail::to($cliente->email)
-                ->send(new \App\Mail\InvoiceIssuedMail($purchase, $pdfBinary));
+            Mail::to($cliente->email)
+                ->send(new InvoiceIssuedMail($purchase, $pdfBinary));
 
             return true;
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("InvoiceService: Falha no envio de e-mail da fatura para {$cliente->email}: " . $e->getMessage());
+            Log::error("InvoiceService: Falha no envio de e-mail da fatura para a compra #{$purchase->id}: ".get_class($e));
+
             return false;
         }
     }
