@@ -2,7 +2,9 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Middleware\RecordAiUsage;
 use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Promptable;
 use Stringable;
 
@@ -13,7 +15,7 @@ use Stringable;
  * As assinaturas seguem laravel.com/docs/ai-sdk; confira contra vendor/laravel/ai
  * depois do `composer require` (roteiro em .agents/workflows/spike-laravel-ai.md).
  */
-class SofiTranslatorAgent implements Agent
+class SofiTranslatorAgent implements Agent, HasMiddleware
 {
     use Promptable;
 
@@ -21,6 +23,14 @@ class SofiTranslatorAgent implements Agent
         public string $sourceName,
         public string $targetName,
     ) {}
+
+    /**
+     * Tradução de textos da plataforma: sem tenant (tenant_id nulo no uso).
+     */
+    public function middleware(): array
+    {
+        return [new RecordAiUsage(null, static::class)];
+    }
 
     public function instructions(): Stringable|string
     {
