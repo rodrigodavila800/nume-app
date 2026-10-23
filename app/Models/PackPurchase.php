@@ -95,7 +95,7 @@ class PackPurchase extends Model
         return ! empty($this->subscription_status) || ($this->pack && $this->pack->billing_type === 'subscription');
     }
 
-    public function renewSubscriptionCycle(int $newVideosQuota = null): void
+    public function renewSubscriptionCycle(?int $newVideosQuota = null): void
     {
         $newCycle = $this->subscription_cycle_current + 1;
         $isCompleted = $newCycle > $this->subscription_cycles_total;

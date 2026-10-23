@@ -104,7 +104,7 @@ class InvoiceManagementController extends Controller
                 'Metodo_Pago',
                 'Referencia_Pasarela',
                 'Estado',
-            ], ';');
+            ], ';', '"', '\\');
 
             $query->chunk(100, function ($purchases) use ($handle) {
                 foreach ($purchases as $purchase) {
@@ -140,7 +140,7 @@ class InvoiceManagementController extends Controller
                         strtoupper($purchase->payment_gateway ?? 'STRIPE'),
                         $purchase->gateway_order_reference ?? $purchase->stripe_checkout_session_id ?? '-',
                         strtoupper($purchase->status),
-                    ], ';');
+                    ], ';', '"', '\\');
                 }
             });
 
