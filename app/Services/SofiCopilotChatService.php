@@ -137,7 +137,7 @@ class SofiCopilotChatService
 
             foreach ($candidateModels as $model) {
                 try {
-                    $response = Http::timeout(20)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                    $response = Http::timeout(20)->withHeaders(['x-goog-api-key' => $apiKey])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
                         'contents' => $contents,
                         'generationConfig' => [
                             'temperature' => 0.7,
@@ -158,7 +158,7 @@ class SofiCopilotChatService
                         Log::warning("SofiCopilotChatService Gemini API response error with model {$model}: " . $response->body());
                     }
                 } catch (Exception $e) {
-                    Log::warning("SofiCopilotChatService Gemini error with model {$model}: " . $e->getMessage());
+                    Log::warning("SofiCopilotChatService Gemini error with model {$model}: " . get_class($e));
                 }
             }
         }

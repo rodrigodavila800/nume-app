@@ -168,7 +168,7 @@ class SofiCopywriterService
 
         foreach ($candidateModels as $model) {
             try {
-                $response = Http::timeout(25)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                $response = Http::timeout(25)->withHeaders(['x-goog-api-key' => $apiKey])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
                     'contents' => [
                         [
                             'parts' => [
@@ -204,7 +204,7 @@ class SofiCopywriterService
                     Log::warning("SofiCopywriterService AI response error with model {$model}: " . $response->body());
                 }
             } catch (Exception $e) {
-                Log::warning("SofiCopywriterService AI error with model {$model}: " . $e->getMessage());
+                Log::warning("SofiCopywriterService AI error with model {$model}: " . get_class($e));
             }
         }
 

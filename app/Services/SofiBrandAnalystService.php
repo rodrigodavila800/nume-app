@@ -114,7 +114,8 @@ class SofiBrandAnalystService
             try {
                 $response = Http::timeout(18.0)
                     ->connectTimeout(4.0)
-                    ->post("https://generativelanguage.googleapis.com/v1beta/models/{$candidateModel}:generateContent?key={$apiKey}", [
+                    ->withHeaders(['x-goog-api-key' => $apiKey])
+                    ->post("https://generativelanguage.googleapis.com/v1beta/models/{$candidateModel}:generateContent", [
                         'contents' => [
                             [
                                 'role' => 'user',
@@ -153,7 +154,7 @@ class SofiBrandAnalystService
                     Log::warning("SofiBrandAnalystService model {$candidateModel} error: " . substr($response->body(), 0, 150));
                 }
             } catch (Exception $e) {
-                Log::warning("SofiBrandAnalystService model {$candidateModel} exception: " . $e->getMessage());
+                Log::warning("SofiBrandAnalystService model {$candidateModel} exception: " . get_class($e));
             }
         }
 

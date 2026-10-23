@@ -96,7 +96,8 @@ PROMPT;
             try {
                 $response = Http::timeout(12.0)
                     ->connectTimeout(3.0)
-                    ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                    ->withHeaders(['x-goog-api-key' => $apiKey])
+                    ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
                         'contents' => [
                             [
                                 'role' => 'user',
@@ -121,7 +122,7 @@ PROMPT;
                     }
                 }
             } catch (Exception $e) {
-                Log::warning("SofiQuoteEstimatorService model {$model} exception: " . $e->getMessage());
+                Log::warning("SofiQuoteEstimatorService model {$model} exception: " . get_class($e));
             }
         }
 

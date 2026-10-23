@@ -182,7 +182,8 @@ class SofiTranslatorService
             try {
                 $response = Http::timeout(3.0)
                     ->connectTimeout(1.5)
-                    ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                    ->withHeaders(['x-goog-api-key' => $apiKey])
+                    ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
                         'contents' => [
                             [
                                 'parts' => [
@@ -212,7 +213,7 @@ class SofiTranslatorService
                     Log::warning("SofiTranslatorService Gemini API Error with model {$model}: ".$response->body());
                 }
             } catch (Exception $e) {
-                Log::warning("SofiTranslatorService Gemini exception with model {$model}: ".$e->getMessage());
+                Log::warning("SofiTranslatorService Gemini exception with model {$model}: ".get_class($e));
             }
         }
 

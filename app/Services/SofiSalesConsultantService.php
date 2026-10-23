@@ -208,7 +208,7 @@ class SofiSalesConsultantService
         foreach ($candidateModels as $model) {
             try {
                 // Timeout rápido de 3.0s para resposta relâmpago no chat do site
-                $response = Http::timeout(3.0)->connectTimeout(1.8)->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                $response = Http::timeout(3.0)->connectTimeout(1.8)->withHeaders(['x-goog-api-key' => $apiKey])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
                     'contents' => $contents,
                     'generationConfig' => [
                         'temperature' => 0.85,
@@ -231,7 +231,7 @@ class SofiSalesConsultantService
                     Log::warning("SofiSalesConsultantService Gemini model {$model} error (HTTP {$response->status()}): " . substr($response->body(), 0, 150));
                 }
             } catch (Exception $e) {
-                Log::warning("SofiSalesConsultantService Gemini model {$model} exception (fallback imediato): " . $e->getMessage());
+                Log::warning("SofiSalesConsultantService Gemini model {$model} exception (fallback imediato): " . get_class($e));
             }
         }
 
