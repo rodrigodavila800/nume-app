@@ -646,12 +646,12 @@
                     @csrf
                     <div id="checkout-addons-hidden-inputs"></div>
 
-                    @if(auth('cliente')->check())
+                    @if($currentCliente)
                         <div class="storefront-checkout-user-badge">
                             <span>👤</span>
                             <div>
                                 <span class="badge-sub-label">{{ __('Autenticado como:') }}</span>
-                                <span class="badge-user-name">{{ auth('cliente')->user()->name }} ({{ auth('cliente')->user()->email }})</span>
+                                <span class="badge-user-name">{{ $currentCliente->name }} ({{ $currentCliente->email }})</span>
                             </div>
                         </div>
                     @else

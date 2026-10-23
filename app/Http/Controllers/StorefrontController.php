@@ -6,16 +6,26 @@ use App\Models\Category;
 use App\Models\Cliente;
 use App\Models\Pack;
 use App\Models\PackPurchase;
+use App\Models\Setting;
 use App\Models\ShowcaseVideo;
 use App\Models\Tenant;
+use App\Services\Billing\TaxCalculationService;
+use App\Services\Payment\PackPaymentConfirmer;
+use App\Services\Payment\RedsysService;
+use App\Services\SofiSalesConsultantService;
 use App\Support\Money;
+use Exception;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
-use Exception;
 
 class StorefrontController extends Controller
 {
@@ -52,15 +62,17 @@ class StorefrontController extends Controller
             'oneOffPacks' => $this->storefrontPacks($tenant)
                 ->where(function ($q) {
                     $q->where('billing_type', '!=', 'subscription')
-                      ->orWhereNull('billing_type');
+                        ->orWhereNull('billing_type');
                 })
                 ->get(),
-            'currentCliente' => auth('cliente')->user(),
-            'activePaymentMethods' => \App\Models\Setting::getActivePaymentMethods($tenant),
+            'currentCliente' => (auth('cliente')->check() && (int) auth('cliente')->user()->tenant_id === (int) $tenant->id)
+                ? auth('cliente')->user()
+                : null,
+            'activePaymentMethods' => Setting::getActivePaymentMethods($tenant),
             'fiscalSettings' => [
-                'regime' => \App\Models\Setting::get('fiscal_regime', 'autonomo'),
-                'irpf_rate' => (\App\Models\Setting::get('fiscal_regime', 'autonomo') === 'autonomo') ? (float) \App\Models\Setting::get('fiscal_irpf_rate', 15.00) : 0.00,
-                'iva_rate' => (float) \App\Models\Setting::get('tax_default_iva_rate', 21.00),
+                'regime' => Setting::get('fiscal_regime', 'autonomo'),
+                'irpf_rate' => (Setting::get('fiscal_regime', 'autonomo') === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00,
+                'iva_rate' => (float) Setting::get('tax_default_iva_rate', 21.00),
             ],
         ]);
     }
@@ -68,7 +80,7 @@ class StorefrontController extends Controller
     /**
      * Pacotes ativos da vitrine com categoria, adicionais e vídeo de destaque, todos pelo tenant da vitrine.
      */
-    protected function storefrontPacks(Tenant $tenant): \Illuminate\Database\Eloquent\Builder
+    protected function storefrontPacks(Tenant $tenant): Builder
     {
         return Pack::forTenant($tenant->id)
             ->where('status', 'active')
@@ -94,9 +106,9 @@ class StorefrontController extends Controller
         Request $request,
         Tenant $tenant,
         string $pack,
-        \App\Services\Billing\TaxCalculationService $taxService,
-        \App\Services\Payment\RedsysService $redsysService
-    ): \Illuminate\Http\Response|RedirectResponse|View {
+        TaxCalculationService $taxService,
+        RedsysService $redsysService
+    ): Response|RedirectResponse|View {
         // {pack} chega como slug (sem binding implícito): o binding usaria o scope do usuário
         // logado e o primeiro slug igual de QUALQUER produtora. Resolvido só no tenant da vitrine.
         $pack = $this->storefrontPackBySlug($tenant, $pack);
@@ -109,17 +121,18 @@ class StorefrontController extends Controller
         }
 
         // Valida se o método escolhido está ativo no tenant / sistema
-        if (! \App\Models\Setting::isPaymentMethodActive($paymentMethod, $tenant)) {
+        if (! Setting::isPaymentMethodActive($paymentMethod, $tenant)) {
             return back()->withInput()->with('error', __('O método de pagamento selecionado não está disponível no momento.'));
         }
 
         $email = Str::lower($request->input('email', ''));
 
-        // Se o cliente já estiver autenticado na sessão atual
-        if (auth('cliente')->check()) {
-            $cliente = auth('cliente')->user();
+        // Se o cliente já estiver autenticado e pertencer ao tenant da vitrine
+        $loggedCliente = auth('cliente')->user();
+        if ($loggedCliente && (int) $loggedCliente->tenant_id === (int) $tenant->id) {
+            $cliente = $loggedCliente;
         } else {
-            // Validação de credenciais do cliente
+            // Validação de credenciais do cliente (visitante ou cliente de outra produtora)
             $validated = $request->validate([
                 'email' => ['required', 'email', 'max:255'],
                 'password' => ['required', 'string', 'min:6'],
@@ -127,9 +140,8 @@ class StorefrontController extends Controller
                 'company_name' => ['nullable', 'string', 'max:255'],
             ]);
 
-            // 1. Verifica se o cliente JÁ TEM CADASTRO no banco de dados
-            $cliente = Cliente::withoutGlobalScope('tenant')
-                ->where('tenant_id', $tenant->id)
+            // 1. Verifica se o cliente JÁ TEM CADASTRO no tenant da vitrine
+            $cliente = Cliente::forTenant($tenant->id)
                 ->where('email', $email)
                 ->first();
 
@@ -201,8 +213,8 @@ class StorefrontController extends Controller
 
         $subtotal = round((float) $pack->price + $addonsTotal, 2);
 
-        $fiscalRegime = \App\Models\Setting::get('fiscal_regime', 'autonomo');
-        $irpfRate = ($fiscalRegime === 'autonomo') ? (float) \App\Models\Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
+        $fiscalRegime = Setting::get('fiscal_regime', 'autonomo');
+        $irpfRate = ($fiscalRegime === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
 
         // 5. Execução do Motor Fiscal (IVA 21%, IRPF e Isenções)
         $taxData = $taxService->calculate(
@@ -300,7 +312,7 @@ class StorefrontController extends Controller
         try {
             $stripe = new StripeClient(config('services.stripe.secret'));
             $currency = strtolower($pack->currency ?: 'eur');
-            $addonsSummary = ! empty($selectedAddonNames) ? (' + Opcionais: ' . implode(', ', $selectedAddonNames)) : '';
+            $addonsSummary = ! empty($selectedAddonNames) ? (' + Opcionais: '.implode(', ', $selectedAddonNames)) : '';
 
             $recurringConfig = $isSubscription ? [
                 'interval' => 'month',
@@ -315,7 +327,7 @@ class StorefrontController extends Controller
                             'currency' => $currency,
                             'product_data' => [
                                 'name' => "{$pack->name} — Sinal ({$depPct}%)",
-                                'description' => "Entrada de {$depPct}%. Saldo de " . number_format($balanceAmount, 2, ',', '.') . " {$pack->currency} a pagar na aprovação do corte final.",
+                                'description' => "Entrada de {$depPct}%. Saldo de ".number_format($balanceAmount, 2, ',', '.')." {$pack->currency} a pagar na aprovação do corte final.",
                             ],
                             'unit_amount' => Money::cents($depositAmount),
                         ],
@@ -326,7 +338,7 @@ class StorefrontController extends Controller
                 $mainPriceData = [
                     'currency' => $currency,
                     'product_data' => [
-                        'name' => $pack->name . ($isSubscription ? " (Contrato {$commitmentMonths} Meses)" : ''),
+                        'name' => $pack->name.($isSubscription ? " (Contrato {$commitmentMonths} Meses)" : ''),
                         'description' => "Pacote de {$pack->video_quantity} vídeos/ciclo — {$tenant->name}{$addonsSummary}",
                     ],
                     'unit_amount' => Money::cents($pack->price),
@@ -353,7 +365,7 @@ class StorefrontController extends Controller
                         $addonPriceData = [
                             'currency' => $currency,
                             'product_data' => [
-                                'name' => '+ ' . $matched['name'],
+                                'name' => '+ '.$matched['name'],
                                 'description' => "Add-on opcional para {$pack->name}",
                             ],
                             'unit_amount' => Money::cents($matched['price']),
@@ -375,7 +387,7 @@ class StorefrontController extends Controller
                         'currency' => $currency,
                         'product_data' => [
                             'name' => "IVA ({$taxData['tax_rate']}%)",
-                            'description' => "Cota tributária legal (Agencia Tributaria)",
+                            'description' => 'Cota tributária legal (Agencia Tributaria)',
                         ],
                         'unit_amount' => Money::cents($taxData['tax_amount']),
                     ];
@@ -459,8 +471,8 @@ class StorefrontController extends Controller
             return redirect($session->url);
         } catch (Exception $e) {
             // Detalhe só no log (tipo e código da Stripe); o visitante recebe mensagem genérica.
-            $stripeCode = $e instanceof \Stripe\Exception\ApiErrorException ? ' ['.($e->getStripeCode() ?? 'sem_codigo').']' : '';
-            \Illuminate\Support\Facades\Log::warning("Checkout da vitrine: falha ao criar sessão da Stripe para a compra #{$purchase->id}: ".get_class($e).$stripeCode);
+            $stripeCode = $e instanceof ApiErrorException ? ' ['.($e->getStripeCode() ?? 'sem_codigo').']' : '';
+            Log::warning("Checkout da vitrine: falha ao criar sessão da Stripe para a compra #{$purchase->id}: ".get_class($e).$stripeCode);
 
             return back()->withInput()->with('error', __('Não foi possível iniciar o pagamento. Tente novamente em instantes ou escolha outro meio de pagamento.'));
         }
@@ -471,8 +483,8 @@ class StorefrontController extends Controller
      */
     public function redsysSuccess(
         Request $request,
-        \App\Services\Payment\RedsysService $redsysService,
-        \App\Services\Payment\PackPaymentConfirmer $confirmer
+        RedsysService $redsysService,
+        PackPaymentConfirmer $confirmer
     ): View {
         // A URL OK é aberta pelo navegador e pode ser forjada: ela nunca marca a compra como paga
         // sozinha. Só confirma se trouxer os parâmetros do Redsys com assinatura válida.
@@ -538,7 +550,7 @@ class StorefrontController extends Controller
         );
     }
 
-    public function success(Request $request, Tenant $tenant, \App\Services\Payment\PackPaymentConfirmer $confirmer): View
+    public function success(Request $request, Tenant $tenant, PackPaymentConfirmer $confirmer): View
     {
         abort_unless($tenant->isActive(), 404);
 
@@ -560,7 +572,7 @@ class StorefrontController extends Controller
                 $session = (new StripeClient(config('services.stripe.secret')))->checkout->sessions->retrieve($sessionId);
                 $confirmer->confirmStripeSession($purchase, $session);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Retorno da Stripe: não foi possível consultar a sessão da compra #{$purchase->id}: ".get_class($e));
+                Log::warning("Retorno da Stripe: não foi possível consultar a sessão da compra #{$purchase->id}: ".get_class($e));
             }
         }
 
@@ -577,8 +589,8 @@ class StorefrontController extends Controller
     public function sofiChat(
         Request $request,
         Tenant $tenant,
-        \App\Services\SofiSalesConsultantService $salesService
-    ): \Illuminate\Http\JsonResponse {
+        SofiSalesConsultantService $salesService
+    ): JsonResponse {
         abort_unless($tenant->isActive(), 404);
 
         $validated = $request->validate([
@@ -586,7 +598,7 @@ class StorefrontController extends Controller
         ]);
 
         $message = trim($validated['message']);
-        $sessionKey = 'sofi_sales_history_' . $tenant->id;
+        $sessionKey = 'sofi_sales_history_'.$tenant->id;
         $history = session()->get($sessionKey, []);
         $locale = session('locale', app()->getLocale() ?: 'pt_BR');
 
@@ -618,11 +630,11 @@ class StorefrontController extends Controller
     /**
      * Reinicia o histórico de atendimento no chat da Sofi para permitir novo diagnóstico ou nicho.
      */
-    public function resetSofiChat(Tenant $tenant): \Illuminate\Http\JsonResponse
+    public function resetSofiChat(Tenant $tenant): JsonResponse
     {
         abort_unless($tenant->isActive(), 404);
 
-        $sessionKey = 'sofi_sales_history_' . $tenant->id;
+        $sessionKey = 'sofi_sales_history_'.$tenant->id;
         session()->forget($sessionKey);
 
         return response()->json([
