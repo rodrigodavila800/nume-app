@@ -145,7 +145,9 @@ Pendências do dono do projeto: rotacionar a chave no Google AI Studio, atualiza
 - Divergência encontrada e corrigida: com provider em array, o SDK ignora `model`. O piloto passa o provider por nome (`sofi_<driver>`), coberto por teste.
 - Testes: 211 → **216**, 0 falhas; suíte de 73 s (PHP 8.2) para **13 s** (PHP 8.4 + `GEMINI_API_KEY` vazia nos testes).
 - Nenhuma chave no log após os testes.
-- Pendências: teste com API real (passo 5); `composer audit` com 3 alertas (`league/commonmark`, `symfony/http-foundation`); um teste acessa a rede real (`BrandDnaCrawlerService`); 2 deprecations do PHP 8.4 (`fputcsv` em `InvoiceManagementController`, parâmetro anulável implícito em `PackPurchase::renewSubscriptionCycle`).
+- **Pendente: passo 5 (teste com a API real), aguardando a chave da Anthropic.** O `.env` já tem `SOFI_USE_AI_SDK=true`, `SOFI_AI_PROVIDER=anthropic` e `SOFI_AI_MODEL=claude-haiku-5-5`, mas a `ANTHROPIC_API_KEY` atual não é uma chave válida (não começa com `sk-ant-`). Com o interruptor ligado e chave inválida, o tradutor cai no fallback léxico.
+- Resolvido depois da Fase 1: chave do Gemini no header `x-goog-api-key` e fora dos logs nos 6 services (`6d42f9b`) e mascarada no `laravel.log`; `composer audit` sem alertas (`league/commonmark` 2.10.4, `symfony/http-foundation` 7.4.21); teste do Brand DNA sem rede real; 0 deprecations do PHP 8.4 na suíte.
+- Para a Fase 2: `Ai::build` com `name` fixo usa um registro compartilhado do processo (último `build()` vence). Usar nome por tenant e reconstruir o provider dentro de jobs.
 - O app passou a rodar só via `composer run dev`/`php artisan serve` (PHP 8.4). **Produção deve usar PHP 8.4.**
 
 ---
