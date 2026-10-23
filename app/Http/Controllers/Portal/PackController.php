@@ -107,13 +107,15 @@ class PackController extends Controller
             $paymentMethod = 'bizum';
         }
 
-        // Valida se o método escolhido está devidamente ativo nas configurações
-        if (! Setting::isPaymentMethodActive($paymentMethod, $tenant)) {
+        // Valida se o método escolhido está devidamente ativo nas configurações para a moeda do pacote
+        if (! Setting::isPaymentMethodActive($paymentMethod, $tenant, $pack)) {
+            $msg = __('O método de pagamento selecionado não está disponível para este pacote.');
+
             if ($isEmbedded) {
-                return response()->json(['status' => 'error', 'message' => __('O método de pagamento selecionado não está ativo no momento.')], 422);
+                return response()->json(['status' => 'error', 'message' => $msg], 422);
             }
 
-            return back()->with('error', __('O método de pagamento selecionado não está ativo no momento.'));
+            return back()->with('error', $msg);
         }
 
         // Dados Fiscais de Faturamento

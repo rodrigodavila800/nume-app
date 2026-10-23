@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
-use Exception;
+use Illuminate\Support\Facades\Schema;
 
 class Setting extends Model
 {
@@ -37,7 +38,8 @@ class Setting extends Model
                 try {
                     return Crypt::decryptString($setting->value);
                 } catch (Exception $e) {
-                    Log::warning("Could not decrypt setting '{$key}': " . $e->getMessage());
+                    Log::warning("Could not decrypt setting '{$key}': ".$e->getMessage());
+
                     return $default;
                 }
             }
@@ -76,7 +78,7 @@ class Setting extends Model
     public static function loadIntoConfig(): void
     {
         try {
-            if (! \Illuminate\Support\Facades\Schema::hasTable('settings')) {
+            if (! Schema::hasTable('settings')) {
                 return;
             }
 
@@ -105,15 +107,19 @@ class Setting extends Model
 
     /**
      * Retorna array com status de ativação de cada método de pagamento.
-     * Leva em consideração as flags globais e o status de conexão da produtora (tenant).
+     * Leva em consideração as flags globais, o status de conexão da produtora (tenant)
+     * e restrições de moeda do pacote (Redsys/Bizum são restritos a EUR).
      *
      * @return array<string, bool>
      */
-    public static function getActivePaymentMethods(?Tenant $tenant = null): array
+    public static function getActivePaymentMethods(?Tenant $tenant = null, ?Pack $pack = null): array
     {
+        $currency = strtolower($pack?->currency ?: 'eur');
+        $isEur = ($currency === 'eur');
+
         $redsysGeneral = (bool) static::get('redsys_enabled', config('services.redsys.enabled', true));
-        $bizumActive = $redsysGeneral && (bool) static::get('redsys_bizum_enabled', true);
-        $redsysCardActive = $redsysGeneral && (bool) static::get('redsys_card_enabled', true);
+        $bizumActive = $isEur && $redsysGeneral && (bool) static::get('redsys_bizum_enabled', true);
+        $redsysCardActive = $isEur && $redsysGeneral && (bool) static::get('redsys_card_enabled', true);
 
         $stripeConfigured = ! empty(config('services.stripe.secret')) || ! empty(static::get('stripe_secret'));
         $stripeGeneral = (bool) static::get('stripe_enabled', true);
@@ -130,9 +136,10 @@ class Setting extends Model
     /**
      * Verifica se um método de pagamento específico está ativo.
      */
-    public static function isPaymentMethodActive(string $method, ?Tenant $tenant = null): bool
+    public static function isPaymentMethodActive(string $method, ?Tenant $tenant = null, ?Pack $pack = null): bool
     {
-        $methods = static::getActivePaymentMethods($tenant);
+        $methods = static::getActivePaymentMethods($tenant, $pack);
+
         return $methods[$method] ?? false;
     }
 }

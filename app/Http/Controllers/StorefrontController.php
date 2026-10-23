@@ -121,9 +121,9 @@ class StorefrontController extends Controller
             $paymentMethod = 'bizum';
         }
 
-        // Valida se o método escolhido está ativo no tenant / sistema
-        if (! Setting::isPaymentMethodActive($paymentMethod, $tenant)) {
-            return back()->withInput()->with('error', __('O método de pagamento selecionado não está disponível no momento.'));
+        // Valida se o método escolhido está ativo no tenant / sistema para a moeda do pacote
+        if (! Setting::isPaymentMethodActive($paymentMethod, $tenant, $pack)) {
+            return back()->withInput()->with('error', __('O método de pagamento selecionado não está disponível para este pacote.'));
         }
 
         $email = Str::lower($request->input('email', ''));

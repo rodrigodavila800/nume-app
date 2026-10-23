@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Addon;
 use App\Models\Category;
 use App\Models\Pack;
+use App\Models\ShowcaseVideo;
 use App\Services\SofiCopywriterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +28,7 @@ class PackController extends Controller
         $this->authorize('create', Pack::class);
         $categories = Category::where('is_active', true)->orderBy('sort_order')->get();
         $availableAddons = Addon::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
-        $showcaseVideos = \App\Models\ShowcaseVideo::where('is_published', true)->orderBy('title')->get();
+        $showcaseVideos = ShowcaseVideo::where('is_published', true)->orderBy('title')->get();
 
         return view('packs.create', compact('categories', 'availableAddons', 'showcaseVideos'));
     }
@@ -43,7 +44,7 @@ class PackController extends Controller
             'description' => 'nullable|string|max:1000',
             'video_quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
-            'currency' => 'nullable|string|max:10',
+            'currency' => 'nullable|string|in:eur,brl,EUR,BRL',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
             'billing_type' => 'nullable|in:one_time,subscription',
             'billing_interval' => 'nullable|in:month,quarter',
@@ -70,7 +71,7 @@ class PackController extends Controller
         ));
 
         $validated['features'] = $features;
-        $validated['currency'] = $validated['currency'] ?? 'eur';
+        $validated['currency'] = strtolower($validated['currency'] ?? 'eur');
         $validated['vat_rate'] = $validated['vat_rate'] ?? 21.00;
         $validated['billing_type'] = $validated['billing_type'] ?? 'one_time';
         $validated['billing_interval'] = $validated['billing_interval'] ?? 'month';
@@ -93,7 +94,7 @@ class PackController extends Controller
         $pack->load(['category', 'addons', 'showcaseVideo']);
         $categories = Category::where('is_active', true)->orderBy('sort_order')->get();
         $availableAddons = Addon::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
-        $showcaseVideos = \App\Models\ShowcaseVideo::where('is_published', true)->orderBy('title')->get();
+        $showcaseVideos = ShowcaseVideo::where('is_published', true)->orderBy('title')->get();
 
         return view('packs.edit', compact('pack', 'categories', 'availableAddons', 'showcaseVideos'));
     }
@@ -109,7 +110,7 @@ class PackController extends Controller
             'description' => 'nullable|string|max:1000',
             'video_quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
-            'currency' => 'nullable|string|max:10',
+            'currency' => 'nullable|string|in:eur,brl,EUR,BRL',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
             'billing_type' => 'nullable|in:one_time,subscription',
             'billing_interval' => 'nullable|in:month,quarter',
@@ -136,7 +137,7 @@ class PackController extends Controller
         ));
 
         $validated['features'] = $features;
-        $validated['currency'] = $validated['currency'] ?? 'eur';
+        $validated['currency'] = strtolower($validated['currency'] ?? 'eur');
         $validated['vat_rate'] = $validated['vat_rate'] ?? 21.00;
         $validated['billing_type'] = $validated['billing_type'] ?? 'one_time';
         $validated['billing_interval'] = $validated['billing_interval'] ?? 'month';
@@ -230,7 +231,7 @@ class PackController extends Controller
             }
         }
 
-        if (!empty($syncData)) {
+        if (! empty($syncData)) {
             $pack->addons()->sync($syncData);
             $pack->update(['addons' => $structuredLegacy]);
         }
@@ -252,7 +253,7 @@ class PackController extends Controller
         ]);
 
         $categoryName = '';
-        if (!empty($validated['category_id'])) {
+        if (! empty($validated['category_id'])) {
             $category = Category::find($validated['category_id']);
             $categoryName = $category?->name ?? '';
         }
