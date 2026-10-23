@@ -45,13 +45,15 @@ Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalcul
 2. **Autorização:** toda ação de controller (exceto listagem pública) chama `$this->authorize(...)`/`Gate::authorize(...)`. Policies em `app/Policies`.
 3. **Inputs:** Form Request ou `$request->validate()`; `$fillable` explícito, nunca `$guarded = []`.
 4. **Identificadores públicos:** `Production` e `Roteiro` usam `uuid` na rota. Nunca exponha ID sequencial em link externo. Rotas aninhadas usam `Route::scopeBindings()`.
-5. **Segredos:** credenciais em `settings` são criptografadas via `App\Models\Setting` (`Setting::get/set`). Nunca imprima, logue ou commite `.env`, `.env.backup` ou chaves. Não leia esses arquivos.
+5. **Segredos:** credenciais e configurações globais ficam criptografadas via `App\Models\Setting` (`Setting::get/set`); configurações e credenciais exclusivas por produtora ficam criptografadas via `App\Models\TenantSetting` (`TenantSetting::get/set`). A checagem de disponibilidade de pagamento por tenant é feita por `App\Services\Payment\PaymentMethodAvailability::forTenant($tenant)`, nunca em `Setting`. Nunca imprima, logue ou commite chaves de API nem senhas.
 6. **`env()` só dentro de `config/*.php`.** Fora disso use `config('...')` (com `config:cache`, `env()` devolve `null`).
 7. **Chaves de API em header, não em URL.** Não monte `?key=...` em requisições; exceções do HTTP client colocam a URL na mensagem e ela acaba no log.
 8. **Webhooks:** validar assinatura (`hash_equals`/HMAC), ser idempotente, isento de CSRF só onde necessário (`/stripe/webhook`, `/webhooks/redsys`, `/webhooks/upload-post`).
    - Só webhook assinado ou confirmação validada na API do gateway marca compra como paga, sempre via `App\Services\Payment\PackPaymentConfirmer`. URL de retorno (success_url, URL OK do Redsys) nunca marca nada sozinha. Valores em centavos sempre por `App\Support\Money::cents()`.
-9. **Redsys:** a chave de teste está como *default* em `config/services.php`. Em produção defina `REDSYS_SECRET_KEY` e `REDSYS_ENVIRONMENT=production` explicitamente.
-10. **IA:** toda chamada a modelo precisa de fallback gracioso (o projeto já cai para motores heurísticos), timeout explícito, log sem dados sensíveis e conteúdo de terceiros (site rastreado, texto do cliente) tratado como **dados não confiáveis** dentro do prompt.
+   - Webhook Redsys é contextualizado: extrai `Ds_Order` de forma segura -> localiza compra e tenant no banco -> valida HMAC SHA-256 com a chave daquele tenant -> valida `Ds_MerchantCode` contra o FUC daquele tenant -> `PackPaymentConfirmer`.
+9. **Redsys:** TPV Virtual é por produtora via `TenantSetting`. O TPV global existente é do tenant oficial `nume`. Em produção, sem credenciais no tenant, Redsys e Bizum não operam e recusam fallback para chaves globais. Defaults de teste só se aplicam em `local`/`testing` ou para o tenant `nume`.
+10. **Comissões fora da Stripe (Decisão B):** compras via Stripe Connect gravam `platform_fee_status = 'collected_at_gateway'`. Vendas por TPV Redsys próprio da produtora gravam `application_fee_amount` e `platform_fee_status = 'pending_billing'` para faturamento posterior na assinatura SaaS.
+11. **IA:** toda chamada a modelo precisa de fallback gracioso (o projeto já cai para motores heurísticos), timeout explícito, log sem dados sensíveis e conteúdo de terceiros (site rastreado, texto do cliente) tratado como **dados não confiáveis** dentro do prompt.
 
 ## Comandos (Windows/PowerShell)
 

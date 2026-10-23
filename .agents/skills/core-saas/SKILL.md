@@ -29,17 +29,28 @@ description: Conhecimento do módulo Core SaaS & Plataforma — Multi-tenancy (T
 
 ---
 
-## 3. Configurações Criptografadas (`Setting.php`)
+## 3. Configurações Globais (`Setting.php`) vs Configurações por Produtora (`TenantSetting.php`)
 
-Para gerenciar credenciais de terceiros (ex: chaves de gateway, tokens de IA), o model `Setting` realiza a criptografia automática:
+Para gerenciar credenciais e preferências com criptografia AES-256:
 
-```php
-// Obter chave descriptografada
-$stripeKey = Setting::get('stripe_secret', $tenantId);
+- **`Setting` (Global da Plataforma Nume):**
+  Apenas configurações globais do SaaS (chaves mestre de IA, OAuth global, defaults).
+  ```php
+  Setting::get('services.gemini.api_key');
+  Setting::set('services.gemini.api_key', $valor);
+  ```
 
-// Gravar chave com criptografia AES-256
-Setting::set('stripe_secret', $valor, $tenantId, $group = 'gateways');
-```
+- **`TenantSetting` (Exclusivo por Produtora — `BelongsToTenant`):**
+  Armazena credenciais e customizações próprias da produtora (TPV Redsys próprio, perfil fiscal contábil, chaves privadas).
+  ```php
+  use App\Models\TenantSetting;
+
+  // Leitura com escopo de tenant automático
+  $fuc = TenantSetting::get($tenant, 'redsys_merchant_code');
+
+  // Gravação criptografada transparente
+  TenantSetting::set($tenant, 'redsys_merchant_code', '999008881');
+  ```
 
 ---
 

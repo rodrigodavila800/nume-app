@@ -8,10 +8,15 @@ description: Conhecimento do módulo Financeiro, Multi-gateway & Motor Fiscal �
 **Responsabilidade:** Gerenciar todos os fluxos monetários e fiscais da plataforma:
 1. **Monetização SaaS:** cobrança de assinaturas de produtoras (Stripe Billing).
 2. **E-commerce de Serviços Audiovisuais (Storefront):** vitrine pública com checkout direto em 1 passo, upsell de add-ons e split/recebimento.
-3. **Multi-gateway:**
-   - **BBVA TPV Virtual (Redsys):** Foco na Espanha/União Europeia via **Bizum** (instantâneo no celular) e **Cartão** com taxas interbancárias ultrabaixas (0,3% a 0,8%).
-   - **Stripe:** Foco global, Apple Pay e cartões internacionais.
-4. **Motor Fiscal (TaxCalculationService):** cálculo automático de **IVA geral espanhol (21%)**, regimes especiais (Canárias 0%, Ceuta/Melilla 0%), operações intracomunitárias B2B (Inversión del sujeto pasivo 0%) e exportações fora da UE.
+3. **Multi-gateway & Comissões:**
+   - **BBVA TPV Virtual (Redsys) por Produtora:** Credenciais criptografadas por tenant em `tenant_settings`. Foco na Espanha/União Europeia via **Bizum** (celular) e **Cartão** com taxas interbancárias ultrabaixas.
+   - **Stripe Connect Express:** Foco global, split na fonte com comissão retida imediatamente (`platform_fee_status = 'collected_at_gateway'`).
+   - **Comissões fora da Stripe (Decisão B):** Vendas via Redsys próprio da produtora geram `application_fee_amount` com `platform_fee_status = 'pending_billing'`, faturadas posteriormente no SaaS.
+4. **Motor Fiscal por Produtora (`TenantFiscalSettings` & `TaxCalculationService`):**
+   - Dados fiscais próprios da produtora (emissor legal da fatura perante o cliente final).
+   - Cálculo automático de **IVA geral espanhol (21%)**, regimes especiais (Canárias 0%, Ceuta/Melilla 0%), operações intracomunitárias B2B (Inversión del sujeto pasivo 0%) e exportações fora da UE.
+   - Numeração atômica sequencial por produtora e série (`invoice_sequences` com `lockForUpdate`).
+   - Armazenamento isolado de PDFs de faturas em `invoices/{tenant_id}/{invoice_number}.pdf` com `invoice_snapshot` imutável.
 
 ---
 
@@ -34,33 +39,36 @@ description: Conhecimento do módulo Financeiro, Multi-gateway & Motor Fiscal �
   - `billing_tax_id` (NIF/CIF/DNI/NIE).
   - `billing_legal_name` (Razão Social / Nome Fiscal).
   - `billing_address`, `billing_postal_code`, `billing_city`, `billing_country`.
-- `application_fee_amount`, `status` (`pending`, `paid`, `failed`, `refunded`), `video_quantity`, `videos_used`, `addons_purchased`, `paid_at`.
+  - `invoice_number`, `invoice_series`, `invoice_generated_at`, `invoice_path`, `invoice_snapshot`.
+- **Comissão da Plataforma:**
+  - `application_fee_amount` (valor em EUR da comissão de uso).
+  - `platform_fee_status` (`not_applicable`, `collected_at_gateway`, `pending_billing`, `billed`, `waived`).
+- `status` (`pending`, `paid`, `failed`, `refunded`), `video_quantity`, `videos_used`, `addons_purchased`, `addons_snapshot`, `paid_at`.
 
 ---
 
-## 2. BBVA TPV Virtual (Redsys / Bizum) & Segurança DevSecOps
+## 2. BBVA TPV Virtual (Redsys / Bizum) Multi-tenant & Segurança DevSecOps
 
-- **Service:** [`App\Services\Payment\RedsysService`](file:///c:/xampp/htdocs/nume_app/app/Services/Payment/RedsysService.php)
-- **Protocolo Criptográfico:** HMAC SHA-256 com derivação de chave 3DES (`openssl_encrypt` DES-EDE3-CBC com IV de 8 zeros).
-- **Compliance PCI-DSS:** Redirecionamento seguro (**PCI SAQ-A** via [`redsys_redirect.blade.php`](file:///c:/xampp/htdocs/nume_app/resources/views/storefront/redsys_redirect.blade.php)). Dados de cartão nunca tocam nossos servidores.
-- **Webhook Notificação Assíncrona:** `POST /webhooks/redsys` ([`RedsysWebhookController`](file:///c:/xampp/htdocs/nume_app/app/Http/Controllers/Webhooks/RedsysWebhookController.php)).
-  - Isento de CSRF em `bootstrap/app.php`.
-  - Validação estrita de assinatura anti-tampering com `hash_equals`.
-  - Baixa automática do pedido e provisionamento imediato de créditos.
-- **Métodos no Redsys:**
-  - `Ds_Merchant_PayMethods = 'z'` -> Ativa **Bizum**.
-  - `Ds_Merchant_PayMethods = 'T'` -> Ativa **Cartão**.
+- **Disponibilidade:** Checada exclusivamente via [`App\Services\Payment\PaymentMethodAvailability::forTenant($tenant)`](file:///c:/xampp/htdocs/nume_app/app/Services/Payment/PaymentMethodAvailability.php). Nunca na classe `Setting`.
+- **Service:** [`App\Services\Payment\RedsysService::forTenant($tenant)`](file:///c:/xampp/htdocs/nume_app/app/Services/Payment/RedsysService.php). Credenciais próprias em `tenant_settings` (`redsys_merchant_code`, `redsys_terminal`, `redsys_secret_key`, `redsys_environment`).
+- **Segurança do Webhook (`POST /webhooks/redsys`):**
+  1. Extração segura de `Ds_Order` dos parâmetros sem confiar no payload.
+  2. Localização da compra e tenant dono no banco (`PackPurchase::withoutGlobalScope('tenant')`).
+  3. Instanciação de `RedsysService::forTenant($tenant)`.
+  4. Validação criptográfica da assinatura HMAC SHA-256 usando estritamente a chave daquele tenant.
+  5. Validação de `Ds_MerchantCode` contra o FUC cadastrado daquele tenant.
+  6. Confirmação segura no `PackPaymentConfirmer`.
+- **Compliance PCI-DSS:** Redirecionamento seguro (**PCI SAQ-A** via [`redsys_redirect.blade.php`](file:///c:/xampp/htdocs/nume_app/resources/views/storefront/redsys_redirect.blade.php)).
+- **Configuração no Admin:** `GET|POST /admin/settings/redsys` ([`TenantRedsysSettingsController`](file:///c:/xampp/htdocs/nume_app/app/Http/Controllers/Admin/TenantRedsysSettingsController.php)), restrito a admin do mesmo tenant, sem CSS inline.
 
 ---
 
-## 3. Motor Fiscal (`TaxCalculationService`)
+## 3. Motor Fiscal & Faturas por Produtora (`TenantFiscalSettings`)
 
-- **Service:** [`App\Services\Billing\TaxCalculationService`](file:///c:/xampp/htdocs/nume_app/app/Services/Billing/TaxCalculationService.php)
-- **Regras:**
-  - Espanha Peninsular: 21% IVA.
-  - Canárias (CP 35xxx, 38xxx), Ceuta (51xxx), Melilla (52xxx): 0% IVA.
-  - UE Intra-comunitário B2B (com NIF-IVA/VIES): 0% IVA (Reverse Charge).
-  - Exportação fora da UE (Brasil, EUA): 0% IVA.
+- **Service:** [`App\Services\Billing\TenantFiscalSettings`](file:///c:/xampp/htdocs/nume_app/app/Services/Billing/TenantFiscalSettings.php)
+- **Configuração no Admin:** `GET|POST /admin/settings/fiscal` ([`TenantFiscalSettingsController`](file:///c:/xampp/htdocs/nume_app/app/Http/Controllers/Admin/TenantFiscalSettingsController.php)), restrito a admin do mesmo tenant.
+- **Numeração Atômica:** [`App\Services\Billing\InvoiceService`](file:///c:/xampp/htdocs/nume_app/app/Services/Billing/InvoiceService.php) usando model `InvoiceSequence` com `lockForUpdate` por tenant e série fiscal.
+- **Snapshot Imutável:** Todo faturamento gera `invoice_snapshot` gravado em JSON no `pack_purchases` para garantir integridade histórica perante auditorias da AEAT.
 
 ---
 
@@ -69,12 +77,12 @@ description: Conhecimento do módulo Financeiro, Multi-gateway & Motor Fiscal �
 - Onboarding express de produtoras via Stripe Connect.
 - Checkout global Stripe integrado com linha de impostos.
 - Webhook `POST /stripe/webhook` com validação de assinatura e idempotência.
+- Marcação atômica de `platform_fee_status = 'collected_at_gateway'` na confirmação do split.
 
 ---
 
 ## 5. Painel Fiscal & Exportação para Gestoría (AEAT)
 
-- **Libro de Facturas Emitidas:** `GET /admin/invoices` com consolidação de base imponible, cuotas de IVA repercutido (Modelo 303), retenciones IRPF (Modelo 111/130) e **Saldo Retido em Custódia Ativa (50/50)** para previsão de receita.
-- **Filtros Contábeis & Modalidade:** Por exercício fiscal, trimestre (1T, 2T, 3T, 4T), modalidade de cobrança (`split_50_50`, `pending_escrow`, `paid_escrow`, `full_upfront`, `subscription`), pasarela (Bizum, Tarjeta, Stripe) e busca textual por NIF/CIF.
-- **Exportação CSV para Asesorías Españolas:** `GET /admin/invoices/export` com encoding UTF-8 BOM, delimitador `;` e colunas fiscais completas incluindo `Modalidad_Cobro`, `Deposito_Cobrado_EUR`, `Saldo_Entrega_EUR` e `Estado_Saldo`.
+- **Libro de Facturas Emitidas:** `GET /admin/invoices` com consolidação de base imponible, cuotas de IVA repercutido (Modelo 303), retenciones IRPF (Modelo 111/130) e saldo retido em custódia.
+- **Exportação CSV para Asesorías Españolas:** `GET /admin/invoices/export` com encoding UTF-8 BOM, delimitador `;` e colunas fiscais completas.
 - **Emissão e Download Oficial de PDF:** `GET /admin/invoices/{purchase}/download` e `GET /portal/purchases/{purchase}/factura` (Real Decreto 1619/2012).
