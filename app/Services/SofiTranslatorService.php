@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Ai\Agents\SofiTranslatorAgent;
+use App\Ai\SofiProvider;
 use App\Models\Setting;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Laravel\Ai\Ai;
 
 class SofiTranslatorService
 {
@@ -226,31 +226,18 @@ class SofiTranslatorService
      */
     protected function translateViaSdk(string $text, string $to, string $from): ?string
     {
-        $provider = (string) config('sofi.provider', 'gemini');
-        $apiKey = config("sofi.keys.{$provider}");
-
-        if (! $apiKey) {
-            return null;
-        }
+        $sofiProvider = app(SofiProvider::class);
+        $provider = $sofiProvider->driver();
 
         $targetName = $to === 'es' ? 'Español (España / Zaragoza)' : 'Português do Brasil';
         $sourceName = $from === 'es' ? 'Español' : 'Português';
 
         try {
-            // Nome fixo: sem 'name' o SDK usa ondemand_<md5 da config com a chave>,
-            // que aparece em Meta e nos eventos de failover.
-            $sdkProvider = Ai::build([
-                'name' => "sofi_{$provider}",
-                'driver' => $provider,
-                'key' => $apiKey,
-            ]);
+            $options = $sofiProvider->options();
 
-            // Provider como string: na forma de array o SDK ignora o argumento model.
-            $options = array_filter([
-                'provider' => $sdkProvider->name(),
-                'model' => config('sofi.model'),
-                'timeout' => (int) config('sofi.timeout', 15),
-            ], fn ($value) => $value !== null && $value !== '');
+            if ($options === null) {
+                return null;
+            }
 
             $response = (new SofiTranslatorAgent($sourceName, $targetName))
                 ->prompt($text, ...$options);
