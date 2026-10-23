@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
+use App\Ai\Agents\SofiTranslatorAgent;
 use App\Models\Setting;
-use Illuminate\Support\Facades\App;
+use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
+use Laravel\Ai\Ai;
 
 class SofiTranslatorService
 {
@@ -35,9 +36,9 @@ class SofiTranslatorService
     /**
      * Traduz uma string de texto entre pt_BR e es (ou outros idiomas suportados).
      *
-     * @param string $text Texto original a ser traduzido
-     * @param string $to Idioma destino ('es' ou 'pt_BR')
-     * @param string|null $from Idioma de origem (default autodetect ou 'pt_BR')
+     * @param  string  $text  Texto original a ser traduzido
+     * @param  string  $to  Idioma destino ('es' ou 'pt_BR')
+     * @param  string|null  $from  Idioma de origem (default autodetect ou 'pt_BR')
      * @return string Texto traduzido
      */
     public function translate(string $text, string $to = 'es', ?string $from = 'pt_BR'): string
@@ -62,7 +63,7 @@ class SofiTranslatorService
         }
 
         // 2. Tenta recuperar do Cache persistente (chave por MD5)
-        $cacheKey = 'sofi_trans_' . $sourceLocale . '_' . $targetLocale . '_' . md5($cleanText);
+        $cacheKey = 'sofi_trans_'.$sourceLocale.'_'.$targetLocale.'_'.md5($cleanText);
         $cached = Cache::get($cacheKey);
         if ($cached !== null) {
             return $cached;
@@ -75,21 +76,23 @@ class SofiTranslatorService
             $finalText = trim($translated);
             // Armazena no cache por 60 dias
             Cache::put($cacheKey, $finalText, now()->addDays(60));
+
             return $finalText;
         }
 
         // 4. Fallback léxico inteligente se IA não estiver configurada ou falhar
         $fallbackText = $this->lexicalFallback($cleanText, $targetLocale, $sourceLocale);
         Cache::put($cacheKey, $fallbackText, now()->addDays(7));
+
         return $fallbackText;
     }
 
     /**
      * Traduz um lote (batch) de textos em uma única operação.
      *
-     * @param array $texts Array de strings
-     * @param string $to Idioma destino
-     * @param string|null $from Idioma origem
+     * @param  array  $texts  Array de strings
+     * @param  string  $to  Idioma destino
+     * @param  string|null  $from  Idioma origem
      * @return array Array com textos traduzidos mantendo as chaves originais
      */
     public function translateBatch(array $texts, string $to = 'es', ?string $from = 'pt_BR'): array
@@ -104,6 +107,7 @@ class SofiTranslatorService
                 $results[$key] = $text;
             }
         }
+
         return $results;
     }
 
@@ -149,16 +153,16 @@ class SofiTranslatorService
             return null;
         }
 
-        $apiKey = config('services.gemini.key') 
-            ?: Setting::get('gemini_api_key') 
+        $apiKey = config('services.gemini.key')
+            ?: Setting::get('gemini_api_key')
             ?: env('GEMINI_API_KEY');
 
         if (! $apiKey) {
             return null;
         }
 
-        $primaryModel = config('services.gemini.model') 
-            ?: Setting::get('gemini_model') 
+        $primaryModel = config('services.gemini.model')
+            ?: Setting::get('gemini_model')
             ?: env('GEMINI_MODEL', 'gemini-3.5-flash-lite');
         $fallbackModels = config('services.gemini.fallback_models', ['gemini-3.8-flash', 'gemini-1.5-flash']);
         $candidateModels = array_unique(array_filter([$primaryModel, ...$fallbackModels]));
@@ -167,12 +171,12 @@ class SofiTranslatorService
         $sourceName = $from === 'es' ? 'Español' : 'Português';
 
         $prompt = "Você é a Sofi, Agente de IA especialista em audiovisual, copywriting e marketing B2B para NUME Creative.\n"
-                . "Traduza o seguinte texto de {$sourceName} para {$targetName}.\n"
-                . "Diretrizes obrigatórias:\n"
-                . "- Mantenha tom profissional, comercial, persuasivo e natural para o mercado corporativo espanhol/brasileiro.\n"
-                . "- Mantenha termos técnicos (Reels, Shorts, 4K HDR, VSL, Bizum, Redsys, Stripe, IVA 21%, AEAT, Sofi IA).\n"
-                . "- Retorne EXCLUSIVAMENTE o texto traduzido final, sem aspas adicionais, sem preâmbulos e sem explicações.\n\n"
-                . "Texto:\n{$text}";
+                ."Traduza o seguinte texto de {$sourceName} para {$targetName}.\n"
+                ."Diretrizes obrigatórias:\n"
+                ."- Mantenha tom profissional, comercial, persuasivo e natural para o mercado corporativo espanhol/brasileiro.\n"
+                ."- Mantenha termos técnicos (Reels, Shorts, 4K HDR, VSL, Bizum, Redsys, Stripe, IVA 21%, AEAT, Sofi IA).\n"
+                ."- Retorne EXCLUSIVAMENTE o texto traduzido final, sem aspas adicionais, sem preâmbulos e sem explicações.\n\n"
+                ."Texto:\n{$text}";
 
         foreach ($candidateModels as $model) {
             try {
@@ -182,14 +186,14 @@ class SofiTranslatorService
                         'contents' => [
                             [
                                 'parts' => [
-                                    ['text' => $prompt]
-                                ]
-                            ]
+                                    ['text' => $prompt],
+                                ],
+                            ],
                         ],
                         'generationConfig' => [
                             'temperature' => 0.2,
                             'maxOutputTokens' => 1024,
-                        ]
+                        ],
                     ]);
 
                 if ($response->successful()) {
@@ -202,12 +206,13 @@ class SofiTranslatorService
                     if ($response->status() === 429 || $response->status() === 503) {
                         Cache::put('gemini_trans_circuit_breaker', true, now()->addSeconds(60));
                         Log::warning("SofiTranslatorService Gemini Rate Limit ({$response->status()}). Circuit breaker ativado por 60s.");
+
                         return null;
                     }
-                    Log::warning("SofiTranslatorService Gemini API Error with model {$model}: " . $response->body());
+                    Log::warning("SofiTranslatorService Gemini API Error with model {$model}: ".$response->body());
                 }
             } catch (Exception $e) {
-                Log::warning("SofiTranslatorService Gemini exception with model {$model}: " . $e->getMessage());
+                Log::warning("SofiTranslatorService Gemini exception with model {$model}: ".$e->getMessage());
             }
         }
 
@@ -231,13 +236,22 @@ class SofiTranslatorService
         $sourceName = $from === 'es' ? 'Español' : 'Português';
 
         try {
+            // Nome fixo: sem 'name' o SDK usa ondemand_<md5 da config com a chave>,
+            // que aparece em Meta e nos eventos de failover.
+            $sdkProvider = Ai::build([
+                'name' => "sofi_{$provider}",
+                'driver' => $provider,
+                'key' => $apiKey,
+            ]);
+
+            // Provider como string: na forma de array o SDK ignora o argumento model.
             $options = array_filter([
-                'provider' => [\Laravel\Ai\Ai::build(['driver' => $provider, 'key' => $apiKey])],
+                'provider' => $sdkProvider->name(),
                 'model' => config('sofi.model'),
                 'timeout' => (int) config('sofi.timeout', 15),
             ], fn ($value) => $value !== null && $value !== '');
 
-            $response = (new \App\Ai\Agents\SofiTranslatorAgent($sourceName, $targetName))
+            $response = (new SofiTranslatorAgent($sourceName, $targetName))
                 ->prompt($text, ...$options);
 
             $output = trim((string) $response);
@@ -320,6 +334,7 @@ class SofiTranslatorService
         if (str_starts_with($normalized, 'es')) {
             return 'es';
         }
+
         return 'pt_BR';
     }
 }

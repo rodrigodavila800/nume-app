@@ -132,9 +132,21 @@ Análise de `storage/logs/laravel.log` (1.034 entradas, 01/09 a 10/10/2026) e de
 - **Os testes chamam a API real.** 129 das entradas de IA são do ambiente `testing`; nenhum teste usa `Http::fake` para o Gemini. Isso consome cota, deixa a suíte lenta (391 s no total; três testes de lote/Brand DNA somam ~348 s) e vaza a chave. **Corrigido:** `phpunit.xml` agora força `GEMINI_API_KEY` vazia, e os seis services caem direto no fallback heurístico nos testes.
 - **Nomes de modelo: aceitos pela API.** Em 339 entradas de erro de IA não há nenhum `404 NOT_FOUND` nem `INVALID_ARGUMENT`. Os erros são `429 RESOURCE_EXHAUSTED` (cota da conta esgotada: "You exceeded your current quota, please check your plan and billing details"), `503 UNAVAILABLE` e timeouts de cURL.
 - **Causa real do fallback:** cota esgotada + timeouts curtos. `SofiTranslatorService` e `SofiSalesConsultantService` usam 3 s de timeout e concentram a maioria dos timeouts.
-- **Linha de base de testes:** 217 testes no cache, **nenhuma falha nem erro registrados**; 83 *deprecations* e 38 *notices*.
+- **Linha de base de testes:** o cache listava 217 entradas, mas 6 eram de testes renomeados. O total real é **211 testes, nenhuma falha**; 83 *deprecations* e 38 *notices*.
 
 Pendências do dono do projeto: rotacionar a chave no Google AI Studio, atualizar o `.env`, depois limpar `storage/logs/laravel.log`; rodar `php artisan test` para validar a mudança do `phpunit.xml`.
+
+---
+
+## 6.2 Resultado da Fase 1 (23/10/2026)
+
+- PHP local atualizado para **8.4.27** (`C:\php84`, antes do XAMPP no PATH do sistema); `composer.json` em `"php": "^8.3"`. Todas as versões do `laravel/ai` exigem PHP ≥ 8.3.
+- **`laravel/ai` v1.3.0** instalado, sem dependências novas. `config/ai.php` publicado com default `SOFI_AI_PROVIDER`. Migrations de conversa **não** publicadas.
+- Divergência encontrada e corrigida: com provider em array, o SDK ignora `model`. O piloto passa o provider por nome (`sofi_<driver>`), coberto por teste.
+- Testes: 211 → **216**, 0 falhas; suíte de 73 s (PHP 8.2) para **13 s** (PHP 8.4 + `GEMINI_API_KEY` vazia nos testes).
+- Nenhuma chave no log após os testes.
+- Pendências: teste com API real (passo 5); `composer audit` com 3 alertas (`league/commonmark`, `symfony/http-foundation`); um teste acessa a rede real (`BrandDnaCrawlerService`); 2 deprecations do PHP 8.4 (`fputcsv` em `InvoiceManagementController`, parâmetro anulável implícito em `PackPurchase::renewSubscriptionCycle`).
+- O app passou a rodar só via `composer run dev`/`php artisan serve` (PHP 8.4). **Produção deve usar PHP 8.4.**
 
 ---
 

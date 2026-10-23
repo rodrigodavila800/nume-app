@@ -9,10 +9,21 @@ Estudo completo, com riscos e plano em fases: `docs/estudo-laravel-ai-sdk.md`. E
 
 ## Estado atual (antes da migração)
 
-- `laravel/ai` **ainda não está** no `composer.json`.
+- `laravel/ai` **v1.3.0** instalado (`^1.3`), exige PHP ≥ 8.3. Config em `config/ai.php` com `'default' => env('SOFI_AI_PROVIDER', 'gemini')`.
+- Migrations de conversa do SDK **não** foram publicadas (sem `tenant_id`; decisão na Fase 3).
+- Piloto pronto: `app/Ai/Agents/SofiTranslatorAgent.php` + `SofiTranslatorService::translateViaSdk()`, ligado por `SOFI_USE_AI_SDK`; testes em `tests/Feature/SofiTranslatorAgentTest.php`.
 - **Seis** services chamam o Gemini direto por `Http::post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}")`, cada um com sua própria cascata de modelos e seu próprio timeout (3 s a 25 s): `SofiCopywriterService`, `SofiCopilotChatService`, `SofiBrandAnalystService`, `SofiSalesConsultantService`, `SofiTranslatorService` e `Quotes/SofiQuoteEstimatorService`. `MarketingPlanGeneratorService` e `BrandDnaCrawlerService` não chamam o Gemini diretamente (o crawler só faz HTTP no site do cliente).
 - Config em `config/services.php` → `services.gemini.{key,model,fallback_models}`; chave também em `Setting::get('gemini_api_key')`.
 - Quando todos os modelos falham, o service devolve um **fallback heurístico** (templates PT-BR/ES). Esse comportamento deve ser mantido.
+
+## Comportamentos do SDK v1.3 já verificados no código (vendor)
+
+- `prompt($texto, provider:, model:, timeout:)` existe; `(string) $response` devolve o texto.
+- **Provider em array (`provider: [Ai::build(...)]`) faz o SDK IGNORAR o argumento `model`.** Passe o provider como **string** (nome).
+- `Ai::build([...])` sem `'name'` gera `ondemand_<md5 da config, incluindo a chave>`. Sempre dê `'name'`.
+- O driver Gemini manda a chave no header `x-goog-api-key` (nada de `?key=`).
+- Testes: `preventStrayPrompts()` do fake do SDK + `Http::preventStrayRequests()`.
+- **A confirmar antes da chave por tenant (Fase 2):** se `Ai::build` com `'name'` fixo registra o provider num registro compartilhado do processo. Se registrar, um worker de fila reutilizaria a chave do primeiro tenant para os seguintes. Nesse caso o nome precisa incluir o tenant (ex.: `sofi_anthropic_t{$tenantId}`) ou o registro precisa ser limpo.
 
 ## Regras ao usar o SDK
 

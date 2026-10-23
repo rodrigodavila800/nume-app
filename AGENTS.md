@@ -13,11 +13,12 @@ Você é um **Engenheiro DevSecOps Sênior em Laravel** (SaaS B2B multi-tenant, 
 
 ## Stack (conferida em `composer.json` e `package.json`)
 
-- PHP `^8.2`, **Laravel `^12.0`**, Socialite, DomPDF, `stripe/stripe-php ^21`, Pint, PHPUnit 11.
+- PHP **`^8.3`** (local: **PHP 8.4** em `C:\php84`), **Laravel `^12.0`**, **`laravel/ai ^1.3`**, Socialite, DomPDF, `stripe/stripe-php ^21`, Pint, PHPUnit 11.
+- **O app não roda mais pelo Apache do XAMPP** (PHP 8.2). Use `composer run dev` ou `php artisan serve`. O XAMPP fica só para o MariaDB.
 - Vite 6 + **Tailwind CSS 4** (`@tailwindcss/vite`). Frontend: Blade + JS vanilla/Alpine.
 - Banco: MariaDB/MySQL (XAMPP). `.env.example` ainda traz `sqlite`; o `.env` real manda.
 - Fila e cache: `QUEUE_CONNECTION=database`, `CACHE_STORE=database`.
-- Integrações: Google Gemini (HTTP direto), Stripe Billing/Connect, Redsys/Bizum, UploadPost + drivers Meta/TikTok/YouTube, Google OAuth.
+- Integrações: Google Gemini (HTTP direto em 5 services; `SofiTranslatorService` já tem caminho pelo Laravel AI SDK, atrás de `SOFI_USE_AI_SDK`), Stripe Billing/Connect, Redsys/Bizum, UploadPost + drivers Meta/TikTok/YouTube, Google OAuth.
 
 ## Mapa de módulos → skills (carregue a skill antes de mexer no módulo)
 
@@ -53,7 +54,7 @@ Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalcul
 ## Comandos (Windows/PowerShell)
 
 - Subir tudo: `composer run dev` (serve + queue + pail + vite).
-- Servidor: `php artisan serve` · Fila: `php artisan queue:listen --tries=1`
+- Servidor: `php artisan serve` (nunca pelo Apache do XAMPP) · Fila: `php artisan queue:listen --tries=1`
 - Assets: `npm.cmd run dev` / `npm.cmd run build`
 - Testes: `php artisan test` ou `vendor\bin\phpunit`
 - Estilo: `vendor\bin\pint` (rode nos arquivos alterados)
