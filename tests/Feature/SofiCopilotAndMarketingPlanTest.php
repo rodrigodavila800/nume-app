@@ -6,9 +6,11 @@ use App\Models\Cliente;
 use App\Models\MarketingPlan;
 use App\Models\SofiConversation;
 use App\Models\Tenant;
+use App\Services\BrandDnaCrawlerService;
 use App\Services\MarketingPlanGeneratorService;
 use App\Services\SofiCopilotChatService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SofiCopilotAndMarketingPlanTest extends TestCase
@@ -211,6 +213,21 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
 
     public function test_client_can_trigger_sofi_brand_dna_analysis_and_view_dossier(): void
     {
+        // Sem rede real: HTML simulado e checagem anti-SSRF (que resolve DNS) desligada só neste teste
+        Http::preventStrayRequests();
+        Http::fake([
+            'zaragozadental.com*' => Http::response(
+                '<html><head><title>Clínica Zaragoza Dental</title>'
+                .'<meta name="description" content="Implantes dentários guiados e alinhadores invisíveis em Zaragoza."></head>'
+                .'<body><h1>Implantes sem dor</h1><p>Estética dental para adultos.</p></body></html>',
+                200,
+                ['Content-Type' => 'text/html; charset=utf-8'],
+            ),
+        ]);
+        $this->partialMock(BrandDnaCrawlerService::class, function ($mock) {
+            $mock->shouldAllowMockingProtectedMethods()->shouldReceive('isSafeUrl')->andReturn(true);
+        });
+
         $response = $this->actingAs($this->cliente, 'cliente')
             ->post(route('portal.profile.analyze-dna'), [
                 'website' => 'https://zaragozadental.com',
