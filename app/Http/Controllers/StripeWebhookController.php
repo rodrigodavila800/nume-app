@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\StripeCustomer;
 use App\Models\Tenant;
 use App\Models\PackPurchase;
+use App\Services\Payment\PackPaymentConfirmer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -43,8 +44,12 @@ class StripeWebhookController extends Controller
                 return false;
             }
 
+            // O checkout não fixa payment_method_types: valem os métodos habilitados no painel
+            // da Stripe, que podem ser assíncronos (ex.: SEPA). Por isso os eventos async_payment_*.
             match ($event->type) {
                 'checkout.session.completed' => $this->handleCheckoutCompleted($event->data->object),
+                'checkout.session.async_payment_succeeded' => $this->handlePackPurchaseCompleted($event->data->object),
+                'checkout.session.async_payment_failed' => $this->handlePackPurchaseAsyncFailed($event->data->object),
                 'customer.subscription.updated' => $this->handleSubscriptionUpdated($event->data->object),
                 'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event->data->object),
                 'invoice.payment_failed' => $this->handlePaymentFailed($event->data->object),
@@ -106,39 +111,29 @@ class StripeWebhookController extends Controller
 
     private function handlePackPurchaseCompleted(object $session): void
     {
-        $purchase = PackPurchase::withoutGlobalScope('tenant')
+        if ($purchase = $this->packPurchaseFor($session)) {
+            app(PackPaymentConfirmer::class)->confirmStripeSession($purchase, $session);
+        }
+    }
+
+    private function handlePackPurchaseAsyncFailed(object $session): void
+    {
+        if ($purchase = $this->packPurchaseFor($session)) {
+            app(PackPaymentConfirmer::class)->failStripeSession($purchase, $session);
+        }
+    }
+
+    /**
+     * Compra apontada pelo metadata; o PackPaymentConfirmer confere sessão, tenant e valores.
+     */
+    private function packPurchaseFor(object $session): ?PackPurchase
+    {
+        if (($session->metadata->type ?? null) !== 'pack_purchase') {
+            return null;
+        }
+
+        return PackPurchase::withoutGlobalScope('tenant')
             ->find($session->metadata->pack_purchase_id ?? null);
-
-        if (!$purchase || $purchase->isPaid()) {
-            return;
-        }
-
-        $paymentIntentId = (string) $session->payment_intent;
-        $purchase->markAsPaid($paymentIntentId);
-
-        if ($purchase->isSplit5050()) {
-            $updateData = ['deposit_paid_at' => now()];
-
-            if (config('services.stripe.secret')) {
-                try {
-                    $stripe = new StripeClient(config('services.stripe.secret'));
-                    $pi = $stripe->paymentIntents->retrieve($paymentIntentId);
-                    if (!empty($pi->payment_method)) {
-                        $updateData['stripe_payment_method_id'] = is_string($pi->payment_method) ? $pi->payment_method : $pi->payment_method->id;
-                    }
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning("Stripe Webhook: Não foi possível recuperar payment_method para 50/50: " . $e->getMessage());
-                }
-            }
-
-            $purchase->update($updateData);
-        }
-
-        try {
-            app(\App\Services\Billing\InvoiceService::class)->issueAndNotify($purchase);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("Stripe Webhook: Erro ao gerar fatura PDF ou enviar e-mail: " . $e->getMessage());
-        }
     }
 
     private function handleSubscriptionUpdated(object $subscription): void

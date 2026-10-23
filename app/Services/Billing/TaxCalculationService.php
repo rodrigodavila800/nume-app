@@ -2,6 +2,8 @@
 
 namespace App\Services\Billing;
 
+use App\Support\Money;
+
 class TaxCalculationService
 {
     /**
@@ -107,7 +109,7 @@ class TaxCalculationService
             'is_reverse_charge' => $isReverseCharge,
             'is_exempt' => $isExempt,
             'currency' => 'EUR',
-            'amount_in_cents' => (int) round($totalAmount * 100),
+            'amount_in_cents' => Money::cents($totalAmount),
         ];
     }
 }

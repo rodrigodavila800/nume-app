@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\Setting;
+use App\Support\Money;
 use Exception;
 
 class RedsysService
@@ -11,6 +12,8 @@ class RedsysService
     public const LIVE_URL = 'https://sis.redsys.es/sis/realizarPago';
 
     public const SIGNATURE_VERSION = 'HMAC_SHA256_V1';
+
+    public const CURRENCY_EUR = '978';
 
     protected string $merchantCode;
     protected string $terminal;
@@ -27,6 +30,11 @@ class RedsysService
         $this->terminal = $terminal ?? (string) Setting::get('redsys_terminal', config('services.redsys.terminal', '001'));
         $this->secretKey = $secretKey ?? (string) Setting::get('redsys_secret_key', config('services.redsys.secret_key', 'sq7HjrUOBfKmC5Jw6ZGg14hqEcTZip5t'));
         $this->environment = $environment ?? (string) Setting::get('redsys_environment', config('services.redsys.environment', 'test'));
+    }
+
+    public function merchantCode(): string
+    {
+        return $this->merchantCode;
     }
 
     /**
@@ -73,13 +81,14 @@ class RedsysService
         ?string $productDescription = null,
         ?string $titular = null
     ): array {
-        $amountInCents = (int) round($amountInEuros * 100);
+        // Mesmo cálculo usado na conferência do Ds_Amount (PackPaymentConfirmer)
+        $amountInCents = Money::cents($amountInEuros);
 
         $params = [
             'DS_MERCHANT_AMOUNT' => (string) $amountInCents,
             'DS_MERCHANT_ORDER' => $orderNumber,
             'DS_MERCHANT_MERCHANTCODE' => $this->merchantCode,
-            'DS_MERCHANT_CURRENCY' => '978', // EUR
+            'DS_MERCHANT_CURRENCY' => self::CURRENCY_EUR,
             'DS_MERCHANT_TRANSACTIONTYPE' => '0', // Autorização / Compra
             'DS_MERCHANT_TERMINAL' => $this->terminal,
             'DS_MERCHANT_MERCHANTURL' => $notificationUrl,
@@ -175,9 +184,15 @@ class RedsysService
      * Verifica se o código de resposta indica aprovação da transação.
      * Códigos de 0000 a 0099 indicam transação autorizada com sucesso.
      */
-    public function isResponseSuccessful(string|int $responseCode): bool
+    public function isResponseSuccessful(string|int|null $responseCode): bool
     {
-        $code = (int) $responseCode;
-        return $code >= 0 && $code <= 99;
+        // Só código numérico (até 4 dígitos): vazio ou texto não pode virar 0 = "aprovado".
+        $code = trim((string) $responseCode);
+
+        if (! preg_match('/^\d{1,4}$/', $code)) {
+            return false;
+        }
+
+        return (int) $code <= 99;
     }
 }

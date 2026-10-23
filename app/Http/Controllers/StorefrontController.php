@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\Pack;
 use App\Models\PackPurchase;
 use App\Models\Tenant;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -259,8 +260,9 @@ class StorefrontController extends Controller
                 ? "{$pack->name} (Contrato {$commitmentMonths}M) - {$tenant->name}"
                 : "{$pack->name} - {$tenant->name}";
 
+            // Mesmo campo conferido no Ds_Amount pelo PackPaymentConfirmer
             $payload = $redsysService->createPaymentPayload(
-                amountInEuros: $initialChargedAmount,
+                amountInEuros: (float) $purchase->amount,
                 orderNumber: $orderNumber,
                 urlOk: route('redsys.success', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),
                 urlKo: route('redsys.cancel', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),
@@ -294,7 +296,7 @@ class StorefrontController extends Controller
                                 'name' => "{$pack->name} — Sinal ({$depPct}%)",
                                 'description' => "Entrada de {$depPct}%. Saldo de " . number_format($balanceAmount, 2, ',', '.') . " {$pack->currency} a pagar na aprovação do corte final.",
                             ],
-                            'unit_amount' => (int) round($depositAmount * 100),
+                            'unit_amount' => Money::cents($depositAmount),
                         ],
                         'quantity' => 1,
                     ],
@@ -306,7 +308,7 @@ class StorefrontController extends Controller
                         'name' => $pack->name . ($isSubscription ? " (Contrato {$commitmentMonths} Meses)" : ''),
                         'description' => "Pacote de {$pack->video_quantity} vídeos/ciclo — {$tenant->name}{$addonsSummary}",
                     ],
-                    'unit_amount' => (int) round($pack->price * 100),
+                    'unit_amount' => Money::cents($pack->price),
                 ];
                 if ($recurringConfig) {
                     $mainPriceData['recurring'] = $recurringConfig;
@@ -333,7 +335,7 @@ class StorefrontController extends Controller
                                 'name' => '+ ' . $matched['name'],
                                 'description' => "Add-on opcional para {$pack->name}",
                             ],
-                            'unit_amount' => (int) round((float) $matched['price'] * 100),
+                            'unit_amount' => Money::cents($matched['price']),
                         ];
                         if ($recurringConfig) {
                             $addonPriceData['recurring'] = $recurringConfig;
@@ -354,7 +356,7 @@ class StorefrontController extends Controller
                             'name' => "IVA ({$taxData['tax_rate']}%)",
                             'description' => "Cota tributária legal (Agencia Tributaria)",
                         ],
-                        'unit_amount' => (int) round($taxData['tax_amount'] * 100),
+                        'unit_amount' => Money::cents($taxData['tax_amount']),
                     ];
                     if ($recurringConfig) {
                         $taxPriceData['recurring'] = $recurringConfig;
@@ -365,6 +367,13 @@ class StorefrontController extends Controller
                         'quantity' => 1,
                     ];
                 }
+            }
+
+            // O PackPaymentConfirmer confere amount_total == Money::cents($purchase->amount):
+            // a sessão só é criada se os line items (menos o cupom de IRPF) baterem com esse valor.
+            $irpfDiscountCents = (! $isSplit5050 && ($taxData['irpf_amount'] ?? 0) > 0) ? Money::cents($taxData['irpf_amount']) : 0;
+            if (Money::lineItemsTotal($lineItems) - $irpfDiscountCents !== Money::cents($purchase->amount)) {
+                throw new \RuntimeException('checkout_amount_mismatch');
             }
 
             $sessionPayload = [
@@ -388,7 +397,7 @@ class StorefrontController extends Controller
             // Dedução Oficial de IRPF (Autônomo B2B na Espanha)
             if (! $isSplit5050 && ($taxData['irpf_amount'] ?? 0) > 0) {
                 $irpfCoupon = $stripe->coupons->create([
-                    'amount_off' => (int) round($taxData['irpf_amount'] * 100),
+                    'amount_off' => Money::cents($taxData['irpf_amount']),
                     'currency' => $currency,
                     'duration' => 'once',
                     'name' => "Retención IRPF ({$taxData['irpf_rate']}%)",
@@ -410,7 +419,7 @@ class StorefrontController extends Controller
                 ];
             } else {
                 $paymentIntentData = [
-                    'application_fee_amount' => (int) round(($feeAmount * ($isSplit5050 ? ($pack->getEffectiveDepositPercentage() / 100) : 1)) * 100),
+                    'application_fee_amount' => Money::cents($feeAmount * ($isSplit5050 ? ($pack->getEffectiveDepositPercentage() / 100) : 1)),
                     'transfer_data' => ['destination' => $tenant->stripe_account_id],
                 ];
 

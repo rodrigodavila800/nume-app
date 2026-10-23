@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pack;
 use App\Models\PackPurchase;
 use App\Models\Setting;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -229,8 +230,9 @@ class PackController extends Controller
                 ? "{$pack->name} (Contrato {$commitmentMonths}M) - {$tenant->name}"
                 : "{$pack->name} - {$tenant->name}";
 
+            // Mesmo campo conferido no Ds_Amount pelo PackPaymentConfirmer
             $payload = $redsysService->createPaymentPayload(
-                amountInEuros: $taxData['total_amount'],
+                amountInEuros: (float) $purchase->amount,
                 orderNumber: $orderNumber,
                 urlOk: route('redsys.success', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),
                 urlKo: route('redsys.cancel', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),
@@ -270,7 +272,7 @@ class PackController extends Controller
                 'name' => $pack->name . ($isSubscription ? " (Contrato {$commitmentMonths} Meses)" : ''),
                 'description' => "Pacote de {$pack->video_quantity} vídeos/ciclo — {$tenant->name}{$addonsSummary}",
             ],
-            'unit_amount' => (int) round($pack->price * 100),
+            'unit_amount' => Money::cents($pack->price),
         ];
         if ($recurringConfig) {
             $mainPriceData['recurring'] = $recurringConfig;
@@ -295,7 +297,7 @@ class PackController extends Controller
                         'name' => '+ ' . $matched['name'],
                         'description' => "Add-on opcional para {$pack->name}",
                     ],
-                    'unit_amount' => (int) round((float) $matched['price'] * 100),
+                    'unit_amount' => Money::cents($matched['price']),
                 ];
                 if ($recurringConfig) {
                     $addonPriceData['recurring'] = $recurringConfig;
@@ -312,7 +314,7 @@ class PackController extends Controller
             $taxPriceData = [
                 'currency' => $currency,
                 'product_data' => ['name' => "IVA ({$taxData['tax_rate']}%)"],
-                'unit_amount' => (int) round($taxData['tax_amount'] * 100),
+                'unit_amount' => Money::cents($taxData['tax_amount']),
             ];
             if ($recurringConfig) {
                 $taxPriceData['recurring'] = $recurringConfig;
@@ -324,6 +326,18 @@ class PackController extends Controller
             ];
         }
 
+
+        // O PackPaymentConfirmer confere amount_total == Money::cents($purchase->amount):
+        // a sessão só é criada se os line items (menos o cupom de IRPF) baterem com esse valor.
+        $irpfDiscountCents = (($taxData['irpf_amount'] ?? 0) > 0) ? Money::cents($taxData['irpf_amount']) : 0;
+        if (Money::lineItemsTotal($lineItems) - $irpfDiscountCents !== Money::cents($purchase->amount)) {
+            \Illuminate\Support\Facades\Log::error("Checkout do portal: valor dos itens diverge da compra #{$purchase->id}.");
+            $message = __('Não foi possível iniciar o pagamento. Tente novamente em instantes.');
+
+            return $isEmbedded
+                ? response()->json(['status' => 'error', 'message' => $message], 422)
+                : back()->with('error', $message);
+        }
 
         $sessionPayload = [
             'mode' => $isSubscription ? 'subscription' : 'payment',
@@ -348,7 +362,7 @@ class PackController extends Controller
         // Dedução Oficial de IRPF (Autônomo B2B na Espanha)
         if (($taxData['irpf_amount'] ?? 0) > 0) {
             $irpfCoupon = $stripe->coupons->create([
-                'amount_off' => (int) round($taxData['irpf_amount'] * 100),
+                'amount_off' => Money::cents($taxData['irpf_amount']),
                 'currency' => $currency,
                 'duration' => 'once',
                 'name' => "Retención IRPF ({$taxData['irpf_rate']}%)",
@@ -370,7 +384,7 @@ class PackController extends Controller
             ];
         } else {
             $sessionPayload['payment_intent_data'] = [
-                'application_fee_amount' => (int) round($applicationFeeAmount * 100),
+                'application_fee_amount' => Money::cents($applicationFeeAmount),
                 'transfer_data' => ['destination' => $tenant->stripe_account_id],
             ];
         }
