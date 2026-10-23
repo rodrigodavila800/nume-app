@@ -191,7 +191,7 @@ class PackController extends Controller
             'video_quantity' => $pack->video_quantity,
             'addons_purchased' => $selectedAddonNames,
             'status' => 'pending',
-            'subscription_status' => $isSubscription ? 'active' : null,
+            'subscription_status' => null, // vira 'active' só no PackPaymentConfirmer, após o pagamento
             'subscription_interval' => $billingInterval,
             'commitment_months' => $commitmentMonths,
             'subscription_cycle_current' => 1,

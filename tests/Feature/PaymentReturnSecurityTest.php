@@ -8,6 +8,7 @@ use App\Models\PackPurchase;
 use App\Models\Tenant;
 use App\Services\Billing\InvoiceService;
 use App\Services\Payment\RedsysService;
+use App\Support\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -164,6 +165,36 @@ class PaymentReturnSecurityTest extends TestCase
         $this->actingAs($purchase->cliente, 'cliente')
             ->get('/pagamento/redsys/sucesso?order=260000005678')
             ->assertSee('Reels Starter');
+    }
+
+    public function test_subscription_is_only_active_after_confirmed_payment(): void
+    {
+        Pack::create([
+            'tenant_id' => $this->tenantA->id, 'name' => 'Plano Mensal', 'slug' => 'plano-mensal', 'price' => 490, 'currency' => 'eur',
+            'video_quantity' => 4, 'status' => 'active', 'billing_type' => 'subscription', 'billing_interval' => 'month', 'commitment_months' => 3,
+        ]);
+
+        // Checkout pela vitrine com Bizum (Redsys): nenhuma chamada à Stripe.
+        $this->post('/vitrine/produtora-a/pacotes/plano-mensal/checkout', [
+            'payment_method' => 'bizum',
+            'email' => 'novo-cliente@empresa.com',
+            'password' => 'secret123',
+            'name' => 'Novo Cliente',
+        ])->assertOk();
+
+        $purchase = PackPurchase::withoutGlobalScope('tenant')->latest('id')->firstOrFail();
+        $this->assertSame('pending', $purchase->status);
+        $this->assertNull($purchase->subscription_status, 'Assinatura nasceu ativa antes do pagamento.');
+        $this->assertSame(0, $this->videosReleasedFor($purchase), 'Assinatura ainda não paga libera vídeos.');
+
+        // Webhook assinado do Redsys com o valor da compra: só então a assinatura fica ativa.
+        [$parameters, $signature] = $this->signedRedsys($purchase->gateway_order_reference, (string) Money::cents($purchase->amount));
+        $this->post('/webhooks/redsys', ['Ds_SignatureVersion' => 'HMAC_SHA256_V1', 'Ds_MerchantParameters' => $parameters, 'Ds_Signature' => $signature])->assertOk();
+
+        $purchase->refresh();
+        $this->assertSame('paid', $purchase->status);
+        $this->assertSame('active', $purchase->subscription_status);
+        $this->assertSame(4, $this->videosReleasedFor($purchase));
     }
 
     /**
