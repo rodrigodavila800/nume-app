@@ -175,7 +175,15 @@ Pendências do dono do projeto: rotacionar a chave no Google AI Studio, atualiza
 - Teste real (Gemini flash-lite, tenant 1, 1 conversa de 2 mensagens fictícias): 4 requisições HTTP 200, tool usada nas duas mensagens, ~4 s por mensagem (o widget aborta em 8 s), sem fallback, 4 linhas em `ai_usage_logs` no tenant 1 (~3,5 mil tokens de entrada por mensagem). Nenhuma chave nos logs.
 - Testes: 227 → **243**, 0 falhas.
 - **Deploy (não implementado):** com Cloudflare ou outro proxy na frente, `$request->ip()` passa a ser o IP do proxy e todos os visitantes dividem o mesmo limite por IP. Nesse caso configure os proxies confiáveis (`TrustProxies`, em `bootstrap/app.php` com `$middleware->trustProxies(...)`) com as faixas do proxy, nunca `*` sem um proxy de fato na frente.
-- **Pendente de aprovação:** riscos de tenant/pagamento no `StorefrontController` (exibição, checkout, retorno Stripe e Redsys), mapeados e não corrigidos.
+- **Em correção (prioridade, antes do deploy):** as URLs de retorno marcam a compra como paga sem confirmação. `StorefrontController::success()` chama `markAsPaid()` só com o `purchase_id` da URL (de qualquer tenant), e `redsysSuccess()` chama `markAsPaidViaGateway()` sem validar a assinatura do Redsys. Testes que reproduzem: `tests/Feature/PaymentReturnSecurityTest.php`.
+- **Pendências do "endurecimento da vitrine" (fase seguinte, também antes do deploy):**
+  1. `checkout()` com cliente já logado usa `auth('cliente')->user()` sem conferir o tenant: cliente da produtora B compra na vitrine da A e a compra do tenant A fica com `cliente_id` do B.
+  2. `checkout()` calcula o preço dos adicionais por `$pack->effective_addons` (relação `addons` com o scope): com usuário logado de outra produtora o adicional entra pelo nome e não é cobrado; sem login, entra adicional de outro tenant vinculado no pivot.
+  3. Rota `/vitrine/{tenant:slug}/pacotes/{pack}/checkout` sem `scopeBindings()`: slug repetido em outra produtora ou usuário logado de outro tenant gera 404 numa compra legítima.
+  4. `show()`: categorias, portfólio e pacotes (com adicionais) pelo scope; com usuário logado de outra produtora a vitrine aparece vazia.
+  5. `checkout()` em erro da Stripe mostra `$e->getMessage()` ao visitante (entra na correção prioritária).
+- **Pergunta para o dono do projeto (negócio):** IVA, IRPF e regime fiscal (`fiscal_regime`, `fiscal_irpf_rate`, `tax_default_iva_rate`) são lidos de `Setting` global da plataforma, não da produtora. Cada produtora deve ter o próprio regime fiscal (autônomo com IRPF x sociedade), ou a plataforma fatura em nome de todas?
+- **Outros achados de pagamento (a decidir):** assinatura de pacote nasce com `subscription_status = 'active'` ainda `pending` (o portal a lista como ativa); `PackBalancePaymentService` marca o saldo 50/50 como quitado sem cobrar quando `STRIPE_SECRET` está vazio ou contém `mock`, mesmo fora de `testing`.
 
 ---
 
