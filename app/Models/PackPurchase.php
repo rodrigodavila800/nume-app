@@ -42,6 +42,7 @@ class PackPurchase extends Model
         'invoice_path',
         'invoice_snapshot',
         'application_fee_amount',
+        'platform_fee_status',
         'status',
         'subscription_status',
         'subscription_interval',
@@ -162,19 +163,46 @@ class PackPurchase extends Model
             'status' => 'paid',
             'payment_gateway' => 'stripe',
             'stripe_payment_intent_id' => $paymentIntentId,
+            'platform_fee_status' => 'collected_at_gateway',
             'paid_at' => now(),
         ]);
     }
 
     public function markAsPaidViaGateway(string $gateway, string $reference, ?array $metadata = null): void
     {
+        $isNume = ($this->tenant?->slug === 'nume');
+        $feeStatus = (! $isNume && (float) $this->application_fee_amount > 0)
+            ? 'pending_billing'
+            : 'not_applicable';
+
         $this->update([
             'status' => 'paid',
             'payment_gateway' => $gateway,
             'gateway_order_reference' => $reference,
             'gateway_metadata' => $metadata,
+            'platform_fee_status' => $feeStatus,
             'paid_at' => now(),
         ]);
+    }
+
+    public function isPlatformFeeCollected(): bool
+    {
+        return $this->platform_fee_status === 'collected_at_gateway';
+    }
+
+    public function isPlatformFeePending(): bool
+    {
+        return $this->platform_fee_status === 'pending_billing';
+    }
+
+    public function scopePendingPlatformFee($query)
+    {
+        return $query->where('platform_fee_status', 'pending_billing');
+    }
+
+    public function scopeCollectedPlatformFee($query)
+    {
+        return $query->where('platform_fee_status', 'collected_at_gateway');
     }
 
     /**

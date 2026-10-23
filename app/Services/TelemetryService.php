@@ -25,6 +25,8 @@ class TelemetryService
         $totalBaseRevenue = (float) $paidPurchases->sum('subtotal') ?: $totalGrossRevenue;
         $totalIva = (float) $paidPurchases->sum('tax_amount');
         $totalPlatformFee = (float) $paidPurchases->sum('application_fee_amount');
+        $collectedPlatformFee = (float) $paidPurchases->where('platform_fee_status', 'collected_at_gateway')->sum('application_fee_amount');
+        $pendingBillingPlatformFee = (float) $paidPurchases->where('platform_fee_status', 'pending_billing')->sum('application_fee_amount');
         $totalSalesCount = $paidPurchases->count();
 
         // Breakdown por canal de pagamento
@@ -43,8 +45,8 @@ class TelemetryService
             ],
         ];
 
-        $averageTicket = $totalSalesCount > 0 
-            ? $totalGrossRevenue / $totalSalesCount 
+        $averageTicket = $totalSalesCount > 0
+            ? $totalGrossRevenue / $totalSalesCount
             : (float) (Pack::withoutGlobalScope('tenant')->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))->avg('price') ?? 0);
 
         // 2. Clientes & Contratos
@@ -78,6 +80,7 @@ class TelemetryService
 
                 $purchasesCount = $pQuery->count();
                 $revenue = (float) $pQuery->sum('amount');
+
                 return [
                     'id' => $pack->id,
                     'name' => $pack->name,
@@ -112,6 +115,9 @@ class TelemetryService
                 'grossRevenue' => $totalGrossRevenue,
                 'baseRevenue' => $totalBaseRevenue,
                 'totalIva' => $totalIva,
+                'totalPlatformFee' => $totalPlatformFee,
+                'collectedPlatformFee' => $collectedPlatformFee,
+                'pendingBillingPlatformFee' => $pendingBillingPlatformFee,
                 'totalSalesCount' => $totalSalesCount,
                 'averageTicket' => $averageTicket,
                 'totalClients' => $totalClients,
@@ -152,7 +158,7 @@ class TelemetryService
                 'type' => 'prospecting',
                 'category' => 'Prospecção & Marketing',
                 'urgency' => 'alta',
-                'title' => 'Campanha Direcionada: ' . $mostPopularPack['name'],
+                'title' => 'Campanha Direcionada: '.$mostPopularPack['name'],
                 'description' => "O pacote '{$mostPopularPack['name']}' lidera as conversões da sua vitrine. Recomendamos criar anúncios e prospecção ativa B2B enfatizando este formato com cases reais.",
                 'action_label' => 'Ver Pacote no Catálogo',
                 'action_url' => route('packs.index'),
