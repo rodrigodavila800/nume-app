@@ -30,4 +30,12 @@ return [
         'anthropic' => env('ANTHROPIC_API_KEY'),
     ],
 
+    // Limites do chat público da vitrine (cada mensagem é uma chamada paga ao modelo).
+    'chat_rate_limits' => [
+        'per_minute' => (int) env('SOFI_CHAT_PER_MINUTE', 6),
+        'per_hour_ip' => (int) env('SOFI_CHAT_PER_HOUR_IP', 40),
+        'per_hour_tenant' => (int) env('SOFI_CHAT_PER_HOUR_TENANT', 400),
+        'reset_per_minute' => (int) env('SOFI_CHAT_RESET_PER_MINUTE', 5),
+    ],
+
 ];

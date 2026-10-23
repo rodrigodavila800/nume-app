@@ -36,9 +36,10 @@ Route::get('/', [MarketplaceController::class, 'index'])->name('marketplace.inde
 // Vitrine pÃºblica de cada produtora: portfÃ³lio, pacotes e checkout para visitantes.
 Route::get('/vitrine/{tenant:slug}', [StorefrontController::class, 'show'])->name('storefront.show');
 Route::post('/vitrine/{tenant:slug}/sofi-chat', [StorefrontController::class, 'sofiChat'])
-    ->middleware('throttle:30,1')
+    ->middleware('throttle:sofi-chat')
     ->name('storefront.sofi-chat');
 Route::post('/vitrine/{tenant:slug}/sofi-chat/reset', [StorefrontController::class, 'resetSofiChat'])
+    ->middleware('throttle:sofi-chat-reset')
     ->name('storefront.sofi-chat.reset');
 Route::post('/vitrine/{tenant:slug}/pacotes/{pack}/checkout', [StorefrontController::class, 'checkout'])
     ->middleware('throttle:10,1')

@@ -77,6 +77,23 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($identifier);
         });
 
+        // Chat público da Sofi na vitrine: cada mensagem é uma chamada paga ao modelo.
+        // O throttle roda antes do SubstituteBindings: {tenant} ainda pode ser o slug (string).
+        RateLimiter::for('sofi-chat', function (Request $request) {
+            $limits = config('sofi.chat_rate_limits');
+            $ip = $request->ip();
+
+            return [
+                Limit::perMinute($limits['per_minute'])->by('sofi-chat:ip-m:'.$ip),
+                Limit::perHour($limits['per_hour_ip'])->by('sofi-chat:ip-h:'.$ip),
+                Limit::perHour($limits['per_hour_tenant'])->by('sofi-chat:tenant:'.static::storefrontTenantKey($request)),
+            ];
+        });
+
+        RateLimiter::for('sofi-chat-reset', function (Request $request) {
+            return Limit::perMinute(config('sofi.chat_rate_limits.reset_per_minute'))->by('sofi-chat-reset:'.$request->ip());
+        });
+
         // MVC: Compartilha dados institucionais do tenant nas views do Portal sem queries dentro do Blade
         \Illuminate\Support\Facades\View::composer(['layouts.portal', 'portal.*'], function ($view) {
             $tenant = auth('cliente')->user()?->tenant;
@@ -88,6 +105,16 @@ class AppServiceProvider extends ServiceProvider
             }
             $view->with('portalTenant', $tenant);
         });
+    }
+
+    /**
+     * Chave da vitrine para o rate limit: o slug, com o model já resolvido ou ainda como string.
+     */
+    protected static function storefrontTenantKey(Request $request): string
+    {
+        $tenant = $request->route('tenant');
+
+        return $tenant instanceof \App\Models\Tenant ? (string) $tenant->slug : (string) $tenant;
     }
 }
 

@@ -510,6 +510,10 @@ class SofiSalesConsultantService
         }
 
         $ctaType = $data['call_to_action'] ?? null;
+        // Só ações que o widget conhece; qualquer valor inventado pelo modelo vira null.
+        if (! in_array($ctaType, ['open_pack_modal', 'register_dna'], true)) {
+            $ctaType = null;
+        }
         if ($packData && empty($ctaType)) {
             $ctaType = 'open_pack_modal';
         }

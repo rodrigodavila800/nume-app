@@ -73,6 +73,21 @@ class SofiSalesConsultantAgentTest extends TestCase
         $this->assertSame('🔄 Trocar de nicho', end($result['quick_replies']));
     }
 
+    public function test_invented_call_to_action_becomes_null(): void
+    {
+        SofiSalesConsultantAgent::fake([
+            ['reply' => 'Compre agora!', 'recommended_pack_id' => null, 'call_to_action' => 'redirect_to_checkout', 'suggested_quick_replies' => []],
+            ['reply' => 'Veja o pacote', 'recommended_pack_id' => $this->pack->id, 'call_to_action' => 'delete_account', 'suggested_quick_replies' => []],
+        ])->preventStrayPrompts();
+
+        $service = app(SofiSalesConsultantService::class);
+
+        $this->assertNull($service->consult($this->tenant, 'Oi', [], 'pt_BR')['call_to_action']);
+
+        // Com pacote recomendado, o valor inválido é descartado e vale o padrão open_pack_modal.
+        $this->assertSame('open_pack_modal', $service->consult($this->tenant, 'Oi de novo', [], 'pt_BR')['call_to_action']);
+    }
+
     public function test_storefront_endpoint_keeps_json_and_session_history(): void
     {
         SofiSalesConsultantAgent::fake([
