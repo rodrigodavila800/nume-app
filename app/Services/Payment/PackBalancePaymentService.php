@@ -57,8 +57,19 @@ class PackBalancePaymentService
         $paymentMethodId = $newPaymentMethodId ?: $purchase->stripe_payment_method_id;
         $stripeSecret = config('services.stripe.secret');
 
-        // Modo Mock / Teste Automatizado sem chave real configurada
-        if (empty($stripeSecret) || str_contains($stripeSecret, 'mock') || app()->environment('testing')) {
+        // Modo simulado SÓ na suíte de testes. Fora dela, sem chave válida, nada é cobrado nem
+        // marcado como pago (antes, chave vazia ou "mock" quitava o saldo sem cobrança).
+        if (! app()->environment('testing') && ! $this->isUsableStripeSecret($stripeSecret)) {
+            Log::error("PackBalancePaymentService: cobrança do saldo da compra #{$purchase->id} bloqueada: chave da Stripe ausente ou inválida (STRIPE_SECRET).");
+
+            return [
+                'success' => false,
+                'message' => __('O pagamento do saldo está temporariamente indisponível. A produtora já foi avisada; tente novamente mais tarde.'),
+                'payment_intent_id' => null,
+            ];
+        }
+
+        if (app()->environment('testing')) {
             $mockPiId = 'pi_balance_mock_' . Str::random(16);
             $purchase->markBalancePaid($mockPiId);
 
@@ -134,5 +145,15 @@ class PackBalancePaymentService
                 'payment_intent_id' => null,
             ];
         }
+    }
+
+    /**
+     * Chave secreta ou restrita da Stripe (sk_/rk_), sem marcadores de simulação.
+     */
+    protected function isUsableStripeSecret(?string $secret): bool
+    {
+        return is_string($secret)
+            && preg_match('/^(sk|rk)_(live|test)_[A-Za-z0-9]+$/', $secret) === 1
+            && ! str_contains(strtolower($secret), 'mock');
     }
 }
