@@ -8,6 +8,7 @@ use App\Models\PackPurchase;
 use App\Models\Setting;
 use App\Services\Billing\InvoiceService;
 use App\Services\Billing\TaxCalculationService;
+use App\Services\Billing\TenantFiscalSettings;
 use App\Services\Payment\PackCheckoutPricing;
 use App\Services\Payment\RedsysService;
 use App\Support\Money;
@@ -69,18 +70,16 @@ class PackController extends Controller
             ->orderBy('price')
             ->get();
 
-        $fiscalRegime = Setting::get('fiscal_regime', 'autonomo');
-        $fiscalIrpfRate = ($fiscalRegime === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
-        $taxDefaultIvaRate = (float) Setting::get('tax_default_iva_rate', 21.00);
+        $fiscal = TenantFiscalSettings::for($cliente->tenant);
 
         return view('portal.packs.index', [
             'packs' => $packs,
             'tenant' => $cliente->tenant,
             'activePaymentMethods' => Setting::getActivePaymentMethods($cliente->tenant),
             'fiscalSettings' => [
-                'regime' => $fiscalRegime,
-                'irpf_rate' => $fiscalIrpfRate,
-                'iva_rate' => $taxDefaultIvaRate,
+                'regime' => $fiscal->regime,
+                'irpf_rate' => $fiscal->irpfRate,
+                'iva_rate' => $fiscal->ivaRate,
             ],
         ]);
     }
@@ -154,17 +153,17 @@ class PackController extends Controller
         $subtotal = $pricing->subtotal;
         $selectedAddonNames = $pricing->addonNames;
 
-        $fiscalRegime = Setting::get('fiscal_regime', 'autonomo');
-        $irpfRate = ($fiscalRegime === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
+        $fiscal = TenantFiscalSettings::for($tenant);
 
-        // Execução do Motor Fiscal (IVA 21%, IRPF e Isenções)
+        // Execução do Motor Fiscal (IVA, IRPF e Isenções)
         $taxData = $taxService->calculate(
             subtotal: $subtotal,
             countryCode: $billingCountry,
             postalCode: $billingPostalCode,
             taxId: $billingTaxId,
             isCompany: ($billingType === 'empresa_autonomo'),
-            irpfRate: $irpfRate
+            irpfRate: $fiscal->irpfRate,
+            standardIvaRate: $fiscal->ivaRate
         );
 
         $applicationFeePercent = (float) config('services.stripe.platform_fee_percent', 10);

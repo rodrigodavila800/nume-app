@@ -23,13 +23,13 @@ class TaxCalculationService
     /**
      * Calcula o desmembramento fiscal completo (IVA 21%, IRPF e Total Líquido).
      *
-     * @param float $subtotal Base imponible (Preço do Pack + Add-ons)
-     * @param string $countryCode Código ISO do país do comprador (ex: 'ES', 'BR')
-     * @param string|null $postalCode Código postal para verificação de regimes especiais (Canárias, Ceuta, Melilla)
-     * @param string|null $taxId NIF, CIF, NIE ou VAT intra-comunitário
-     * @param bool $isCompany Se o comprador é pessoa jurídica / autônomo
-     * @param float $irpfRate Alíquota de retenção IRPF (se o emissor for autônomo espanhol, padrão 0.00)
-     * @return array
+     * @param  float  $subtotal  Base imponible (Preço do Pack + Add-ons)
+     * @param  string  $countryCode  Código ISO do país do comprador (ex: 'ES', 'BR')
+     * @param  string|null  $postalCode  Código postal para verificação de regimes especiais (Canárias, Ceuta, Melilla)
+     * @param  string|null  $taxId  NIF, CIF, NIE ou VAT intra-comunitário
+     * @param  bool  $isCompany  Se o comprador é pessoa jurídica / autônomo
+     * @param  float  $irpfRate  Alíquota de retenção IRPF (se o emissor for autônomo espanhol, padrão 0.00)
+     * @param  float|null  $standardIvaRate  Alíquota padrão de IVA da produtora (fallback 21.00%)
      */
     public function calculate(
         float $subtotal,
@@ -37,11 +37,13 @@ class TaxCalculationService
         ?string $postalCode = null,
         ?string $taxId = null,
         bool $isCompany = false,
-        float $irpfRate = 0.00
+        float $irpfRate = 0.00,
+        ?float $standardIvaRate = null
     ): array {
         $country = strtoupper(trim($countryCode));
-        $taxRate = self::DEFAULT_SPANISH_IVA_RATE;
-        $taxLabel = 'IVA (21%)';
+        $defaultIva = $standardIvaRate ?? self::DEFAULT_SPANISH_IVA_RATE;
+        $taxRate = $defaultIva;
+        $taxLabel = 'IVA ('.(int) $taxRate.'%)';
         $isReverseCharge = false;
         $isExempt = false;
 
@@ -66,14 +68,14 @@ class TaxCalculationService
         // 2. Operações Intracomunitárias B2B (UE fora da Espanha)
         if (! $isExempt && $country !== 'ES' && in_array($country, self::EU_COUNTRIES, true)) {
             if ($isCompany && ! empty($taxId)) {
-                // Inversión del sujeto pasivo (Reverse Charge Art. 196 Diretiva IVA)
+                // Inversión del sujeito pasivo (Reverse Charge Art. 196 Diretiva IVA)
                 $taxRate = 0.00;
                 $taxLabel = 'IVA 0% - Inversión del Sujeto Pasivo (Operación Intracomunitaria UE)';
                 $isReverseCharge = true;
             } else {
                 // B2C na UE
-                $taxRate = self::DEFAULT_SPANISH_IVA_RATE;
-                $taxLabel = 'IVA (21% - UE)';
+                $taxRate = $defaultIva;
+                $taxLabel = 'IVA ('.(int) $taxRate.'% - UE)';
             }
         }
 

@@ -145,6 +145,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/settings/platform/regenerate-seo', [\App\Http\Controllers\Admin\TenantSettingsController::class, 'regenerateSeo'])
         ->name('admin.settings.platform.regenerate-seo');
 
+    // Admin Settings / Perfil Fiscal por Produtora
+    Route::get('/admin/settings/fiscal', [\App\Http\Controllers\Admin\TenantFiscalSettingsController::class, 'index'])
+        ->name('admin.settings.fiscal');
+    Route::post('/admin/settings/fiscal', [\App\Http\Controllers\Admin\TenantFiscalSettingsController::class, 'update'])
+        ->name('admin.settings.fiscal.update');
+
     // Productions
     Route::resource('productions', ProductionController::class);
     Route::post('productions/{production}/mark-approved', [ProductionController::class, 'markAsApproved'])

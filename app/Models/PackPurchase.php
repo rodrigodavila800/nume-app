@@ -40,6 +40,7 @@ class PackPurchase extends Model
         'invoice_series',
         'invoice_generated_at',
         'invoice_path',
+        'invoice_snapshot',
         'application_fee_amount',
         'status',
         'subscription_status',
@@ -87,6 +88,7 @@ class PackPurchase extends Model
             'deposit_paid_at' => 'datetime',
             'balance_paid_at' => 'datetime',
             'invoice_generated_at' => 'datetime',
+            'invoice_snapshot' => 'array',
             'subscription_renews_at' => 'datetime',
             'subscription_ends_at' => 'datetime',
         ];

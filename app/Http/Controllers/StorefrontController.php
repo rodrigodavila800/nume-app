@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\ShowcaseVideo;
 use App\Models\Tenant;
 use App\Services\Billing\TaxCalculationService;
+use App\Services\Billing\TenantFiscalSettings;
 use App\Services\Payment\PackCheckoutPricing;
 use App\Services\Payment\PackPaymentConfirmer;
 use App\Services\Payment\RedsysService;
@@ -202,17 +203,17 @@ class StorefrontController extends Controller
         $subtotal = $pricing->subtotal;
         $selectedAddonNames = $pricing->addonNames;
 
-        $fiscalRegime = Setting::get('fiscal_regime', 'autonomo');
-        $irpfRate = ($fiscalRegime === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
+        $fiscal = TenantFiscalSettings::for($tenant);
 
-        // 5. Execução do Motor Fiscal (IVA 21%, IRPF e Isenções)
+        // 5. Execução do Motor Fiscal (IVA, IRPF e Isenções)
         $taxData = $taxService->calculate(
             subtotal: $subtotal,
             countryCode: $billingCountry,
             postalCode: $billingPostalCode,
             taxId: $billingTaxId,
             isCompany: ($billingType === 'empresa_autonomo'),
-            irpfRate: $irpfRate
+            irpfRate: $fiscal->irpfRate,
+            standardIvaRate: $fiscal->ivaRate
         );
 
         $feePercent = (float) config('services.stripe.platform_fee_percent', 10);

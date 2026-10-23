@@ -9,10 +9,9 @@
         <span>{{ __('Gateways de Pagamento') }}</span>
     </a>
 
-    <a href="{{ route('admin.settings.gateways') }}#fiscal"
-       onclick="if(typeof switchSettingTab === 'function') { switchSettingTab('fiscal'); return false; }"
+    <a href="{{ route('admin.settings.fiscal') }}"
        id="tab-btn-fiscal"
-       class="settings-tab-btn flex-1 min-w-[170px] px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 select-none cursor-pointer {{ $active === 'fiscal' ? 'bg-orange-600 text-white shadow-sm font-extrabold' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+       class="settings-tab-btn flex-1 min-w-[170px] px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 select-none cursor-pointer {{ $active === 'fiscal' || request()->routeIs('admin.settings.fiscal*') ? 'bg-orange-600 text-white shadow-sm font-extrabold' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
         <span>⚖️</span>
         <span>{{ __('Perfil Fiscal & Impostos') }}</span>
     </a>

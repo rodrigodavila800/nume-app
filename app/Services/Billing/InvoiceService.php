@@ -3,10 +3,11 @@
 namespace App\Services\Billing;
 
 use App\Mail\InvoiceIssuedMail;
+use App\Models\InvoiceSequence;
 use App\Models\PackPurchase;
-use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPdfInstance;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -14,60 +15,95 @@ use Illuminate\Support\Facades\Storage;
 class InvoiceService
 {
     /**
-     * Gera o próximo número sequencial de fatura da série contábil.
+     * Gera o próximo número sequencial de fatura da série contábil com trava atômica por tenant e série.
      */
     public function generateInvoiceNumber(PackPurchase $purchase): string
     {
-        $series = Setting::get('fiscal_invoice_series', 'NUM-'.date('Y').'-');
+        $fiscal = TenantFiscalSettings::for($purchase->tenant_id);
+        $series = $fiscal->invoiceSeries;
 
-        $count = PackPurchase::withoutGlobalScope('tenant')
-            ->whereNotNull('invoice_number')
-            ->where('invoice_series', $series)
-            ->count() + 1;
+        return DB::transaction(function () use ($purchase, $series) {
+            $sequence = InvoiceSequence::withoutGlobalScope('tenant')
+                ->where('tenant_id', $purchase->tenant_id)
+                ->where('series', $series)
+                ->lockForUpdate()
+                ->first();
 
-        return $series.str_pad((string) $count, 5, '0', STR_PAD_LEFT);
+            if (! $sequence) {
+                $existingCount = PackPurchase::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $purchase->tenant_id)
+                    ->where('invoice_series', $series)
+                    ->whereNotNull('invoice_number')
+                    ->count();
+
+                $sequence = InvoiceSequence::withoutGlobalScope('tenant')->create([
+                    'tenant_id' => $purchase->tenant_id,
+                    'series' => $series,
+                    'last_number' => $existingCount,
+                ]);
+            }
+
+            $sequence->last_number++;
+            $sequence->save();
+
+            return $series.str_pad((string) $sequence->last_number, 5, '0', STR_PAD_LEFT);
+        });
     }
 
     /**
      * Prepara todos os dados canônicos exigidos pela Agencia Tributaria (RD 1619/2012).
+     * Se o snapshot já existir, usa-o diretamente para garantir imutabilidade da fatura.
      */
     public function prepareInvoiceData(PackPurchase $purchase): array
     {
-        // Atribui numeração se ainda não tiver
-        if (empty($purchase->invoice_number)) {
-            $series = Setting::get('fiscal_invoice_series', 'NUM-'.date('Y').'-');
-            $purchase->update([
-                'invoice_series' => $series,
-                'invoice_number' => $this->generateInvoiceNumber($purchase),
-                'invoice_generated_at' => now(),
-            ]);
-            $purchase->refresh();
+        // Se já tiver snapshot gravado, renderiza os dados a partir do snapshot
+        if (! empty($purchase->invoice_snapshot) && is_array($purchase->invoice_snapshot)) {
+            return $this->formatDataFromSnapshot($purchase, $purchase->invoice_snapshot);
         }
 
+        $fiscal = TenantFiscalSettings::for($purchase->tenant_id);
+
+        // Atribui numeração atômica e snapshot se ainda não tiver
+        if (empty($purchase->invoice_number)) {
+            $series = $fiscal->invoiceSeries;
+            $invoiceNumber = $this->generateInvoiceNumber($purchase);
+
+            $snapshot = $this->buildSnapshotData($purchase, $fiscal, $invoiceNumber, $series);
+
+            $purchase->update([
+                'invoice_series' => $series,
+                'invoice_number' => $invoiceNumber,
+                'invoice_generated_at' => now(),
+                'invoice_snapshot' => $snapshot,
+            ]);
+            $purchase->refresh();
+
+            return $this->formatDataFromSnapshot($purchase, $snapshot);
+        }
+
+        // Caso tenha invoice_number mas ainda não tinha snapshot (ex: registro histórico), cria e persiste o snapshot
+        $snapshot = $this->buildSnapshotData($purchase, $fiscal, $purchase->invoice_number, $purchase->invoice_series ?: $fiscal->invoiceSeries);
+        $purchase->update(['invoice_snapshot' => $snapshot]);
+        $purchase->refresh();
+
+        return $this->formatDataFromSnapshot($purchase, $snapshot);
+    }
+
+    /**
+     * Monta o snapshot imutável da fatura com dados do emissor da produtora e comprador.
+     */
+    protected function buildSnapshotData(PackPurchase $purchase, TenantFiscalSettings $fiscal, string $invoiceNumber, string $series): array
+    {
         $paidAt = $purchase->paid_at ?? now();
-
-        // Dados do Emissor (Nume / Empresa)
-        $companyName = Setting::get('fiscal_company_name', 'Nume Creative S.L.');
-        $companyCif = Setting::get('fiscal_company_cif', 'B12345678');
-        $companyAddress = Setting::get('fiscal_company_address', 'Calle Alfonso I, 12, Planta 3');
-        $companyPostalCode = Setting::get('fiscal_company_postal_code', '50003');
-        $companyCity = Setting::get('fiscal_company_city', 'Zaragoza');
-        $companyEmail = Setting::get('fiscal_company_email', 'facturacion@nume.es');
-
-        // Dados do Cliente / Receptor
         $cliente = $purchase->cliente;
-        $clientLegalName = $purchase->billing_legal_name ?: ($cliente->company_name ?: $cliente->name);
-        $clientTaxId = $purchase->billing_tax_id ?: '';
-        $clientAddress = $purchase->billing_address ?: '';
-        $clientPostalCode = $purchase->billing_postal_code ?: '';
-        $clientCity = $purchase->billing_city ?: '';
-        $clientCountry = $purchase->billing_country ?: 'ES';
-        $clientEmail = $cliente->email;
+
+        $clientLegalName = $purchase->billing_legal_name ?: ($cliente?->company_name ?: ($cliente?->name ?? 'Cliente'));
+        $clientTaxId = $purchase->billing_tax_id ?: ($cliente?->tax_id ?? '');
 
         // Add-ons desmembrados
         $addonsList = [];
         $rawAddons = $purchase->addons_purchased ?? [];
-        $effectiveAddons = collect($purchase->pack->effective_addons ?? []);
+        $effectiveAddons = collect($purchase->pack?->effective_addons ?? []);
 
         foreach ($rawAddons as $raw) {
             $matched = $effectiveAddons->first(function ($a) use ($raw) {
@@ -80,8 +116,61 @@ class InvoiceService
             ];
         }
 
-        // Mapeamento do método de pagamento amigável
-        $paymentMethod = $purchase->payment_gateway;
+        return [
+            'invoice_number' => $invoiceNumber,
+            'invoice_series' => $series,
+            'issued_date' => $paidAt->format('d/m/Y H:i'),
+            'operation_date' => $paidAt->format('d/m/Y'),
+            'company' => [
+                'name' => $fiscal->companyName,
+                'cif' => $fiscal->companyCif,
+                'address' => $fiscal->companyAddress,
+                'postal_code' => $fiscal->companyPostalCode,
+                'city' => $fiscal->companyCity,
+                'email' => $fiscal->companyEmail,
+            ],
+            'client' => [
+                'legal_name' => $clientLegalName,
+                'tax_id' => $clientTaxId,
+                'address' => $purchase->billing_address ?: '',
+                'postal_code' => $purchase->billing_postal_code ?: '',
+                'city' => $purchase->billing_city ?: '',
+                'country' => $purchase->billing_country ?: 'ES',
+                'email' => $cliente?->email ?? '',
+            ],
+            'financial' => [
+                'subtotal' => (float) ($purchase->subtotal ?? $purchase->amount),
+                'tax_rate' => (float) $purchase->tax_rate,
+                'tax_amount' => (float) $purchase->tax_amount,
+                'irpf_rate' => (float) $purchase->irpf_rate,
+                'irpf_amount' => (float) $purchase->irpf_amount,
+                'total_amount' => (float) ($purchase->total_amount ?? $purchase->amount),
+                'payment_method' => $purchase->payment_gateway,
+                'gateway_reference' => $purchase->gateway_order_reference ?: $purchase->stripe_payment_intent_id,
+            ],
+            'pack' => [
+                'name' => $purchase->pack?->name ?? 'Pacote de Produção',
+                'price' => (float) ($purchase->pack?->price ?? $purchase->amount),
+                'video_quantity' => (int) ($purchase->pack?->video_quantity ?? $purchase->video_quantity),
+            ],
+            'addons' => $addonsList,
+        ];
+    }
+
+    /**
+     * Mapeia os dados do snapshot para as variáveis esperadas pela view da fatura.
+     */
+    protected function formatDataFromSnapshot(PackPurchase $purchase, array $snapshot): array
+    {
+        $company = $snapshot['company'] ?? [];
+        $client = $snapshot['client'] ?? [];
+        $financial = $snapshot['financial'] ?? [];
+        $packData = $snapshot['pack'] ?? [];
+
+        $taxRate = (float) ($financial['tax_rate'] ?? $purchase->tax_rate);
+        $taxLabel = ($taxRate > 0) ? 'IVA' : 'Exento de IVA';
+
+        $paymentMethod = $financial['payment_method'] ?? $purchase->payment_gateway;
         $paymentMethodName = match ($paymentMethod) {
             'bizum', 'redsys_bizum' => 'Bizum Móvil (BBVA)',
             'redsys_card' => 'Tarjeta de Crédito / Débito (BBVA Redsys)',
@@ -89,39 +178,36 @@ class InvoiceService
             default => 'Pasarela Bancaria Segura',
         };
 
-        $taxRate = (float) $purchase->tax_rate;
-        $taxLabel = ($taxRate > 0) ? 'IVA' : 'Exento de IVA';
-
         return [
             'purchase' => $purchase,
             'pack' => $purchase->pack,
-            'packBasePrice' => (float) $purchase->pack->price,
-            'addonsList' => $addonsList,
-            'invoiceNumber' => $purchase->invoice_number,
-            'issuedDate' => $paidAt->format('d/m/Y H:i'),
-            'operationDate' => $paidAt->format('d/m/Y'),
-            'companyName' => $companyName,
-            'companyCif' => $companyCif,
-            'companyAddress' => $companyAddress,
-            'companyPostalCode' => $companyPostalCode,
-            'companyCity' => $companyCity,
-            'companyEmail' => $companyEmail,
-            'clientLegalName' => $clientLegalName,
-            'clientTaxId' => $clientTaxId,
-            'clientAddress' => $clientAddress,
-            'clientPostalCode' => $clientPostalCode,
-            'clientCity' => $clientCity,
-            'clientCountry' => $clientCountry,
-            'clientEmail' => $clientEmail,
-            'subtotal' => (float) ($purchase->subtotal ?? $purchase->amount),
+            'packBasePrice' => (float) ($packData['price'] ?? $purchase->pack?->price ?? 0),
+            'addonsList' => $snapshot['addons'] ?? [],
+            'invoiceNumber' => $snapshot['invoice_number'] ?? $purchase->invoice_number,
+            'issuedDate' => $snapshot['issued_date'] ?? ($purchase->paid_at ? $purchase->paid_at->format('d/m/Y H:i') : now()->format('d/m/Y H:i')),
+            'operationDate' => $snapshot['operation_date'] ?? ($purchase->paid_at ? $purchase->paid_at->format('d/m/Y') : now()->format('d/m/Y')),
+            'companyName' => $company['name'] ?? '',
+            'companyCif' => $company['cif'] ?? '',
+            'companyAddress' => $company['address'] ?? '',
+            'companyPostalCode' => $company['postal_code'] ?? '',
+            'companyCity' => $company['city'] ?? '',
+            'companyEmail' => $company['email'] ?? '',
+            'clientLegalName' => $client['legal_name'] ?? ($client['name'] ?? ''),
+            'clientTaxId' => $client['tax_id'] ?? '',
+            'clientAddress' => $client['address'] ?? '',
+            'clientPostalCode' => $client['postal_code'] ?? '',
+            'clientCity' => $client['city'] ?? '',
+            'clientCountry' => $client['country'] ?? 'ES',
+            'clientEmail' => $client['email'] ?? '',
+            'subtotal' => (float) ($financial['subtotal'] ?? $purchase->subtotal ?? $purchase->amount),
             'taxRate' => $taxRate,
-            'taxAmount' => (float) $purchase->tax_amount,
+            'taxAmount' => (float) ($financial['tax_amount'] ?? $purchase->tax_amount),
             'taxLabel' => $taxLabel,
-            'irpfRate' => (float) $purchase->irpf_rate,
-            'irpfAmount' => (float) $purchase->irpf_amount,
-            'totalAmount' => (float) ($purchase->total_amount ?? $purchase->amount),
+            'irpfRate' => (float) ($financial['irpf_rate'] ?? $purchase->irpf_rate),
+            'irpfAmount' => (float) ($financial['irpf_amount'] ?? $purchase->irpf_amount),
+            'totalAmount' => (float) ($financial['total_amount'] ?? $purchase->total_amount ?? $purchase->amount),
             'paymentMethodName' => $paymentMethodName,
-            'gatewayReference' => $purchase->gateway_order_reference ?: $purchase->stripe_payment_intent_id,
+            'gatewayReference' => $financial['gateway_reference'] ?? ($purchase->gateway_order_reference ?: $purchase->stripe_payment_intent_id),
         ];
     }
 
@@ -139,12 +225,12 @@ class InvoiceService
     }
 
     /**
-     * Salva o PDF da fatura em disco local seguro e atualiza o caminho no banco.
+     * Salva o PDF da fatura em disco local isolado por tenant e atualiza o caminho no banco.
      */
     public function saveInvoiceFile(PackPurchase $purchase): string
     {
         $pdf = $this->renderPdf($purchase);
-        $fileName = 'invoices/'.$purchase->invoice_number.'.pdf';
+        $fileName = 'invoices/'.$purchase->tenant_id.'/'.$purchase->invoice_number.'.pdf';
 
         Storage::disk('local')->put($fileName, $pdf->output());
 
