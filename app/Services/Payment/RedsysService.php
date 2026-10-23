@@ -3,12 +3,14 @@
 namespace App\Services\Payment;
 
 use App\Models\Setting;
+use App\Models\Tenant;
+use App\Models\TenantSetting;
 use App\Support\Money;
-use Exception;
 
 class RedsysService
 {
     public const TEST_URL = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+
     public const LIVE_URL = 'https://sis.redsys.es/sis/realizarPago';
 
     public const SIGNATURE_VERSION = 'HMAC_SHA256_V1';
@@ -16,8 +18,11 @@ class RedsysService
     public const CURRENCY_EUR = '978';
 
     protected string $merchantCode;
+
     protected string $terminal;
+
     protected string $secretKey;
+
     protected string $environment;
 
     public function __construct(
@@ -32,9 +37,91 @@ class RedsysService
         $this->environment = $environment ?? (string) Setting::get('redsys_environment', config('services.redsys.environment', 'test'));
     }
 
+    /**
+     * Instancia o serviço Redsys contextualizado para as credenciais da produtora (tenant).
+     * Em produção, SEM credenciais válidas do tenant, recusa fallback global (exceto tenant 'nume').
+     */
+    public static function forTenant(?Tenant $tenant = null): self
+    {
+        if (! $tenant) {
+            return new self;
+        }
+
+        $merchantCode = TenantSetting::get($tenant, 'redsys_merchant_code');
+        $terminal = TenantSetting::get($tenant, 'redsys_terminal') ?: '001';
+        $secretKey = TenantSetting::get($tenant, 'redsys_secret_key');
+        $environment = TenantSetting::get($tenant, 'redsys_environment') ?: 'test';
+
+        if (! empty($merchantCode) && ! empty($secretKey)) {
+            return new self($merchantCode, $terminal, $secretKey, $environment);
+        }
+
+        if (app()->environment('local', 'testing') || $tenant->slug === 'nume') {
+            return new self;
+        }
+
+        throw new \RuntimeException("O tenant {$tenant->name} ({$tenant->id}) não possui credenciais do TPV Redsys configuradas.");
+    }
+
+    /**
+     * Decodifica Ds_MerchantParameters de forma segura APENAS para extrair Ds_Order.
+     * Não valida a assinatura (deve ser validada logo a seguir com a chave do tenant).
+     */
+    public static function extractOrderFromParameters(?string $merchantParametersBase64): ?string
+    {
+        if (empty($merchantParametersBase64)) {
+            return null;
+        }
+
+        $json = base64_decode(strtr($merchantParametersBase64, '-_', '+/'));
+        $data = json_decode($json, true);
+
+        if (! is_array($data)) {
+            return null;
+        }
+
+        $order = $data['Ds_Order'] ?? $data['DS_MERCHANT_ORDER'] ?? null;
+        if (! is_string($order) || ! preg_match('/^[0-9A-Za-z]{4,12}$/', $order)) {
+            return null;
+        }
+
+        return $order;
+    }
+
+    /**
+     * Extrai Ds_MerchantCode dos parâmetros decodificados.
+     */
+    public static function extractMerchantCodeFromParameters(?string $merchantParametersBase64): ?string
+    {
+        if (empty($merchantParametersBase64)) {
+            return null;
+        }
+
+        $json = base64_decode(strtr($merchantParametersBase64, '-_', '+/'));
+        $data = json_decode($json, true);
+
+        if (! is_array($data)) {
+            return null;
+        }
+
+        $code = $data['Ds_MerchantCode'] ?? $data['DS_MERCHANT_MERCHANTCODE'] ?? null;
+
+        return is_string($code) ? trim($code) : null;
+    }
+
     public function merchantCode(): string
     {
         return $this->merchantCode;
+    }
+
+    public function terminal(): string
+    {
+        return $this->terminal;
+    }
+
+    public function environment(): string
+    {
+        return $this->environment;
     }
 
     /**
@@ -55,21 +142,21 @@ class RedsysService
         // Formato: 4 dígitos de data (mdH) + 8 dígitos aleatórios numéricos
         $prefix = date('md');
         $random = str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
-        return substr($prefix . $random, 0, 12);
+
+        return substr($prefix.$random, 0, 12);
     }
 
     /**
      * Prepara os parâmetros do formulário e calcula a assinatura SHA-256.
      *
-     * @param float $amountInEuros Valor total já com IVA incluído
-     * @param string $orderNumber Código do pedido (12 caracteres)
-     * @param string $urlOk URL de retorno após sucesso
-     * @param string $urlKo URL de retorno após cancelamento
-     * @param string $notificationUrl URL do webhook assíncrono
-     * @param string|null $payMethod 'z' para Bizum, 'T' para Cartão, null para aberto
-     * @param string|null $productDescription Descrição do serviço
-     * @param string|null $titular Nome do cliente
-     * @return array
+     * @param  float  $amountInEuros  Valor total já com IVA incluído
+     * @param  string  $orderNumber  Código do pedido (12 caracteres)
+     * @param  string  $urlOk  URL de retorno após sucesso
+     * @param  string  $urlKo  URL de retorno após cancelamento
+     * @param  string  $notificationUrl  URL do webhook assíncrono
+     * @param  string|null  $payMethod  'z' para Bizum, 'T' para Cartão, null para aberto
+     * @param  string|null  $productDescription  Descrição do serviço
+     * @param  string|null  $titular  Nome do cliente
      */
     public function createPaymentPayload(
         float $amountInEuros,

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Support\StripeCredentials;
+use App\Services\Payment\PaymentMethodAvailability;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
@@ -107,40 +107,25 @@ class Setting extends Model
     }
 
     /**
+    /**
      * Retorna array com status de ativação de cada método de pagamento.
-     * Leva em consideração as flags globais, o status de conexão da produtora (tenant)
-     * e restrições de moeda do pacote (Redsys/Bizum são restritos a EUR).
+     *
+     * @deprecated Use \App\Services\Payment\PaymentMethodAvailability::forTenant($tenant)->getActiveMethods($pack)
      *
      * @return array<string, bool>
      */
     public static function getActivePaymentMethods(?Tenant $tenant = null, ?Pack $pack = null): array
     {
-        $currency = strtolower($pack?->currency ?: 'eur');
-        $isEur = ($currency === 'eur');
-
-        $redsysGeneral = (bool) static::get('redsys_enabled', config('services.redsys.enabled', true));
-        $bizumActive = $isEur && $redsysGeneral && (bool) static::get('redsys_bizum_enabled', true);
-        $redsysCardActive = $isEur && $redsysGeneral && (bool) static::get('redsys_card_enabled', true);
-
-        $stripeConfigured = ! empty(StripeCredentials::secret());
-        $stripeGeneral = (bool) static::get('stripe_enabled', true);
-        $stripeTenantReady = $tenant ? $tenant->canReceivePayments() : true;
-        $stripeActive = $stripeGeneral && $stripeConfigured && $stripeTenantReady;
-
-        return [
-            'bizum' => $bizumActive,
-            'redsys_card' => $redsysCardActive,
-            'stripe' => $stripeActive,
-        ];
+        return PaymentMethodAvailability::forTenant($tenant)->getActiveMethods($pack);
     }
 
     /**
      * Verifica se um método de pagamento específico está ativo.
+     *
+     * @deprecated Use \App\Services\Payment\PaymentMethodAvailability::forTenant($tenant)->isMethodActive($method, $pack)
      */
     public static function isPaymentMethodActive(string $method, ?Tenant $tenant = null, ?Pack $pack = null): bool
     {
-        $methods = static::getActivePaymentMethods($tenant, $pack);
-
-        return $methods[$method] ?? false;
+        return PaymentMethodAvailability::forTenant($tenant)->isMethodActive($method, $pack);
     }
 }

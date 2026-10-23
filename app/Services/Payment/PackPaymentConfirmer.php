@@ -112,11 +112,13 @@ class PackPaymentConfirmer
             return $this->reject($purchase, 'redsys', 'currency_mismatch');
         }
 
-        if (isset($data['Ds_MerchantCode']) && (string) $data['Ds_MerchantCode'] !== $this->redsys->merchantCode()) {
+        $tenantRedsys = RedsysService::forTenant($purchase->tenant);
+
+        if (isset($data['Ds_MerchantCode']) && (string) $data['Ds_MerchantCode'] !== $tenantRedsys->merchantCode()) {
             return $this->reject($purchase, 'redsys', 'merchant_mismatch');
         }
 
-        if (! $this->redsys->isResponseSuccessful($data['Ds_Response'] ?? null)) {
+        if (! $tenantRedsys->isResponseSuccessful($data['Ds_Response'] ?? null)) {
             $failed = $this->transitionToFailed($purchase, ['status' => 'failed', 'gateway_metadata' => $data]);
             Log::warning("PackPaymentConfirmer: Redsys recusou o pagamento da compra #{$purchase->id}.");
 

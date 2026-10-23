@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Portal;
 use App\Http\Controllers\Controller;
 use App\Models\Pack;
 use App\Models\PackPurchase;
-use App\Models\Setting;
 use App\Services\Billing\InvoiceService;
 use App\Services\Billing\TaxCalculationService;
 use App\Services\Billing\TenantFiscalSettings;
 use App\Services\Payment\PackCheckoutPricing;
+use App\Services\Payment\PaymentMethodAvailability;
 use App\Services\Payment\RedsysService;
 use App\Support\Money;
 use App\Support\StripeCredentials;
@@ -37,18 +37,16 @@ class PackController extends Controller
             ->orderBy('price')
             ->get();
 
-        $fiscalRegime = Setting::get('fiscal_regime', 'autonomo');
-        $fiscalIrpfRate = ($fiscalRegime === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
-        $taxDefaultIvaRate = (float) Setting::get('tax_default_iva_rate', 21.00);
+        $fiscal = TenantFiscalSettings::for($cliente->tenant);
 
         return view('portal.plans.index', [
             'plans' => $plans,
             'tenant' => $cliente->tenant,
-            'activePaymentMethods' => Setting::getActivePaymentMethods($cliente->tenant),
+            'activePaymentMethods' => PaymentMethodAvailability::forTenant($cliente->tenant)->getActiveMethods(),
             'fiscalSettings' => [
-                'regime' => $fiscalRegime,
-                'irpf_rate' => $fiscalIrpfRate,
-                'iva_rate' => $taxDefaultIvaRate,
+                'regime' => $fiscal->regime,
+                'irpf_rate' => $fiscal->irpfRate,
+                'iva_rate' => $fiscal->ivaRate,
             ],
         ]);
     }
@@ -75,7 +73,7 @@ class PackController extends Controller
         return view('portal.packs.index', [
             'packs' => $packs,
             'tenant' => $cliente->tenant,
-            'activePaymentMethods' => Setting::getActivePaymentMethods($cliente->tenant),
+            'activePaymentMethods' => PaymentMethodAvailability::forTenant($cliente->tenant)->getActiveMethods(),
             'fiscalSettings' => [
                 'regime' => $fiscal->regime,
                 'irpf_rate' => $fiscal->irpfRate,
@@ -119,7 +117,7 @@ class PackController extends Controller
         }
 
         // Valida se o método escolhido está devidamente ativo nas configurações para a moeda do pacote
-        if (! Setting::isPaymentMethodActive($paymentMethod, $tenant, $pack)) {
+        if (! PaymentMethodAvailability::forTenant($tenant)->isMethodActive($paymentMethod, $pack)) {
             $msg = __('O método de pagamento selecionado não está disponível para este pacote.');
 
             if ($isEmbedded) {
@@ -227,7 +225,8 @@ class PackController extends Controller
 
         // A) Redsys (Bizum ou Cartão)
         if (in_array($paymentMethod, ['bizum', 'redsys_card'], true)) {
-            $orderNumber = $redsysService->generateOrderNumber();
+            $redsys = RedsysService::forTenant($tenant);
+            $orderNumber = $redsys->generateOrderNumber();
             $purchase->update(['gateway_order_reference' => $orderNumber]);
 
             $payMethodCode = ($paymentMethod === 'bizum') ? 'z' : 'T';
@@ -237,7 +236,7 @@ class PackController extends Controller
                 : "{$pack->name} - {$tenant->name}";
 
             // Mesmo campo conferido no Ds_Amount pelo PackPaymentConfirmer
-            $payload = $redsysService->createPaymentPayload(
+            $payload = $redsys->createPaymentPayload(
                 amountInEuros: (float) $purchase->amount,
                 orderNumber: $orderNumber,
                 urlOk: route('redsys.success', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),

@@ -98,6 +98,26 @@ class TenantFiscalSettings
         );
     }
 
+    public function regime(): string
+    {
+        return $this->regime;
+    }
+
+    public function irpfRate(): float
+    {
+        return $this->irpfRate;
+    }
+
+    public function ivaRate(): float
+    {
+        return $this->ivaRate;
+    }
+
+    public function standardIvaRate(): float
+    {
+        return $this->ivaRate;
+    }
+
     /**
      * Atualiza as configurações fiscais do tenant.
      */

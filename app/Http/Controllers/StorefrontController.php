@@ -6,13 +6,13 @@ use App\Models\Category;
 use App\Models\Cliente;
 use App\Models\Pack;
 use App\Models\PackPurchase;
-use App\Models\Setting;
 use App\Models\ShowcaseVideo;
 use App\Models\Tenant;
 use App\Services\Billing\TaxCalculationService;
 use App\Services\Billing\TenantFiscalSettings;
 use App\Services\Payment\PackCheckoutPricing;
 use App\Services\Payment\PackPaymentConfirmer;
+use App\Services\Payment\PaymentMethodAvailability;
 use App\Services\Payment\RedsysService;
 use App\Services\SofiSalesConsultantService;
 use App\Support\Money;
@@ -71,11 +71,11 @@ class StorefrontController extends Controller
             'currentCliente' => (auth('cliente')->check() && (int) auth('cliente')->user()->tenant_id === (int) $tenant->id)
                 ? auth('cliente')->user()
                 : null,
-            'activePaymentMethods' => Setting::getActivePaymentMethods($tenant),
+            'activePaymentMethods' => PaymentMethodAvailability::forTenant($tenant)->getActiveMethods(),
             'fiscalSettings' => [
-                'regime' => Setting::get('fiscal_regime', 'autonomo'),
-                'irpf_rate' => (Setting::get('fiscal_regime', 'autonomo') === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00,
-                'iva_rate' => (float) Setting::get('tax_default_iva_rate', 21.00),
+                'regime' => TenantFiscalSettings::for($tenant)->regime(),
+                'irpf_rate' => TenantFiscalSettings::for($tenant)->irpfRate(),
+                'iva_rate' => TenantFiscalSettings::for($tenant)->standardIvaRate(),
             ],
         ]);
     }
@@ -128,7 +128,7 @@ class StorefrontController extends Controller
         }
 
         // Valida se o método escolhido está ativo no tenant / sistema para a moeda do pacote
-        if (! Setting::isPaymentMethodActive($paymentMethod, $tenant, $pack)) {
+        if (! PaymentMethodAvailability::forTenant($tenant)->isMethodActive($paymentMethod, $pack)) {
             return back()->withInput()->with('error', __('O método de pagamento selecionado não está disponível para este pacote.'));
         }
 
@@ -275,7 +275,8 @@ class StorefrontController extends Controller
         // 7. Roteamento de Gateway
         // A) BBVA / Redsys (Bizum ou Cartão de Crédito/Débito)
         if (in_array($paymentMethod, ['bizum', 'redsys_card'], true)) {
-            $orderNumber = $redsysService->generateOrderNumber();
+            $redsys = RedsysService::forTenant($tenant);
+            $orderNumber = $redsys->generateOrderNumber();
             $purchase->update(['gateway_order_reference' => $orderNumber]);
 
             $payMethodCode = ($paymentMethod === 'bizum') ? 'z' : 'T';
@@ -285,7 +286,7 @@ class StorefrontController extends Controller
                 : "{$pack->name} - {$tenant->name}";
 
             // Mesmo campo conferido no Ds_Amount pelo PackPaymentConfirmer
-            $payload = $redsysService->createPaymentPayload(
+            $payload = $redsys->createPaymentPayload(
                 amountInEuros: (float) $purchase->amount,
                 orderNumber: $orderNumber,
                 urlOk: route('redsys.success', ['order' => $orderNumber]),
@@ -468,21 +469,27 @@ class StorefrontController extends Controller
      */
     public function redsysSuccess(
         Request $request,
-        RedsysService $redsysService,
         PackPaymentConfirmer $confirmer
     ): View {
         // A URL OK é aberta pelo navegador e pode ser forjada: ela nunca marca a compra como paga
-        // sozinha. Só confirma se trouxer os parâmetros do Redsys com assinatura válida.
+        // sozinha. Só confirma se trouxer os parâmetros do Redsys com assinatura válida para aquele tenant.
         $parameters = (string) $request->query('Ds_MerchantParameters', '');
         $signature = (string) $request->query('Ds_Signature', '');
         $purchase = null;
 
-        if ($parameters !== '' && $signature !== '' && $redsysService->verifySignature($parameters, $signature)) {
-            $data = $redsysService->decodeParameters($parameters);
-            $purchase = $this->purchaseByRedsysOrder($data['Ds_Order'] ?? $data['DS_MERCHANT_ORDER'] ?? null);
+        if ($parameters !== '' && $signature !== '') {
+            $orderNumber = RedsysService::extractOrderFromParameters($parameters);
+            $purchase = $this->purchaseByRedsysOrder($orderNumber);
 
             if ($purchase) {
-                $confirmer->confirmRedsys($purchase, $data);
+                $redsys = RedsysService::forTenant($purchase->tenant);
+                if ($redsys->verifySignature($parameters, $signature)) {
+                    $data = $redsys->decodeParameters($parameters);
+                    $receivedMerchantCode = trim((string) ($data['Ds_MerchantCode'] ?? $data['DS_MERCHANT_MERCHANTCODE'] ?? ''));
+                    if ($receivedMerchantCode === $redsys->merchantCode()) {
+                        $confirmer->confirmRedsys($purchase, $data);
+                    }
+                }
             }
         } else {
             // Sem assinatura válida: só leitura do status gravado (pelo webhook).
