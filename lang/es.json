@@ -494,5 +494,14 @@
     "Ver Factura": "Ver Factura",
     "Contrato": "Contrato",
     "Ciclo": "Ciclo",
-    "Avulso": "Puntual"
+    "Avulso": "Puntual",
+    "Contratação Confirmada": "Contratación Confirmada",
+    "Pagamento Confirmado": "Pago Confirmado",
+    "Seu pacote foi ativado!": "¡Tu paquete ha sido activado!",
+    "Sua conta de cliente está pronta. Acesse o portal para conferir seu saldo de vídeos, aprovar roteiros e acompanhar as gravações.": "Tu cuenta de cliente está lista. Accede al portal para consultar tu saldo de vídeos, aprobar guiones y seguir las grabaciones.",
+    "Processando pagamento": "Procesando pago",
+    "Estamos confirmando seu pagamento": "Estamos confirmando tu pago",
+    "Assim que o banco confirmar, seu pacote será ativado e você receberá a fatura por e-mail. Isso costuma levar poucos minutos; você pode acompanhar pelo portal.": "En cuanto el banco lo confirme, tu paquete se activará y recibirás la factura por correo electrónico. Suele tardar pocos minutos; puedes seguirlo desde el portal.",
+    "Não foi possível iniciar o pagamento. Tente novamente em instantes ou escolha outro meio de pagamento.": "No se pudo iniciar el pago. Inténtalo de nuevo en unos instantes o elige otro método de pago.",
+    "Não foi possível iniciar o pagamento. Tente novamente em instantes.": "No se pudo iniciar el pago. Inténtalo de nuevo en unos instantes."
 }

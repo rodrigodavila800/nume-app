@@ -264,8 +264,8 @@ class StorefrontController extends Controller
             $payload = $redsysService->createPaymentPayload(
                 amountInEuros: (float) $purchase->amount,
                 orderNumber: $orderNumber,
-                urlOk: route('redsys.success', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),
-                urlKo: route('redsys.cancel', ['order' => $orderNumber, 'purchase_id' => $purchase->id]),
+                urlOk: route('redsys.success', ['order' => $orderNumber]),
+                urlKo: route('redsys.cancel', ['order' => $orderNumber]),
                 notificationUrl: url('/webhooks/redsys'),
                 payMethod: $payMethodCode,
                 productDescription: $productDesc,
@@ -380,7 +380,8 @@ class StorefrontController extends Controller
                 'mode' => $isSubscription ? 'subscription' : 'payment',
                 'customer_email' => $cliente->email,
                 'line_items' => $lineItems,
-                'success_url' => route('storefront.success', $tenant).'?session_id={CHECKOUT_SESSION_ID}&purchase_id='.$purchase->id,
+                // A compra é localizada pela sessão + tenant da vitrine, nunca por um id na URL.
+                'success_url' => route('storefront.success', $tenant).'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => url('/#pacotes'),
                 'metadata' => [
                     'type' => 'pack_purchase',
@@ -436,34 +437,73 @@ class StorefrontController extends Controller
 
             return redirect($session->url);
         } catch (Exception $e) {
-            return back()->withInput()->with('error', 'Erro ao iniciar checkout: ' . $e->getMessage());
+            // Detalhe só no log (tipo e código da Stripe); o visitante recebe mensagem genérica.
+            $stripeCode = $e instanceof \Stripe\Exception\ApiErrorException ? ' ['.($e->getStripeCode() ?? 'sem_codigo').']' : '';
+            \Illuminate\Support\Facades\Log::warning("Checkout da vitrine: falha ao criar sessão da Stripe para a compra #{$purchase->id}: ".get_class($e).$stripeCode);
+
+            return back()->withInput()->with('error', __('Não foi possível iniciar o pagamento. Tente novamente em instantes ou escolha outro meio de pagamento.'));
         }
     }
 
     /**
      * Retorno de sucesso após pagamento no BBVA Redsys (Bizum/Cartão).
      */
-    public function redsysSuccess(Request $request): View
-    {
-        $purchaseId = $request->query('purchase_id');
-        $order = $request->query('order');
-
+    public function redsysSuccess(
+        Request $request,
+        \App\Services\Payment\RedsysService $redsysService,
+        \App\Services\Payment\PackPaymentConfirmer $confirmer
+    ): View {
+        // A URL OK é aberta pelo navegador e pode ser forjada: ela nunca marca a compra como paga
+        // sozinha. Só confirma se trouxer os parâmetros do Redsys com assinatura válida.
+        $parameters = (string) $request->query('Ds_MerchantParameters', '');
+        $signature = (string) $request->query('Ds_Signature', '');
         $purchase = null;
-        if ($purchaseId) {
-            $purchase = PackPurchase::withoutGlobalScope('tenant')->find($purchaseId);
-        } elseif ($order) {
-            $purchase = PackPurchase::withoutGlobalScope('tenant')
-                ->where('gateway_order_reference', $order)
-                ->first();
+
+        if ($parameters !== '' && $signature !== '' && $redsysService->verifySignature($parameters, $signature)) {
+            $data = $redsysService->decodeParameters($parameters);
+            $purchase = $this->purchaseByRedsysOrder($data['Ds_Order'] ?? $data['DS_MERCHANT_ORDER'] ?? null);
+
+            if ($purchase) {
+                $confirmer->confirmRedsys($purchase, $data);
+            }
+        } else {
+            // Sem assinatura válida: só leitura do status gravado (pelo webhook).
+            $purchase = $this->purchaseByRedsysOrder($request->query('order'));
         }
 
-        if ($purchase && $purchase->status === 'pending') {
-            $purchase->markAsPaidViaGateway($purchase->payment_gateway, (string) $order, ['verified_at_return' => true]);
+        $tenant = $purchase?->tenant ?? Tenant::where('slug', 'nume')->first();
+
+        // Detalhes da compra só para o cliente dono dela; os demais veem só o estado.
+        $ownsPurchase = $purchase && auth('cliente')->id() === $purchase->cliente_id;
+
+        return view('storefront.success', [
+            'tenant' => $tenant,
+            'purchase' => $ownsPurchase ? $purchase : null,
+            'paymentState' => $this->paymentState($purchase),
+        ]);
+    }
+
+    protected function purchaseByRedsysOrder(mixed $order): ?PackPurchase
+    {
+        if (! is_string($order) || ! preg_match('/^[0-9A-Za-z]{4,12}$/', $order)) {
+            return null;
         }
 
-        $tenant = $purchase ? $purchase->tenant : Tenant::where('slug', 'nume')->first();
+        return PackPurchase::withoutGlobalScope('tenant')
+            ->where('gateway_order_reference', $order)
+            ->first();
+    }
 
-        return view('storefront.success', compact('tenant', 'purchase'));
+    /**
+     * 'paid' (pago confirmado), 'processing' (aguardando o gateway) ou 'unknown' (compra não localizada).
+     */
+    protected function paymentState(?PackPurchase $purchase): string
+    {
+        return match (true) {
+            $purchase === null => 'unknown',
+            $purchase->isPaid() => 'paid',
+            default => 'processing',
+        };
     }
 
     /**
@@ -477,21 +517,37 @@ class StorefrontController extends Controller
         );
     }
 
-    public function success(Request $request, Tenant $tenant): View
+    public function success(Request $request, Tenant $tenant, \App\Services\Payment\PackPaymentConfirmer $confirmer): View
     {
         abort_unless($tenant->isActive(), 404);
 
-        $purchaseId = $request->query('purchase_id');
+        // Compra localizada pela sessão da Stripe E pelo tenant da vitrine (o purchase_id da URL é ignorado).
+        $sessionId = (string) $request->query('session_id', '');
         $purchase = null;
 
-        if ($purchaseId) {
-            $purchase = PackPurchase::withoutGlobalScope('tenant')->find($purchaseId);
-            if ($purchase && $purchase->status === 'pending') {
-                $purchase->markAsPaid('session_verified_' . ($request->query('session_id') ?? time()));
+        if (preg_match('/^cs_[A-Za-z0-9_]{8,255}$/', $sessionId)) {
+            $purchase = PackPurchase::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->where('stripe_checkout_session_id', $sessionId)
+                ->first();
+        }
+
+        // Ainda pendente (webhook não chegou): consulta a sessão na API. O checkout usa destination
+        // charges, então a sessão está na conta da plataforma (sem cabeçalho Stripe-Account).
+        if ($purchase && $purchase->status === 'pending' && config('services.stripe.secret')) {
+            try {
+                $session = (new StripeClient(config('services.stripe.secret')))->checkout->sessions->retrieve($sessionId);
+                $confirmer->confirmStripeSession($purchase, $session);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Retorno da Stripe: não foi possível consultar a sessão da compra #{$purchase->id}: ".get_class($e));
             }
         }
 
-        return view('storefront.success', compact('tenant', 'purchase'));
+        return view('storefront.success', [
+            'tenant' => $tenant,
+            'purchase' => $purchase,
+            'paymentState' => $this->paymentState($purchase),
+        ]);
     }
 
     /**
