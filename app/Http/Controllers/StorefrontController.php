@@ -83,17 +83,29 @@ class StorefrontController extends Controller
             ->orderBy('price');
     }
 
+    protected function storefrontPackBySlug(Tenant $tenant, string $slug): Pack
+    {
+        return Pack::withoutGlobalScope('tenant')
+            ->where('tenant_id', $tenant->id)
+            ->where('slug', $slug)
+            ->firstOrFail();
+    }
+
     /**
      * Checkout de pacotes com verificação estrita de cadastro prévio, motor fiscal (IVA 21%) e múltiplos gateways.
      */
     public function checkout(
         Request $request,
         Tenant $tenant,
-        Pack $pack,
+        string $pack,
         \App\Services\Billing\TaxCalculationService $taxService,
         \App\Services\Payment\RedsysService $redsysService
     ): \Illuminate\Http\Response|RedirectResponse|View {
-        abort_unless($tenant->isActive() && $pack->tenant_id === $tenant->id && $pack->isActive(), 404);
+        // {pack} chega como slug (sem binding implícito): o binding usaria o scope do usuário
+        // logado e o primeiro slug igual de QUALQUER produtora. Resolvido só no tenant da vitrine.
+        $pack = $this->storefrontPackBySlug($tenant, $pack);
+
+        abort_unless($tenant->isActive() && $pack->isActive(), 404);
 
         $paymentMethod = $request->input('payment_method', 'bizum'); // 'bizum', 'redsys_card', 'stripe'
         if (! in_array($paymentMethod, ['bizum', 'redsys_card', 'stripe'], true)) {
