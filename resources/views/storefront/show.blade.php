@@ -403,13 +403,9 @@
                             {{ !empty($badgeList) ? implode(' · ', $badgeList) : '🔒 ' . __('Pagamento Seguro') }}
                         </div>
 
-                        <button type="button" 
-                                onclick="openStorefrontCheckout({{ $pack->id }}, '{{ addslashes($pack->name) }}', {{ (float) $pack->price }}, '{{ route('storefront.checkout', ['tenant' => $tenant->slug, 'pack' => $pack->slug]) }}', 'subscription', {{ (int) ($pack->commitment_months ?: 3) }}, '{{ $pack->billing_interval ?: 'month' }}')"
-                                class="contract-btn pack-cta-link pack-cta-btn-block cursor-pointer">
-                            <span>🔄</span>
-                            <span class="pack-btn-text">{{ __('Assinar Plano Recorrente') }}</span>
-                            <span>→</span>
-                        </button>
+                        <div class="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-xs font-medium text-amber-300">
+                            🔒 {{ __('Novas assinaturas temporariamente indisponíveis') }}
+                        </div>
                     </div>
                 </div>
             @empty

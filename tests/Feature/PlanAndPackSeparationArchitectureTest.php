@@ -14,6 +14,7 @@ class PlanAndPackSeparationArchitectureTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private Cliente $cliente;
 
     protected function setUp(): void
@@ -112,7 +113,7 @@ class PlanAndPackSeparationArchitectureTest extends TestCase
         $plansResponse->assertStatus(200);
         $plansResponse->assertSee('Planos de Conteúdo com Escala & Previsibilidade');
         $plansResponse->assertSee('Plano de Continuidade Reels');
-        $plansResponse->assertSee('Assinar Plano de Conteúdo');
+        $plansResponse->assertSee('Novas assinaturas temporariamente indisponíveis');
         $plansResponse->assertDontSee('Campanha Pontual Fechada');
         // Menus dedicados no layout
         $plansResponse->assertSee(route('portal.plans.index'));
@@ -169,7 +170,7 @@ class PlanAndPackSeparationArchitectureTest extends TestCase
         $response->assertSee('id="planos"', false);
         $response->assertSee('Planos Recorrentes de Conteúdo');
         $response->assertSee('Retainer Viral 4K');
-        $response->assertSee('Assinar Plano Recorrente');
+        $response->assertSee('Novas assinaturas temporariamente indisponíveis');
 
         // Seção dedicada de Pacotes
         $response->assertSee('id="pacotes"', false);

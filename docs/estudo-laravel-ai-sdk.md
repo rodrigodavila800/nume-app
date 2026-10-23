@@ -258,6 +258,18 @@ Também existe o diretório de skills do Laravel em [skills.laravel.cloud](https
 
 ---
 
+## 10. Roadmap e Fases Posteriores
+
+### Fase fiscal: assinaturas de pacotes recorrentes
+- **Contexto:** Assinaturas de pacotes de vídeos (`billing_type = subscription`) foram temporariamente retiradas do lançamento inicial.
+- **Implementações postergadas para a Fase Fiscal:**
+  - Tratamento do evento `invoice.paid` da Stripe Connect;
+  - Criação da tabela `pack_purchase_renewals` e controle de ciclo automatizado;
+  - Emissão de fatura/factura por ciclo (numeração sequencial da produtora + retenção de IRPF conforme alinhamento com a gestoria espanhola);
+  - Desbloqueio dos formulários de checkout na vitrine pública e no portal do cliente.
+
+---
+
 ## Fontes
 
 - [Laravel AI SDK (página oficial)](https://laravel.com/ai)

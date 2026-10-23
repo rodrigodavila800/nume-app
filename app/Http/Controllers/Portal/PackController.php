@@ -104,6 +104,16 @@ class PackController extends Controller
             return back()->with('error', 'Este pacote não está mais disponível.');
         }
 
+        if ($pack->billing_type === 'subscription') {
+            $msg = __('As assinaturas de pacotes recorrentes estão temporariamente indisponíveis para novas contratações.');
+
+            if ($isEmbedded) {
+                return response()->json(['status' => 'error', 'message' => $msg], 422);
+            }
+
+            return back()->with('error', $msg);
+        }
+
         $paymentMethod = $request->input('payment_method', 'bizum');
         if (! in_array($paymentMethod, ['bizum', 'redsys_card', 'stripe'], true)) {
             $paymentMethod = 'bizum';

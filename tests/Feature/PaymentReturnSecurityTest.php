@@ -169,20 +169,31 @@ class PaymentReturnSecurityTest extends TestCase
 
     public function test_subscription_is_only_active_after_confirmed_payment(): void
     {
-        Pack::create([
+        $pack = Pack::create([
             'tenant_id' => $this->tenantA->id, 'name' => 'Plano Mensal', 'slug' => 'plano-mensal', 'price' => 490, 'currency' => 'eur',
             'video_quantity' => 4, 'status' => 'active', 'billing_type' => 'subscription', 'billing_interval' => 'month', 'commitment_months' => 3,
         ]);
 
-        // Checkout pela vitrine com Bizum (Redsys): nenhuma chamada à Stripe.
-        $this->post('/vitrine/produtora-a/pacotes/plano-mensal/checkout', [
-            'payment_method' => 'bizum',
+        $cliente = Cliente::withoutGlobalScope('tenant')->create([
+            'tenant_id' => $this->tenantA->id,
+            'name' => 'Novo Cliente',
             'email' => 'novo-cliente@empresa.com',
             'password' => 'secret123',
-            'name' => 'Novo Cliente',
-        ])->assertOk();
+        ]);
 
-        $purchase = PackPurchase::withoutGlobalScope('tenant')->latest('id')->firstOrFail();
+        $purchase = PackPurchase::create([
+            'tenant_id' => $this->tenantA->id,
+            'cliente_id' => $cliente->id,
+            'pack_id' => $pack->id,
+            'payment_gateway' => 'bizum',
+            'gateway_order_reference' => '260000007890',
+            'amount' => 490.00,
+            'total_amount' => 592.90,
+            'status' => 'pending',
+            'subscription_status' => null,
+            'video_quantity' => 4,
+        ]);
+
         $this->assertSame('pending', $purchase->status);
         $this->assertNull($purchase->subscription_status, 'Assinatura nasceu ativa antes do pagamento.');
         $this->assertSame(0, $this->videosReleasedFor($purchase), 'Assinatura ainda não paga libera vídeos.');

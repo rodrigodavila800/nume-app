@@ -20,8 +20,9 @@ class SubscriptionManagementController extends Controller
 
         $query = PackPurchase::where('tenant_id', $tenant->id)
             ->where(function ($q) {
-                $q->where('billing_type', 'subscription')
-                  ->orWhereNotNull('subscription_status');
+                $q->where('billing_mode', 'subscription')
+                    ->orWhereNotNull('subscription_status')
+                    ->orWhereHas('pack', fn ($p) => $p->where('billing_type', 'subscription'));
             })
             ->with(['cliente', 'pack']);
 
@@ -32,12 +33,12 @@ class SubscriptionManagementController extends Controller
 
         // Filtro por Busca de Cliente ou Plano
         if ($request->filled('search')) {
-            $search = '%' . trim($request->input('search')) . '%';
+            $search = '%'.trim($request->input('search')).'%';
             $query->where(function ($sub) use ($search) {
                 $sub->whereHas('cliente', function ($c) use ($search) {
                     $c->where('name', 'like', $search)
-                      ->orWhere('email', 'like', $search)
-                      ->orWhere('company_name', 'like', $search);
+                        ->orWhere('email', 'like', $search)
+                        ->orWhere('company_name', 'like', $search);
                 })->orWhereHas('pack', function ($p) use ($search) {
                     $p->where('name', 'like', $search);
                 });
@@ -47,8 +48,9 @@ class SubscriptionManagementController extends Controller
         // Métricas e KPIs de Assinatura (MRR, Clientes Ativos, Cotas de Vídeo)
         $allSubscriptions = PackPurchase::where('tenant_id', $tenant->id)
             ->where(function ($q) {
-                $q->where('billing_type', 'subscription')
-                  ->orWhereNotNull('subscription_status');
+                $q->where('billing_mode', 'subscription')
+                    ->orWhereNotNull('subscription_status')
+                    ->orWhereHas('pack', fn ($p) => $p->where('billing_type', 'subscription'));
             })
             ->get();
 
@@ -58,6 +60,7 @@ class SubscriptionManagementController extends Controller
         $estimatedMrr = $activeSubscriptions->sum(function ($sub) {
             $interval = $sub->subscription_interval ?: 'month';
             $amount = (float) ($sub->total_amount ?: $sub->amount);
+
             return ($interval === 'quarter') ? ($amount / 3) : $amount;
         });
 
@@ -120,7 +123,12 @@ class SubscriptionManagementController extends Controller
         $tenant = $request->user()->tenant;
         abort_if($subscription->tenant_id !== $tenant->id, 403);
 
-        $subscription->renewSubscriptionCycle();
+        try {
+            $subscription->renewSubscriptionCycle();
+        } catch (\DomainException $e) {
+            return redirect()->route('admin.subscriptions.show', $subscription)
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()->route('admin.subscriptions.show', $subscription)
             ->with('success', __('Ciclo da assinatura renovado e nova cota de vídeos liberada!'));

@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Cliente;
 use App\Models\Pack;
 use App\Models\PackPurchase;
+use App\Models\Setting;
+use App\Models\ShowcaseVideo;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\CategoryAndPacksSeeder;
@@ -177,7 +180,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $video = \App\Models\ShowcaseVideo::create([
+        $video = ShowcaseVideo::create([
             'tenant_id' => $tenant->id,
             'title' => 'Vídeo Institucional Cirurgia 4K',
             'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
@@ -212,7 +215,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $video = \App\Models\ShowcaseVideo::create([
+        $video = ShowcaseVideo::create([
             'tenant_id' => $tenant->id,
             'title' => 'Demonstração de Retenção 9:16',
             'video_url' => 'https://www.youtube.com/shorts/demo123',
@@ -233,7 +236,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $cliente = \App\Models\Cliente::create([
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Alejandro Martínez',
             'email' => 'alejandro@empresa.es',
@@ -253,7 +256,7 @@ class PackManualAddonsAndSofiTest extends TestCase
 
     public function test_storefront_guest_checkout_creates_client_inline_with_addons(): void
     {
-        \App\Models\Setting::set('redsys_enabled', '1');
+        Setting::set('redsys_enabled', '1');
 
         $tenant = Tenant::create([
             'name' => 'NUME Zaragoza',
@@ -285,13 +288,13 @@ class PackManualAddonsAndSofiTest extends TestCase
         ]);
 
         // Valida que o cliente foi criado e autenticado
-        $createdClient = \App\Models\Cliente::where('email', 'novo@cliente.com')->first();
+        $createdClient = Cliente::where('email', 'novo@cliente.com')->first();
         $this->assertNotNull($createdClient);
         $this->assertEquals('Novo Cliente Zaragoza', $createdClient->name);
         $this->assertAuthenticatedAs($createdClient, 'cliente');
 
         // Valida que a compra foi registrada com os add-ons somados
-        $purchase = \App\Models\PackPurchase::where('cliente_id', $createdClient->id)->first();
+        $purchase = PackPurchase::where('cliente_id', $createdClient->id)->first();
         $this->assertNotNull($purchase);
         $this->assertEquals(950.00, (float) $purchase->subtotal); // 800 base + 150 addon
         $this->assertEquals(1149.50, (float) $purchase->total_amount); // 950 * 1.21 IVA
@@ -300,7 +303,7 @@ class PackManualAddonsAndSofiTest extends TestCase
 
     public function test_portal_pack_checkout_records_purchase_with_addons_and_iva(): void
     {
-        \App\Models\Setting::set('redsys_enabled', '1');
+        Setting::set('redsys_enabled', '1');
 
         $tenant = Tenant::create([
             'name' => 'NUME Zaragoza',
@@ -320,7 +323,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $cliente = \App\Models\Cliente::create([
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Carlos Aragón',
             'email' => 'carlos@aragon.es',
@@ -337,7 +340,7 @@ class PackManualAddonsAndSofiTest extends TestCase
         $response->assertStatus(200); // Exibe a view de redirecionamento seguro Redsys
         $response->assertSee('redsys_form');
 
-        $purchase = \App\Models\PackPurchase::where('cliente_id', $cliente->id)->first();
+        $purchase = PackPurchase::where('cliente_id', $cliente->id)->first();
         $this->assertNotNull($purchase);
         $this->assertEquals(1150.00, (float) $purchase->subtotal); // 1000 base + 150 addons
         $this->assertEquals(1391.50, (float) $purchase->total_amount); // 1150 * 1.21 IVA
@@ -348,7 +351,7 @@ class PackManualAddonsAndSofiTest extends TestCase
 
     public function test_storefront_existing_client_checkout_validates_password(): void
     {
-        \App\Models\Setting::set('redsys_enabled', '1');
+        Setting::set('redsys_enabled', '1');
 
         $tenant = Tenant::create([
             'name' => 'NUME Zaragoza',
@@ -364,7 +367,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $cliente = \App\Models\Cliente::create([
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente Existente',
             'email' => 'existente@empresa.es',
@@ -400,11 +403,11 @@ class PackManualAddonsAndSofiTest extends TestCase
 
     public function test_storefront_and_portal_render_payment_method_ux_elements(): void
     {
-        \App\Models\Setting::set('stripe_secret', 'sk_test_mock');
-        \App\Models\Setting::set('stripe_enabled', '1');
-        \App\Models\Setting::set('redsys_enabled', '1');
-        \App\Models\Setting::set('redsys_bizum_enabled', '1');
-        \App\Models\Setting::set('redsys_card_enabled', '1');
+        Setting::set('stripe_secret', 'sk_test_mock');
+        Setting::set('stripe_enabled', '1');
+        Setting::set('redsys_enabled', '1');
+        Setting::set('redsys_bizum_enabled', '1');
+        Setting::set('redsys_card_enabled', '1');
 
         $tenant = Tenant::create([
             'name' => 'NUME Zaragoza',
@@ -427,7 +430,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             ],
         ]);
 
-        $cliente = \App\Models\Cliente::create([
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente Teste UX',
             'email' => 'teste.ux@empresa.com',
@@ -459,10 +462,10 @@ class PackManualAddonsAndSofiTest extends TestCase
     public function test_inactive_payment_methods_are_hidden_and_rejected(): void
     {
         // Desativa Bizum e Stripe no banco de dados
-        \App\Models\Setting::set('redsys_enabled', '1');
-        \App\Models\Setting::set('redsys_bizum_enabled', '0');
-        \App\Models\Setting::set('redsys_card_enabled', '1');
-        \App\Models\Setting::set('stripe_enabled', '0');
+        Setting::set('redsys_enabled', '1');
+        Setting::set('redsys_bizum_enabled', '0');
+        Setting::set('redsys_card_enabled', '1');
+        Setting::set('stripe_enabled', '0');
 
         $tenant = Tenant::create([
             'name' => 'Produtora Teste',
@@ -479,7 +482,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $cliente = \App\Models\Cliente::create([
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente Inativo UX',
             'email' => 'cliente.inativo@empresa.com',
@@ -517,7 +520,7 @@ class PackManualAddonsAndSofiTest extends TestCase
 
     public function test_storefront_and_portal_checkout_recurring_subscription_pack(): void
     {
-        \App\Models\Setting::set('redsys_enabled', '1');
+        Setting::set('redsys_enabled', '1');
 
         $tenant = Tenant::create([
             'name' => 'NUME Zaragoza',
@@ -545,7 +548,7 @@ class PackManualAddonsAndSofiTest extends TestCase
         $storefront->assertSee('pack-subscription-badge', false);
         $storefront->assertSee('/ mês', false);
 
-        // 2. Checkout na vitrine grava assinatura com 3 ciclos e datas de renovação
+        // 2. Checkout na vitrine recusa novas assinaturas nesta fase de lançamento
         $response = $this->post(route('storefront.checkout', [
             'tenant' => $tenant->slug,
             'pack' => $subPack->slug,
@@ -556,12 +559,22 @@ class PackManualAddonsAndSofiTest extends TestCase
             'payment_method' => 'bizum',
         ]);
 
-        $response->assertStatus(200); // Redsys redirect view
+        $response->assertSessionHas('error', 'As assinaturas de pacotes recorrentes estão temporariamente indisponíveis para novas contratações.');
 
-        // Assinatura só fica 'active' após o pagamento confirmado (PackPaymentConfirmer).
-        $this->assertDatabaseHas('pack_purchases', [
+        // 3. Contratos ativos continuam sendo suportados pelo model e ciclos
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
+            'name' => 'Cliente Contrato 3M',
+            'email' => 'contrato3m@empresa.com',
+            'password' => bcrypt('secret123'),
+        ]);
+
+        $purchase = PackPurchase::create([
+            'tenant_id' => $tenant->id,
+            'cliente_id' => $cliente->id,
             'pack_id' => $subPack->id,
+            'payment_gateway' => 'bizum',
+            'amount' => 800.00,
             'status' => 'pending',
             'subscription_status' => null,
             'subscription_interval' => 'month',
@@ -569,9 +582,10 @@ class PackManualAddonsAndSofiTest extends TestCase
             'subscription_cycle_current' => 1,
             'subscription_cycles_total' => 3,
             'video_quantity' => 4,
+            'subscription_renews_at' => now()->addMonth(),
+            'subscription_ends_at' => now()->addMonths(3),
         ]);
 
-        $purchase = PackPurchase::where('pack_id', $subPack->id)->first();
         $this->assertTrue($purchase->isSubscription());
         $this->assertNotNull($purchase->subscription_renews_at);
         $this->assertNotNull($purchase->subscription_ends_at);
@@ -597,7 +611,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'commitment_months' => 3,
         ]);
 
-        $cliente = \App\Models\Cliente::create([
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente Ciclos',
             'email' => 'ciclos@empresa.com',
@@ -667,7 +681,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'commitment_months' => 3,
         ]);
 
-        $cliente = \App\Models\Cliente::create([
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente VIP Contrato',
             'email' => 'vip.contrato@empresa.es',
@@ -712,11 +726,11 @@ class PackManualAddonsAndSofiTest extends TestCase
     public function test_checkout_applies_irpf_deduction_for_b2b_when_producer_is_autonomo(): void
     {
         // 1. Configura a produtora como Autônomo com 15% de IRPF
-        \App\Models\Setting::set('fiscal_regime', 'autonomo');
-        \App\Models\Setting::set('fiscal_irpf_rate', 15.00);
-        \App\Models\Setting::set('tax_default_iva_rate', 21.00);
-        \App\Models\Setting::set('redsys_enabled', '1');
-        \App\Models\Setting::set('redsys_bizum_enabled', '1');
+        Setting::set('fiscal_regime', 'autonomo');
+        Setting::set('fiscal_irpf_rate', 15.00);
+        Setting::set('tax_default_iva_rate', 21.00);
+        Setting::set('redsys_enabled', '1');
+        Setting::set('redsys_bizum_enabled', '1');
 
         $tenant = Tenant::create([
             'name' => 'Produtora Autonoma',
@@ -733,7 +747,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $clienteEmpresa = \App\Models\Cliente::create([
+        $clienteEmpresa = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente Empresa S.L.',
             'company_name' => 'Empresa Contratante S.L.',
@@ -761,7 +775,7 @@ class PackManualAddonsAndSofiTest extends TestCase
 
         // B) Compra como Particular -> NÃO aplica IRPF
         // Base = 1000, IVA 21% = 210, IRPF 0% -> Total = 1210
-        $clienteParticular = \App\Models\Cliente::create([
+        $clienteParticular = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente Particular',
             'email' => 'particular@gmail.com',
@@ -785,9 +799,9 @@ class PackManualAddonsAndSofiTest extends TestCase
 
     public function test_portal_pack_checkout_with_stripe_returns_embedded_json(): void
     {
-        \App\Models\Setting::set('stripe_secret', 'sk_test_mock_secret');
-        \App\Models\Setting::set('stripe_key', 'pk_test_mock_key');
-        \App\Models\Setting::set('stripe_enabled', '1');
+        Setting::set('stripe_secret', 'sk_test_mock_secret');
+        Setting::set('stripe_key', 'pk_test_mock_key');
+        Setting::set('stripe_enabled', '1');
 
         $tenant = Tenant::create([
             'name' => 'NUME Zaragoza',
@@ -805,7 +819,7 @@ class PackManualAddonsAndSofiTest extends TestCase
             'status' => 'active',
         ]);
 
-        $cliente = \App\Models\Cliente::create([
+        $cliente = Cliente::create([
             'tenant_id' => $tenant->id,
             'name' => 'Cliente Stripe Teste',
             'email' => 'stripe.teste@empresa.es',
@@ -813,7 +827,7 @@ class PackManualAddonsAndSofiTest extends TestCase
         ]);
 
         // Quando a chave secreta estiver ausente ou inválida, retorna JSON 422 amigável
-        \App\Models\Setting::set('stripe_secret', '');
+        Setting::set('stripe_secret', '');
 
         $response = $this->actingAs($cliente, 'cliente')
             ->postJson(route('portal.packs.checkout', $pack), [

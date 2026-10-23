@@ -99,6 +99,10 @@ class PackPurchase extends Model
 
     public function renewSubscriptionCycle(?int $newVideosQuota = null): void
     {
+        if ($this->status !== 'paid') {
+            throw new \DomainException(__('Não é possível renovar ciclo de uma assinatura com status pendente ou inválido.'));
+        }
+
         $newCycle = $this->subscription_cycle_current + 1;
         $isCompleted = $newCycle > $this->subscription_cycles_total;
         $intervalMonths = ($this->subscription_interval === 'quarter') ? 3 : 1;

@@ -192,14 +192,10 @@
                         @endif
                     </div>
 
-                    <!-- Botão Principal de Abertura do Modal de Checkout -->
-                    <button type="button"
-                            onclick="openPortalCheckoutModal('{{ $pack->id }}', '{{ addslashes($pack->name) }}', {{ (float) $pack->price }}, '{{ route('portal.packs.checkout', $pack) }}', '{{ $currencySymbol }}', this, 'subscription', {{ (int) ($pack->commitment_months ?: 3) }}, '{{ $pack->billing_interval ?: 'month' }}')"
-                            class="w-full py-3.5 px-4 rounded-xl text-xs font-extrabold tracking-wider uppercase bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                        <span>🔄</span>
-                        <span>{{ __('Assinar Plano de Conteúdo') }}</span>
-                        <span>→</span>
-                    </button>
+                    <!-- Aviso de Novas Assinaturas Indisponíveis Temporariamente -->
+                    <div class="w-full py-3 px-4 rounded-xl text-center text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                        🔒 {{ __('Novas assinaturas temporariamente indisponíveis') }}
+                    </div>
                 </div>
 
             </div>

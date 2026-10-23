@@ -117,6 +117,10 @@ class StorefrontController extends Controller
 
         abort_unless($tenant->isActive() && $pack->isActive(), 404);
 
+        if ($pack->billing_type === 'subscription') {
+            return back()->withInput()->with('error', __('As assinaturas de pacotes recorrentes estão temporariamente indisponíveis para novas contratações.'));
+        }
+
         $paymentMethod = $request->input('payment_method', 'bizum'); // 'bizum', 'redsys_card', 'stripe'
         if (! in_array($paymentMethod, ['bizum', 'redsys_card', 'stripe'], true)) {
             $paymentMethod = 'bizum';
