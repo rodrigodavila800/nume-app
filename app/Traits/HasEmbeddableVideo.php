@@ -43,7 +43,29 @@ trait HasEmbeddableVideo
     }
 
     /**
-     * Retorna o tipo de player a ser renderizado: 'youtube', 'vimeo' ou 'direct'
+     * Retorna o ID do Google Drive caso o link seja do Google Drive
+     */
+    public function getDriveIdAttribute(): ?string
+    {
+        if (empty($this->video_url)) {
+            return null;
+        }
+
+        // 1. Formatos com /file/d/FILE_ID/... (ex: /view, /preview)
+        if (preg_match('#drive\.google\.com/file/d/([a-zA-Z0-9_-]+)#i', $this->video_url, $matches)) {
+            return $matches[1];
+        }
+
+        // 2. Formatos com query param /open?id=FILE_ID ou /uc?id=FILE_ID
+        if (preg_match('#drive\.google\.com/(?:open|uc)\?(?:[^\s"\'&]*&)*id=([a-zA-Z0-9_-]+)#i', $this->video_url, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * Retorna o tipo de player a ser renderizado: 'youtube', 'vimeo', 'drive' ou 'direct'
      */
     public function getVideoTypeAttribute(): string
     {
@@ -53,6 +75,10 @@ trait HasEmbeddableVideo
 
         if ($this->vimeo_id !== null) {
             return 'vimeo';
+        }
+
+        if ($this->drive_id !== null) {
+            return 'drive';
         }
 
         return 'direct';
@@ -102,6 +128,10 @@ trait HasEmbeddableVideo
             return "https://player.vimeo.com/video/{$this->vimeo_id}?badge=0&autopause=0&player_id=0&app_id=58479";
         }
 
+        if ($this->drive_id) {
+            return "https://drive.google.com/file/d/{$this->drive_id}/preview";
+        }
+
         return $this->video_url;
     }
 
@@ -110,11 +140,12 @@ trait HasEmbeddableVideo
      */
     public function getEffectiveThumbnailUrlAttribute(): ?string
     {
-        if (!empty($this->thumbnail_url)) {
+        if (! empty($this->thumbnail_url)) {
             if (str_starts_with($this->thumbnail_url, 'http://') || str_starts_with($this->thumbnail_url, 'https://')) {
                 return $this->thumbnail_url;
             }
-            return asset('storage/' . ltrim($this->thumbnail_url, '/'));
+
+            return asset('storage/'.ltrim($this->thumbnail_url, '/'));
         }
 
         if ($this->youtube_id) {
