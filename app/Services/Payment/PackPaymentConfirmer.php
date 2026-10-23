@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\PackPurchase;
+use App\Models\User;
 use App\Services\Billing\InvoiceService;
 use App\Support\Money;
 use App\Support\StripeCredentials;
@@ -141,6 +142,47 @@ class PackPaymentConfirmer
         Log::info("PackPaymentConfirmer: pagamento Redsys confirmado ({$gatewayName}) para a compra #{$purchase->id}.");
 
         $this->issueInvoice($purchase, 'Redsys');
+        $this->provisionFirstProduction($purchase);
+
+        return self::PAID;
+    }
+
+    /**
+     * Confirmação manual de transferência bancária realizada pelo administrador do tenant.
+     * Registra confirmed_by_user_id e confirmed_at para auditoria rigorosa.
+     */
+    public function confirmBankTransfer(PackPurchase $purchase, User $confirmedBy): string
+    {
+        if ($purchase->status !== 'pending') {
+            return self::ALREADY_PROCESSED;
+        }
+
+        $transitioned = $this->transitionToPaid($purchase, function (PackPurchase $locked) use ($confirmedBy) {
+            $isNume = ($locked->tenant?->slug === 'nume');
+            $feeStatus = (! $isNume && (float) $locked->application_fee_amount > 0)
+                ? 'pending_billing'
+                : 'not_applicable';
+
+            $locked->update([
+                'status' => 'paid',
+                'paid_at' => now(),
+                'confirmed_by_user_id' => $confirmedBy->id,
+                'confirmed_at' => now(),
+                'platform_fee_status' => $feeStatus,
+            ]);
+
+            if ($this->isSubscriptionPurchase($locked)) {
+                $locked->update(['subscription_status' => 'active']);
+            }
+        });
+
+        if (! $transitioned) {
+            return self::ALREADY_PROCESSED;
+        }
+
+        Log::info("PackPaymentConfirmer: transferência bancária da compra #{$purchase->id} confirmada pelo staff #{$confirmedBy->id}.");
+
+        $this->issueInvoice($purchase, 'BankTransfer');
         $this->provisionFirstProduction($purchase);
 
         return self::PAID;

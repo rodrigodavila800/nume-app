@@ -13,3 +13,6 @@ Schedule::command('videos:publish-scheduled')->everyMinute()->withoutOverlapping
 
 // Automação de Follow-up de Aprovações Pendentes do Cliente (executa a cada hora)
 Schedule::command('approvals:check-pending --hours=48')->hourly()->withoutOverlapping();
+
+// Expiração automática de transferências bancárias vencidas (executa a cada hora)
+Schedule::command('packs:expire-bank-transfers')->hourly()->withoutOverlapping();

@@ -61,6 +61,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
             ->name('packs.checkout');
         Route::get('packs/checkout/success', [PackController::class, 'success'])->name('packs.success');
         Route::get('packs/checkout/cancel', [PackController::class, 'cancel'])->name('packs.cancel');
+        Route::get('packs/checkout/transferencia/{purchase}', [PackController::class, 'bankTransfer'])->name('packs.bank_transfer');
         Route::get('purchases/{purchase}/factura', [PackController::class, 'downloadInvoice'])->name('purchases.invoice');
 
         // Distribuição Multiplataforma & Conexão de Redes Sociais

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Portal;
 use App\Http\Controllers\Controller;
 use App\Models\Pack;
 use App\Models\PackPurchase;
+use App\Models\TenantSetting;
 use App\Services\Billing\InvoiceService;
 use App\Services\Billing\TaxCalculationService;
 use App\Services\Billing\TenantFiscalSettings;
@@ -112,7 +113,7 @@ class PackController extends Controller
         }
 
         $paymentMethod = $request->input('payment_method', 'bizum');
-        if (! in_array($paymentMethod, ['bizum', 'redsys_card', 'stripe'], true)) {
+        if (! in_array($paymentMethod, ['bizum', 'redsys_card', 'stripe', 'bank_transfer'], true)) {
             $paymentMethod = 'bizum';
         }
 
@@ -191,6 +192,7 @@ class PackController extends Controller
             'billing_city' => $billingCity ?: null,
             'billing_country' => $billingCountry,
             'application_fee_amount' => $applicationFeeAmount,
+            'platform_fee_status' => ($paymentMethod === 'bank_transfer' && $tenant->slug !== 'nume' && $applicationFeeAmount > 0) ? 'pending_billing' : 'not_applicable',
             'video_quantity' => $pack->video_quantity,
             'addons_purchased' => $selectedAddonNames,
             'addons_snapshot' => $pricing->addonsSnapshot,
@@ -250,7 +252,28 @@ class PackController extends Controller
             return view('storefront.redsys_redirect', compact('payload', 'purchase', 'pack', 'tenant'));
         }
 
-        // B) Stripe
+        // B) Transferência Bancária Manual
+        if ($paymentMethod === 'bank_transfer') {
+            $ref = 'BT-'.strtoupper(Str::random(8));
+            $days = (int) (TenantSetting::get($tenant, 'bank_transfer_expiration_days')
+                ?: TenantSetting::get($tenant, 'bank_transfer_expires_days', 3));
+            $purchase->update([
+                'bank_transfer_reference' => $ref,
+                'gateway_order_reference' => $ref,
+                'expires_at' => now()->addDays($days),
+            ]);
+
+            if ($isEmbedded) {
+                return response()->json([
+                    'status' => 'success',
+                    'redirect_url' => route('portal.packs.bank_transfer', $purchase->id),
+                ]);
+            }
+
+            return redirect()->route('portal.packs.bank_transfer', $purchase->id);
+        }
+
+        // C) Stripe
         $stripeSecret = StripeCredentials::secret();
         if (empty($stripeSecret)) {
             if ($isEmbedded) {
@@ -455,5 +478,32 @@ class PackController extends Controller
         $pdf = $invoiceService->renderPdf($purchase);
 
         return $pdf->download("Factura-{$purchase->invoice_number}.pdf");
+    }
+
+    /**
+     * Exibe instruções de transferência bancária no portal do cliente.
+     */
+    public function bankTransfer(PackPurchase $purchase): View
+    {
+        $cliente = auth('cliente')->user();
+        abort_unless((int) $purchase->cliente_id === (int) $cliente->id, 403);
+
+        $tenant = $cliente->tenant;
+        $iban = (string) TenantSetting::get($tenant, 'bank_transfer_iban', '');
+        $bic = (string) TenantSetting::get($tenant, 'bank_transfer_bic', '');
+        $accountHolder = (string) (TenantSetting::get($tenant, 'bank_transfer_account_holder')
+            ?: TenantSetting::get($tenant, 'bank_transfer_beneficiary', $tenant->name));
+        $bankName = (string) TenantSetting::get($tenant, 'bank_transfer_bank_name', '');
+        $instructions = (string) TenantSetting::get($tenant, 'bank_transfer_instructions', '');
+
+        return view('portal.packs.bank_transfer', [
+            'tenant' => $tenant,
+            'purchase' => $purchase,
+            'iban' => $iban,
+            'bic' => $bic,
+            'accountHolder' => $accountHolder,
+            'bankName' => $bankName,
+            'instructions' => $instructions,
+        ]);
     }
 }

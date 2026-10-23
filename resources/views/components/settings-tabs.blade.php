@@ -23,6 +23,13 @@
         <span>{{ __('TPV Redsys (BBVA)') }}</span>
     </a>
 
+    <a href="{{ route('admin.settings.bank-transfer') }}"
+       id="tab-btn-bank-transfer"
+       class="settings-tab-btn flex-1 min-w-[170px] px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 select-none cursor-pointer {{ $active === 'bank_transfer' || request()->routeIs('admin.settings.bank-transfer*') ? 'bg-emerald-600 text-white shadow-sm font-extrabold' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+        <span>🏛️</span>
+        <span>{{ __('Transferência (IBAN)') }}</span>
+    </a>
+
     <a href="{{ route('admin.settings.gateways') }}#oauth"
        onclick="if(typeof switchSettingTab === 'function') { switchSettingTab('oauth'); return false; }"
        id="tab-btn-oauth"

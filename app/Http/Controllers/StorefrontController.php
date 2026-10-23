@@ -8,6 +8,7 @@ use App\Models\Pack;
 use App\Models\PackPurchase;
 use App\Models\ShowcaseVideo;
 use App\Models\Tenant;
+use App\Models\TenantSetting;
 use App\Services\Billing\TaxCalculationService;
 use App\Services\Billing\TenantFiscalSettings;
 use App\Services\Payment\PackCheckoutPricing;
@@ -122,8 +123,8 @@ class StorefrontController extends Controller
             return back()->withInput()->with('error', __('As assinaturas de pacotes recorrentes estão temporariamente indisponíveis para novas contratações.'));
         }
 
-        $paymentMethod = $request->input('payment_method', 'bizum'); // 'bizum', 'redsys_card', 'stripe'
-        if (! in_array($paymentMethod, ['bizum', 'redsys_card', 'stripe'], true)) {
+        $paymentMethod = $request->input('payment_method', 'bizum'); // 'bizum', 'redsys_card', 'stripe', 'bank_transfer'
+        if (! in_array($paymentMethod, ['bizum', 'redsys_card', 'stripe', 'bank_transfer'], true)) {
             $paymentMethod = 'bizum';
         }
 
@@ -259,6 +260,7 @@ class StorefrontController extends Controller
             'billing_city' => $billingCity ?: null,
             'billing_country' => $billingCountry,
             'application_fee_amount' => $feeAmount,
+            'platform_fee_status' => ($paymentMethod === 'bank_transfer' && $tenant->slug !== 'nume' && $feeAmount > 0) ? 'pending_billing' : 'not_applicable',
             'video_quantity' => $pack->video_quantity,
             'addons_purchased' => $selectedAddonNames,
             'addons_snapshot' => $pricing->addonsSnapshot,
@@ -300,7 +302,21 @@ class StorefrontController extends Controller
             return view('storefront.redsys_redirect', compact('payload', 'purchase', 'pack', 'tenant'));
         }
 
-        // B) Stripe Checkout
+        // B) Transferência Bancária Manual
+        if ($paymentMethod === 'bank_transfer') {
+            $ref = 'BT-'.strtoupper(Str::random(8));
+            $days = (int) (TenantSetting::get($tenant, 'bank_transfer_expiration_days')
+                ?: TenantSetting::get($tenant, 'bank_transfer_expires_days', 3));
+            $purchase->update([
+                'bank_transfer_reference' => $ref,
+                'gateway_order_reference' => $ref,
+                'expires_at' => now()->addDays($days),
+            ]);
+
+            return redirect()->route('storefront.bank_transfer', [$tenant->slug, $purchase->id]);
+        }
+
+        // C) Stripe Checkout
         try {
             $stripe = new StripeClient(StripeCredentials::secret());
             $currency = strtolower($pack->currency ?: 'eur');
@@ -632,6 +648,31 @@ class StorefrontController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => __('Atendimento reiniciado com sucesso!'),
+        ]);
+    }
+
+    /**
+     * Exibe a página com instruções de pagamento por transferência bancária.
+     */
+    public function bankTransfer(Tenant $tenant, PackPurchase $purchase): View
+    {
+        abort_unless((int) $purchase->tenant_id === (int) $tenant->id, 404);
+
+        $iban = (string) TenantSetting::get($tenant, 'bank_transfer_iban', '');
+        $bic = (string) TenantSetting::get($tenant, 'bank_transfer_bic', '');
+        $accountHolder = (string) (TenantSetting::get($tenant, 'bank_transfer_account_holder')
+            ?: TenantSetting::get($tenant, 'bank_transfer_beneficiary', $tenant->name));
+        $bankName = (string) TenantSetting::get($tenant, 'bank_transfer_bank_name', '');
+        $instructions = (string) TenantSetting::get($tenant, 'bank_transfer_instructions', '');
+
+        return view('storefront.bank_transfer', [
+            'tenant' => $tenant,
+            'purchase' => $purchase,
+            'iban' => $iban,
+            'bic' => $bic,
+            'accountHolder' => $accountHolder,
+            'bankName' => $bankName,
+            'instructions' => $instructions,
         ]);
     }
 }

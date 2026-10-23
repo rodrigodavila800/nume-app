@@ -313,13 +313,21 @@
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                         💳 BBVA
                                     </span>
+                                @elseif($gateway === 'bank_transfer')
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                        🏛️ Transferencia
+                                    </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
                                         🌐 Stripe
                                     </span>
                                 @endif
 
-                                @if($invoice->gateway_order_reference)
+                                @if($invoice->bank_transfer_reference)
+                                    <div class="text-[9px] text-amber-400 font-mono mt-0.5">
+                                        {{ $invoice->bank_transfer_reference }}
+                                    </div>
+                                @elseif($invoice->gateway_order_reference)
                                     <div class="text-[9px] text-zinc-400 font-mono mt-0.5">
                                         #{{ $invoice->gateway_order_reference }}
                                     </div>
@@ -329,14 +337,32 @@
                             {{-- Ações --}}
                             <td class="px-5 py-4 text-center">
                                 @if($invoice->isPaid())
-                                    <a href="{{ route('admin.invoices.download', $invoice) }}"
-                                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-orange-600 text-zinc-300 hover:text-white border border-zinc-700 hover:border-orange-500 transition shadow-sm"
-                                       title="{{ __('Descargar Factura Oficial AEAT en PDF') }}">
-                                        <svg class="w-3.5 h-3.5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <span>PDF</span>
-                                    </a>
+                                    <div class="inline-flex flex-col items-center gap-1">
+                                        <a href="{{ route('admin.invoices.download', $invoice) }}"
+                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-orange-600 text-zinc-300 hover:text-white border border-zinc-700 hover:border-orange-500 transition shadow-sm"
+                                           title="{{ __('Descargar Factura Oficial AEAT en PDF') }}">
+                                            <svg class="w-3.5 h-3.5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span>PDF</span>
+                                        </a>
+                                        @if($invoice->isBankTransfer() && $invoice->confirmed_at)
+                                            <span class="text-[9px] text-zinc-400 block" title="{{ __('Confirmado por :user', ['user' => $invoice->confirmedBy?->name ?? 'Admin']) }}">
+                                                ✓ {{ $invoice->confirmed_at->format('d/m/Y') }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @elseif($invoice->isBankTransfer() && $invoice->isExpired())
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                        {{ __('Expirada') }}
+                                    </span>
+                                @elseif($invoice->isBankTransfer())
+                                    <form action="{{ route('admin.purchases.confirm-bank-transfer', $invoice) }}" method="POST" onsubmit="return confirm('{{ __('Confirmar o recebimento de € :amount na conta bancária? Isso emitirá a fatura oficial e iniciará o projeto.', ['amount' => number_format((float) $invoice->total_amount, 2, ',', '.')]) }}');">
+                                        @csrf
+                                        <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition">
+                                            ✓ {{ __('Confirmar') }}
+                                        </button>
+                                    </form>
                                 @else
                                     <span class="text-zinc-500 text-xs italic">{{ __('Pendiente') }}</span>
                                 @endif

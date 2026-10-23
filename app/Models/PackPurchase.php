@@ -56,6 +56,10 @@ class PackPurchase extends Model
         'addons_purchased',
         'addons_snapshot',
         'paid_at',
+        'expires_at',
+        'bank_transfer_reference',
+        'confirmed_by_user_id',
+        'confirmed_at',
         'billing_mode',
         'deposit_amount',
         'deposit_paid_at',
@@ -86,6 +90,8 @@ class PackPurchase extends Model
             'addons_snapshot' => 'array',
             'gateway_metadata' => 'array',
             'paid_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'confirmed_at' => 'datetime',
             'deposit_paid_at' => 'datetime',
             'balance_paid_at' => 'datetime',
             'invoice_generated_at' => 'datetime',
@@ -147,9 +153,39 @@ class PackPurchase extends Model
         return $this->hasMany(Production::class);
     }
 
+    public function confirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'confirmed_by_user_id');
+    }
+
     public function isPaid(): bool
     {
         return $this->status === 'paid';
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->status === 'expired' || ($this->status === 'pending' && $this->expires_at && $this->expires_at->isPast());
+    }
+
+    public function isBankTransfer(): bool
+    {
+        return $this->payment_gateway === 'bank_transfer';
+    }
+
+    public function scopeBankTransfers($query)
+    {
+        return $query->where('payment_gateway', 'bank_transfer');
+    }
+
+    public function scopePendingBankTransfers($query)
+    {
+        return $query->where('payment_gateway', 'bank_transfer')->where('status', 'pending');
+    }
+
+    public function scopeExpired($query)
+    {
+        return $query->where('status', 'expired');
     }
 
     public function videosRemaining(): int

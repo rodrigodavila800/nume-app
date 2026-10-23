@@ -115,6 +115,37 @@ class PaymentMethodAvailability
     }
 
     /**
+     * Verifica se os dados bancários da produtora estão configurados (IBAN).
+     */
+    public function bankTransferConfigured(): bool
+    {
+        if (! $this->tenant) {
+            return false;
+        }
+
+        $iban = TenantSetting::get($this->tenant, 'bank_transfer_iban');
+
+        return ! empty($iban);
+    }
+
+    /**
+     * Verifica se a transferência bancária está ativa para a produtora.
+     */
+    public function bankTransferEnabled(?Pack $pack = null): bool
+    {
+        if (! $this->bankTransferConfigured() || ! $this->tenant) {
+            return false;
+        }
+
+        $specific = TenantSetting::get($this->tenant, 'bank_transfer_enabled');
+        if ($specific !== null && $specific !== '') {
+            return (bool) $specific;
+        }
+
+        return false;
+    }
+
+    /**
      * Verifica se a Stripe está ativa e configurada.
      */
     public function stripeEnabled(?Pack $pack = null): bool
@@ -135,6 +166,7 @@ class PaymentMethodAvailability
             'bizum', 'redsys_bizum' => $this->bizumEnabled($pack),
             'redsys_card' => $this->redsysCardEnabled($pack),
             'stripe' => $this->stripeEnabled($pack),
+            'bank_transfer' => $this->bankTransferEnabled($pack),
             default => false,
         };
     }
@@ -150,6 +182,7 @@ class PaymentMethodAvailability
             'bizum' => $this->bizumEnabled($pack),
             'redsys_card' => $this->redsysCardEnabled($pack),
             'stripe' => $this->stripeEnabled($pack),
+            'bank_transfer' => $this->bankTransferEnabled($pack),
         ];
     }
 }
