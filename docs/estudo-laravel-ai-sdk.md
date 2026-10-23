@@ -157,7 +157,13 @@ Pendências do dono do projeto: rotacionar a chave no Google AI Studio, atualiza
 - Middleware `RecordAiUsage` por step, com tenant e agente pelo construtor; falha ao gravar só gera log do tipo do erro. Ligado no `SofiTranslatorAgent` (tenant nulo) e no `SofiQuoteEstimatorAgent`.
 - `SofiQuoteEstimatorService::estimate($text, ?Tenant)` migrado: `SofiQuoteEstimatorAgent` com `HasStructuredOutput` espelhando o array atual, saída por `normalizeParsedData()`, fallback heurístico em qualquer falha. Removido o parsing de ```` ```json ```` no caminho do SDK (o caminho antigo continua igual).
 - Testes: 216 → **227**, 0 falhas, ~13 s. Inclui uso gravado no tenant certo com dois tenants.
-- Ainda pendente: passo 5 (teste real com a chave da Anthropic); `SofiBrandAnalystService` (previsto na seção 7) ficou para a próxima fase.
+- **Teste real com o Gemini (23/10/2026), em vez da Anthropic:** `gemini-3.5-flash-lite`, 2 chamadas, ambas HTTP 200 e sem retry (o script bloqueava qualquer requisição extra).
+  - Tradutor: tradução natural e completa para `es` em ~6,4 s, sem fallback.
+  - Orçamento (tenant 1, dados fictícios): saída estruturada aceita pelo flash-lite em ~5,4 s, sem fallback; todos os campos de `pedido` com o tipo esperado.
+  - `ai_usage_logs`: tradutor com `tenant_id` nulo (216 de entrada / 31 de saída); orçamento com `tenant_id` 1 (318 / 342). Cache 0 nos dois.
+  - Nenhuma chave em `storage/logs` (`key=`, `x-goog-api-key` e os 30 primeiros caracteres da chave: 0 ocorrências).
+- O teste com a Anthropic ficou dispensado por ora (evitar tokens pagos). `SofiBrandAnalystService` (previsto na seção 7) ficou para a próxima fase.
+- Detalhe herdado do caminho antigo: `normalizeParsedData()` devolve `motion` como inteiro `0` quando o valor é zero (`max(0, 0.0)`); os demais números saem como `float`.
 
 ---
 
