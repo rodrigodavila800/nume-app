@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PackPurchase extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use BelongsToTenant, HasFactory;
 
     protected $fillable = [
         'tenant_id',
@@ -52,6 +52,7 @@ class PackPurchase extends Model
         'video_quantity',
         'videos_used',
         'addons_purchased',
+        'addons_snapshot',
         'paid_at',
         'billing_mode',
         'deposit_amount',
@@ -80,6 +81,7 @@ class PackPurchase extends Model
             'subscription_cycle_current' => 'integer',
             'subscription_cycles_total' => 'integer',
             'addons_purchased' => 'array',
+            'addons_snapshot' => 'array',
             'gateway_metadata' => 'array',
             'paid_at' => 'datetime',
             'deposit_paid_at' => 'datetime',

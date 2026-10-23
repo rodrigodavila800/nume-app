@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\ShowcaseVideo;
 use App\Models\Tenant;
 use App\Services\Billing\TaxCalculationService;
+use App\Services\Payment\PackCheckoutPricing;
 use App\Services\Payment\PackPaymentConfirmer;
 use App\Services\Payment\RedsysService;
 use App\Services\SofiSalesConsultantService;
@@ -186,32 +187,15 @@ class StorefrontController extends Controller
         $billingCity = trim($request->input('billing_city', ''));
         $billingCountry = strtoupper(trim($request->input('billing_country', 'ES'))) ?: 'ES';
 
-        // 4. Cálculo da Base Imponible com Add-ons
+        // 4. Cálculo da Base Imponible com Add-ons resolvidos pelo tenant do pacote
         $selectedAddons = $request->input('selected_addons', []);
         if (! is_array($selectedAddons)) {
             $selectedAddons = [];
         }
 
-        $effectiveAddons = collect($pack->effective_addons);
-        $addonsTotal = 0;
-        $selectedAddonNames = [];
-
-        foreach ($selectedAddons as $selected) {
-            $matched = $effectiveAddons->first(function ($addon) use ($selected) {
-                return (isset($addon['id']) && (string) $addon['id'] === (string) $selected)
-                    || (isset($addon['name']) && (string) $addon['name'] === (string) $selected)
-                    || (isset($addon['slug']) && (string) $addon['slug'] === (string) $selected);
-            });
-
-            if ($matched) {
-                $addonsTotal += (float) ($matched['price'] ?? 0);
-                $selectedAddonNames[] = $matched['name'];
-            } else {
-                $selectedAddonNames[] = (string) $selected;
-            }
-        }
-
-        $subtotal = round((float) $pack->price + $addonsTotal, 2);
+        $pricing = PackCheckoutPricing::resolve($pack, $selectedAddons);
+        $subtotal = $pricing->subtotal;
+        $selectedAddonNames = $pricing->addonNames;
 
         $fiscalRegime = Setting::get('fiscal_regime', 'autonomo');
         $irpfRate = ($fiscalRegime === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
@@ -271,6 +255,7 @@ class StorefrontController extends Controller
             'application_fee_amount' => $feeAmount,
             'video_quantity' => $pack->video_quantity,
             'addons_purchased' => $selectedAddonNames,
+            'addons_snapshot' => $pricing->addonsSnapshot,
             'status' => 'pending',
             'subscription_status' => null, // vira 'active' só no PackPaymentConfirmer, após o pagamento
             'subscription_interval' => $billingInterval,
@@ -354,21 +339,15 @@ class StorefrontController extends Controller
                     ],
                 ];
 
-                foreach ($selectedAddons as $selected) {
-                    $matched = $effectiveAddons->first(function ($addon) use ($selected) {
-                        return (isset($addon['id']) && (string) $addon['id'] === (string) $selected)
-                            || (isset($addon['name']) && (string) $addon['name'] === (string) $selected)
-                            || (isset($addon['slug']) && (string) $addon['slug'] === (string) $selected);
-                    });
-
-                    if ($matched && (float) ($matched['price'] ?? 0) > 0) {
+                foreach ($pricing->addonsSnapshot as $addonItem) {
+                    if ($addonItem['price'] > 0) {
                         $addonPriceData = [
                             'currency' => $currency,
                             'product_data' => [
-                                'name' => '+ '.$matched['name'],
+                                'name' => '+ '.$addonItem['name'],
                                 'description' => "Add-on opcional para {$pack->name}",
                             ],
-                            'unit_amount' => Money::cents($matched['price']),
+                            'unit_amount' => Money::cents($addonItem['price']),
                         ];
                         if ($recurringConfig) {
                             $addonPriceData['recurring'] = $recurringConfig;

@@ -6,9 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Pack;
 use App\Models\PackPurchase;
 use App\Models\Setting;
+use App\Services\Billing\InvoiceService;
+use App\Services\Billing\TaxCalculationService;
+use App\Services\Payment\PackCheckoutPricing;
+use App\Services\Payment\RedsysService;
 use App\Support\Money;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Stripe\StripeClient;
 
@@ -54,7 +61,7 @@ class PackController extends Controller
             ->where('status', 'active')
             ->where(function ($q) {
                 $q->where('billing_type', '!=', 'subscription')
-                  ->orWhereNull('billing_type');
+                    ->orWhereNull('billing_type');
             })
             ->with(['category', 'addons', 'showcaseVideo'])
             ->orderBy('price')
@@ -79,9 +86,9 @@ class PackController extends Controller
     public function checkout(
         Request $request,
         Pack $pack,
-        \App\Services\Billing\TaxCalculationService $taxService,
-        \App\Services\Payment\RedsysService $redsysService
-    ): \Illuminate\Http\Response|RedirectResponse|View|\Illuminate\Http\JsonResponse {
+        TaxCalculationService $taxService,
+        RedsysService $redsysService
+    ): Response|RedirectResponse|View|JsonResponse {
         $cliente = $request->user('cliente');
         $tenant = $cliente->tenant;
 
@@ -91,6 +98,7 @@ class PackController extends Controller
             if ($isEmbedded) {
                 return response()->json(['status' => 'error', 'message' => 'Este pacote não está mais disponível.'], 422);
             }
+
             return back()->with('error', 'Este pacote não está mais disponível.');
         }
 
@@ -100,10 +108,11 @@ class PackController extends Controller
         }
 
         // Valida se o método escolhido está devidamente ativo nas configurações
-        if (! \App\Models\Setting::isPaymentMethodActive($paymentMethod, $tenant)) {
+        if (! Setting::isPaymentMethodActive($paymentMethod, $tenant)) {
             if ($isEmbedded) {
                 return response()->json(['status' => 'error', 'message' => __('O método de pagamento selecionado não está ativo no momento.')], 422);
             }
+
             return back()->with('error', __('O método de pagamento selecionado não está ativo no momento.'));
         }
 
@@ -121,35 +130,18 @@ class PackController extends Controller
             $cliente->update(['tax_id' => $billingTaxId]);
         }
 
-        // Add-ons selecionados
+        // Add-ons selecionados resolvidos pelo tenant do pacote
         $selectedAddons = $request->input('selected_addons', []);
         if (! is_array($selectedAddons)) {
             $selectedAddons = [];
         }
 
-        $effectiveAddons = collect($pack->effective_addons);
-        $addonsTotal = 0;
-        $selectedAddonNames = [];
+        $pricing = PackCheckoutPricing::resolve($pack, $selectedAddons);
+        $subtotal = $pricing->subtotal;
+        $selectedAddonNames = $pricing->addonNames;
 
-        foreach ($selectedAddons as $selected) {
-            $matched = $effectiveAddons->first(function ($addon) use ($selected) {
-                return (isset($addon['id']) && (string) $addon['id'] === (string) $selected)
-                    || (isset($addon['name']) && (string) $addon['name'] === (string) $selected)
-                    || (isset($addon['slug']) && (string) $addon['slug'] === (string) $selected);
-            });
-
-            if ($matched) {
-                $addonsTotal += (float) ($matched['price'] ?? 0);
-                $selectedAddonNames[] = $matched['name'];
-            } else {
-                $selectedAddonNames[] = (string) $selected;
-            }
-        }
-
-        $subtotal = round((float) $pack->price + $addonsTotal, 2);
-
-        $fiscalRegime = \App\Models\Setting::get('fiscal_regime', 'autonomo');
-        $irpfRate = ($fiscalRegime === 'autonomo') ? (float) \App\Models\Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
+        $fiscalRegime = Setting::get('fiscal_regime', 'autonomo');
+        $irpfRate = ($fiscalRegime === 'autonomo') ? (float) Setting::get('fiscal_irpf_rate', 15.00) : 0.00;
 
         // Execução do Motor Fiscal (IVA 21%, IRPF e Isenções)
         $taxData = $taxService->calculate(
@@ -190,6 +182,7 @@ class PackController extends Controller
             'application_fee_amount' => $applicationFeeAmount,
             'video_quantity' => $pack->video_quantity,
             'addons_purchased' => $selectedAddonNames,
+            'addons_snapshot' => $pricing->addonsSnapshot,
             'status' => 'pending',
             'subscription_status' => null, // vira 'active' só no PackPaymentConfirmer, após o pagamento
             'subscription_interval' => $billingInterval,
@@ -254,12 +247,13 @@ class PackController extends Controller
                     'message' => 'O gateway Stripe não está configurado no momento.',
                 ], 422);
             }
+
             return back()->with('error', 'O gateway Stripe não está configurado no momento.');
         }
 
         $stripe = new StripeClient($stripeSecret);
         $currency = strtolower($pack->currency ?: 'eur');
-        $addonsSummary = ! empty($selectedAddonNames) ? (' + Opcionais: ' . implode(', ', $selectedAddonNames)) : '';
+        $addonsSummary = ! empty($selectedAddonNames) ? (' + Opcionais: '.implode(', ', $selectedAddonNames)) : '';
 
         $recurringConfig = $isSubscription ? [
             'interval' => 'month',
@@ -269,7 +263,7 @@ class PackController extends Controller
         $mainPriceData = [
             'currency' => $currency,
             'product_data' => [
-                'name' => $pack->name . ($isSubscription ? " (Contrato {$commitmentMonths} Meses)" : ''),
+                'name' => $pack->name.($isSubscription ? " (Contrato {$commitmentMonths} Meses)" : ''),
                 'description' => "Pacote de {$pack->video_quantity} vídeos/ciclo — {$tenant->name}{$addonsSummary}",
             ],
             'unit_amount' => Money::cents($pack->price),
@@ -283,21 +277,15 @@ class PackController extends Controller
             'quantity' => 1,
         ]];
 
-        foreach ($selectedAddons as $selected) {
-            $matched = $effectiveAddons->first(function ($addon) use ($selected) {
-                return (isset($addon['id']) && (string) $addon['id'] === (string) $selected)
-                    || (isset($addon['name']) && (string) $addon['name'] === (string) $selected)
-                    || (isset($addon['slug']) && (string) $addon['slug'] === (string) $selected);
-            });
-
-            if ($matched && (float) ($matched['price'] ?? 0) > 0) {
+        foreach ($pricing->addonsSnapshot as $addonItem) {
+            if ($addonItem['price'] > 0) {
                 $addonPriceData = [
                     'currency' => $currency,
                     'product_data' => [
-                        'name' => '+ ' . $matched['name'],
+                        'name' => '+ '.$addonItem['name'],
                         'description' => "Add-on opcional para {$pack->name}",
                     ],
-                    'unit_amount' => Money::cents($matched['price']),
+                    'unit_amount' => Money::cents($addonItem['price']),
                 ];
                 if ($recurringConfig) {
                     $addonPriceData['recurring'] = $recurringConfig;
@@ -326,12 +314,11 @@ class PackController extends Controller
             ];
         }
 
-
         // O PackPaymentConfirmer confere amount_total == Money::cents($purchase->amount):
         // a sessão só é criada se os line items (menos o cupom de IRPF) baterem com esse valor.
         $irpfDiscountCents = (($taxData['irpf_amount'] ?? 0) > 0) ? Money::cents($taxData['irpf_amount']) : 0;
         if (Money::lineItemsTotal($lineItems) - $irpfDiscountCents !== Money::cents($purchase->amount)) {
-            \Illuminate\Support\Facades\Log::error("Checkout do portal: valor dos itens diverge da compra #{$purchase->id}.");
+            Log::error("Checkout do portal: valor dos itens diverge da compra #{$purchase->id}.");
             $message = __('Não foi possível iniciar o pagamento. Tente novamente em instantes.');
 
             return $isEmbedded
@@ -353,9 +340,9 @@ class PackController extends Controller
 
         if ($isEmbedded) {
             $sessionPayload['ui_mode'] = 'embedded_page';
-            $sessionPayload['return_url'] = route('portal.packs.success') . '?session_id={CHECKOUT_SESSION_ID}&purchase_id=' . $purchase->id;
+            $sessionPayload['return_url'] = route('portal.packs.success').'?session_id={CHECKOUT_SESSION_ID}&purchase_id='.$purchase->id;
         } else {
-            $sessionPayload['success_url'] = route('portal.packs.success') . '?session_id={CHECKOUT_SESSION_ID}&purchase_id=' . $purchase->id;
+            $sessionPayload['success_url'] = route('portal.packs.success').'?session_id={CHECKOUT_SESSION_ID}&purchase_id='.$purchase->id;
             $sessionPayload['cancel_url'] = route('portal.packs.cancel');
         }
 
@@ -405,16 +392,16 @@ class PackController extends Controller
 
             return redirect($session->url);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Erro ao criar sessão de checkout da Stripe: ' . $e->getMessage());
+            Log::error('Erro ao criar sessão de checkout da Stripe: '.$e->getMessage());
 
             if ($isEmbedded) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Não foi possível iniciar o checkout seguro da Stripe: ' . $e->getMessage(),
+                    'message' => 'Não foi possível iniciar o checkout seguro da Stripe: '.$e->getMessage(),
                 ], 422);
             }
 
-            return back()->with('error', 'Erro ao conectar com a Stripe: ' . $e->getMessage());
+            return back()->with('error', 'Erro ao conectar com a Stripe: '.$e->getMessage());
         }
     }
 
@@ -442,7 +429,7 @@ class PackController extends Controller
     public function downloadInvoice(
         Request $request,
         PackPurchase $purchase,
-        \App\Services\Billing\InvoiceService $invoiceService
+        InvoiceService $invoiceService
     ): \Symfony\Component\HttpFoundation\Response {
         $cliente = $request->user('cliente');
         abort_unless($purchase->cliente_id === $cliente->id, 403, 'Acesso negado a esta fatura.');
