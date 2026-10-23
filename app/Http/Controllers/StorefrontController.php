@@ -35,14 +35,12 @@ class StorefrontController extends Controller
         // logado de outra produtora, o scope BelongsToTenant filtraria pelo tenant DELE.
         return view('storefront.show', [
             'tenant' => $tenant,
-            'categories' => Category::withoutGlobalScope('tenant')
-                ->where('tenant_id', $tenant->id)
+            'categories' => Category::forTenant($tenant->id)
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->get(),
-            'videos' => ShowcaseVideo::withoutGlobalScope('tenant')
-                ->where('tenant_id', $tenant->id)
-                ->with(['category' => fn ($q) => $q->withoutGlobalScope('tenant')->where('categories.tenant_id', $tenant->id)])
+            'videos' => ShowcaseVideo::forTenant($tenant->id)
+                ->with(['category' => fn ($q) => $q->forTenant($tenant->id)])
                 ->where('is_published', true)
                 ->orderBy('sort_order')
                 ->orderBy('id')
@@ -72,21 +70,19 @@ class StorefrontController extends Controller
      */
     protected function storefrontPacks(Tenant $tenant): \Illuminate\Database\Eloquent\Builder
     {
-        return Pack::withoutGlobalScope('tenant')
-            ->where('tenant_id', $tenant->id)
+        return Pack::forTenant($tenant->id)
             ->where('status', 'active')
             ->with([
-                'category' => fn ($q) => $q->withoutGlobalScope('tenant')->where('categories.tenant_id', $tenant->id),
-                'addons' => fn ($q) => $q->withoutGlobalScope('tenant')->where('addons.tenant_id', $tenant->id),
-                'showcaseVideo' => fn ($q) => $q->withoutGlobalScope('tenant')->where('showcase_videos.tenant_id', $tenant->id),
+                'category' => fn ($q) => $q->forTenant($tenant->id),
+                'addons' => fn ($q) => $q->forTenant($tenant->id),
+                'showcaseVideo' => fn ($q) => $q->forTenant($tenant->id),
             ])
             ->orderBy('price');
     }
 
     protected function storefrontPackBySlug(Tenant $tenant, string $slug): Pack
     {
-        return Pack::withoutGlobalScope('tenant')
-            ->where('tenant_id', $tenant->id)
+        return Pack::forTenant($tenant->id)
             ->where('slug', $slug)
             ->firstOrFail();
     }

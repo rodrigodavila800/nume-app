@@ -85,10 +85,9 @@ class SofiSalesConsultantService
      */
     protected function activePacksFor(Tenant $tenant)
     {
-        return Pack::withoutGlobalScope('tenant')
-            ->where('tenant_id', $tenant->id)
+        return Pack::forTenant($tenant->id)
             ->where('status', 'active')
-            ->with(['addons' => fn ($query) => $query->withoutGlobalScope('tenant')->where('addons.tenant_id', $tenant->id)])
+            ->with(['addons' => fn ($query) => $query->forTenant($tenant->id)])
             ->orderBy('price')
             ->get();
     }

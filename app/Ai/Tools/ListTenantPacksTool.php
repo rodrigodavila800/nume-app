@@ -42,10 +42,9 @@ class ListTenantPacksTool implements Tool
      */
     public function packs(): array
     {
-        return Pack::withoutGlobalScope('tenant')
-            ->where('tenant_id', $this->tenantId)
+        return Pack::forTenant($this->tenantId)
             ->where('status', 'active')
-            ->with(['addons' => fn ($query) => $query->withoutGlobalScope('tenant')->where('addons.tenant_id', $this->tenantId)])
+            ->with(['addons' => fn ($query) => $query->forTenant($this->tenantId)])
             ->orderBy('price')
             ->get()
             ->map(fn (Pack $pack): array => [

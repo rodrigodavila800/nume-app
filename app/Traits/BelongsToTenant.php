@@ -71,6 +71,15 @@ trait BelongsToTenant
     }
 
     /**
+     * Consulta explícita por tenant, imune ao scope do usuário logado (vitrine, fila, webhook).
+     */
+    public function scopeForTenant(Builder $query, int $tenantId): Builder
+    {
+        return $query->withoutGlobalScope('tenant')
+            ->where($query->getModel()->getTable().'.tenant_id', $tenantId);
+    }
+
+    /**
      * Permite contornar o scoping de tenant quando necessário (apenas para admin)
      */
     public function withoutTenantScope()
