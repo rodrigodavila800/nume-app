@@ -49,6 +49,7 @@ Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalcul
 6. **`env()` só dentro de `config/*.php`.** Fora disso use `config('...')` (com `config:cache`, `env()` devolve `null`).
 7. **Chaves de API em header, não em URL.** Não monte `?key=...` em requisições; exceções do HTTP client colocam a URL na mensagem e ela acaba no log.
 8. **Webhooks:** validar assinatura (`hash_equals`/HMAC), ser idempotente, isento de CSRF só onde necessário (`/stripe/webhook`, `/webhooks/redsys`, `/webhooks/upload-post`).
+   - Só webhook assinado ou confirmação validada na API do gateway marca compra como paga, sempre via `App\Services\Payment\PackPaymentConfirmer`. URL de retorno (success_url, URL OK do Redsys) nunca marca nada sozinha. Valores em centavos sempre por `App\Support\Money::cents()`.
 9. **Redsys:** a chave de teste está como *default* em `config/services.php`. Em produção defina `REDSYS_SECRET_KEY` e `REDSYS_ENVIRONMENT=production` explicitamente.
 10. **IA:** toda chamada a modelo precisa de fallback gracioso (o projeto já cai para motores heurísticos), timeout explícito, log sem dados sensíveis e conteúdo de terceiros (site rastreado, texto do cliente) tratado como **dados não confiáveis** dentro do prompt.
 
