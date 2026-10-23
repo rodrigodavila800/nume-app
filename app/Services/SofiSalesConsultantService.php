@@ -27,10 +27,7 @@ class SofiSalesConsultantService
     public function consult(Tenant $tenant, string $message, array $history = [], string $locale = 'pt_BR'): array
     {
         $isSpanish = str_starts_with($locale, 'es');
-        $availablePacks = $tenant->packs()
-            ->where('status', 'active')
-            ->orderBy('price')
-            ->get();
+        $availablePacks = $this->activePacksFor($tenant);
 
         // Detecção de intenção explícita de troca de nicho ou recomeço
         $lowerMsg = mb_strtolower(trim($message));
@@ -78,6 +75,22 @@ class SofiSalesConsultantService
 
         // 3. Fallback Heurístico Comercial
         return $this->heuristicSalesReply($tenant, $availablePacks, $message, $isSpanish);
+    }
+
+    /**
+     * Pacotes ativos da vitrine, com adicionais, filtrados explicitamente pelo tenant da vitrine.
+     *
+     * Sem o scope BelongsToTenant: o chat é público, e com um usuário logado de outra
+     * produtora o scope filtraria pelo tenant dele (vitrine sem pacotes).
+     */
+    protected function activePacksFor(Tenant $tenant)
+    {
+        return Pack::withoutGlobalScope('tenant')
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'active')
+            ->with(['addons' => fn ($query) => $query->withoutGlobalScope('tenant')->where('addons.tenant_id', $tenant->id)])
+            ->orderBy('price')
+            ->get();
     }
 
     /**
