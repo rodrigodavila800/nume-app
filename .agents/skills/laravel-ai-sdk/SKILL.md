@@ -7,12 +7,16 @@ description: Como criar ou migrar funcionalidades de IA do Nume App para o pacot
 
 Estudo completo, com riscos e plano em fases: `docs/estudo-laravel-ai-sdk.md`. Esta skill é o resumo operacional.
 
-## Estado atual (antes da migração)
+## Estado atual (Fase 2 concluída, 23/10/2026)
 
 - `laravel/ai` **v1.3.0** instalado (`^1.3`), exige PHP ≥ 8.3. Config em `config/ai.php` com `'default' => env('SOFI_AI_PROVIDER', 'gemini')`.
 - Migrations de conversa do SDK **não** foram publicadas (sem `tenant_id`; decisão na Fase 3).
-- Piloto pronto: `app/Ai/Agents/SofiTranslatorAgent.php` + `SofiTranslatorService::translateViaSdk()`, ligado por `SOFI_USE_AI_SDK`; testes em `tests/Feature/SofiTranslatorAgentTest.php`.
-- **Seis** services chamam o Gemini direto por `Http::post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}")`, cada um com sua própria cascata de modelos e seu próprio timeout (3 s a 25 s): `SofiCopywriterService`, `SofiCopilotChatService`, `SofiBrandAnalystService`, `SofiSalesConsultantService`, `SofiTranslatorService` e `Quotes/SofiQuoteEstimatorService`. `MarketingPlanGeneratorService` e `BrandDnaCrawlerService` não chamam o Gemini diretamente (o crawler só faz HTTP no site do cliente).
+- Interruptor `SOFI_USE_AI_SDK` (`config/sofi.php`). Migrados para o SDK, com fallback heurístico preservado:
+  - `SofiTranslatorService` → `app/Ai/Agents/SofiTranslatorAgent.php` (sem tenant).
+  - `Quotes/SofiQuoteEstimatorService::estimate($text, ?Tenant)` → `app/Ai/Agents/SofiQuoteEstimatorAgent.php` (`HasStructuredOutput`, saída passa por `normalizeParsedData()`).
+- **Provider único:** `App\Ai\SofiProvider::options(?Tenant)` devolve `provider`/`model`/`timeout` para `prompt(...$options)` ou `null` sem chave. Nunca chame `Ai::build` direto num service. Chave ainda vem de `config('sofi.keys.*')`; o ponto da chave por tenant (via `Setting`) está marcado em `SofiProvider::apiKey()`.
+- **Uso por tenant:** middleware `App\Ai\Middleware\RecordAiUsage($tenantId, static::class)` em `middleware()` de todo agente (`HasMiddleware`), uma linha por step em `ai_usage_logs` (tokens, cache, driver, modelo, `invocation_id`, sem conteúdo). Model `AiUsageLog` **sem** `BelongsToTenant`; consulte sempre com `AiUsageLog::forTenant($id)`.
+- Ainda chamam o Gemini direto (chave no header `x-goog-api-key`, logs só com `get_class($e)`): `SofiCopywriterService`, `SofiCopilotChatService`, `SofiBrandAnalystService` e `SofiSalesConsultantService`, além do caminho antigo dos dois migrados. `MarketingPlanGeneratorService` e `BrandDnaCrawlerService` não chamam o Gemini diretamente (o crawler só faz HTTP no site do cliente).
 - Config em `config/services.php` → `services.gemini.{key,model,fallback_models}`; chave também em `Setting::get('gemini_api_key')`.
 - Quando todos os modelos falham, o service devolve um **fallback heurístico** (templates PT-BR/ES). Esse comportamento deve ser mantido.
 
@@ -23,7 +27,10 @@ Estudo completo, com riscos e plano em fases: `docs/estudo-laravel-ai-sdk.md`. E
 - `Ai::build([...])` sem `'name'` gera `ondemand_<md5 da config, incluindo a chave>`. Sempre dê `'name'`.
 - O driver Gemini manda a chave no header `x-goog-api-key` (nada de `?key=`).
 - Testes: `preventStrayPrompts()` do fake do SDK + `Http::preventStrayRequests()`.
-- **A confirmar antes da chave por tenant (Fase 2):** se `Ai::build` com `'name'` fixo registra o provider num registro compartilhado do processo. Se registrar, um worker de fila reutilizaria a chave do primeiro tenant para os seguintes. Nesse caso o nome precisa incluir o tenant (ex.: `sofi_anthropic_t{$tenantId}`) ou o registro precisa ser limpo.
+- **Registro compartilhado (confirmado):** `Ai::build` guarda o provider no singleton `AiManager` (`$onDemandProviders[$name]`); o último `build()` com o mesmo nome vence. É limpo entre jobs (`Looping`) e no fim de operações do Octane. Por isso o nome é `sofi_{driver}_t{tenantId}` (via `SofiProvider`). Em `->queue()`, reconstrua o provider dentro do job: a string do nome sozinha não sobrevive ao `flushState()`.
+- **Uso de tokens:** `$response->usage` (`TextUsage`: `inputTokens`, `outputTokens`, `cacheReadInputTokens`, `cacheWriteInputTokens`, `reasoningTokens`) soma os steps. O middleware de agente (`HasMiddleware::middleware()`) roda **por step** (`PendingStep` → `$next($step)->then(fn (StepResponse $r) => ...)`), com `provider` (nome), `model` e `invocationId`. `Provider::driver()` devolve o driver real.
+- **Fake:** o `FakeTextGateway` passa pelo `TextGenerationLoop`, então o middleware do agente roda nos testes. Para simular tokens, devolva `new TextResponse(...)`/`new StructuredTextResponse($data, json_encode($data), new TextUsage($in, $out), new Meta)` no array do `fake()`. Arrays viram saída estruturada; closures com `throw` simulam falha.
+- Atributos de geração: `#[Temperature]`, `#[MaxTokens]`, `#[MaxSteps]`, `#[Timeout]` (classe do agente).
 
 ## Regras ao usar o SDK
 

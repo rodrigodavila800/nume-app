@@ -150,6 +150,15 @@ Pendências do dono do projeto: rotacionar a chave no Google AI Studio, atualiza
 - Para a Fase 2: `Ai::build` com `name` fixo usa um registro compartilhado do processo (último `build()` vence). Usar nome por tenant e reconstruir o provider dentro de jobs.
 - O app passou a rodar só via `composer run dev`/`php artisan serve` (PHP 8.4). **Produção deve usar PHP 8.4.**
 
+## 6.3 Resultado da Fase 2 (23/10/2026)
+
+- `App\Ai\SofiProvider`: único ponto de `Ai::build`, nome `sofi_{driver}` ou `sofi_{driver}_t{tenantId}`. Chave ainda global (`config('sofi.keys.*')`); chave por tenant via `Setting` marcada para depois.
+- Tabela `ai_usage_logs` (migrada): `tenant_id` (FK `nullOnDelete`), `agent`, `provider` (driver), `model`, `input_tokens`, `output_tokens`, `cache_read_input_tokens`, `cache_write_input_tokens`, `invocation_id`, `created_at`. Sem texto de prompt ou resposta. Model `AiUsageLog` sem `BelongsToTenant` (exceção registrada no `AGENTS.md`), consulta por `forTenant()`.
+- Middleware `RecordAiUsage` por step, com tenant e agente pelo construtor; falha ao gravar só gera log do tipo do erro. Ligado no `SofiTranslatorAgent` (tenant nulo) e no `SofiQuoteEstimatorAgent`.
+- `SofiQuoteEstimatorService::estimate($text, ?Tenant)` migrado: `SofiQuoteEstimatorAgent` com `HasStructuredOutput` espelhando o array atual, saída por `normalizeParsedData()`, fallback heurístico em qualquer falha. Removido o parsing de ```` ```json ```` no caminho do SDK (o caminho antigo continua igual).
+- Testes: 216 → **227**, 0 falhas, ~13 s. Inclui uso gravado no tenant certo com dois tenants.
+- Ainda pendente: passo 5 (teste real com a chave da Anthropic); `SofiBrandAnalystService` (previsto na seção 7) ficou para a próxima fase.
+
 ---
 
 ## 7. Plano em fases
