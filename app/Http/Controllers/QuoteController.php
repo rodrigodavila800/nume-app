@@ -195,7 +195,7 @@ class QuoteController extends Controller
             'description' => 'required|string|max:20000',
         ]);
 
-        $reading = $this->estimator->estimate($validated['description']);
+        $reading = $this->estimator->estimate($validated['description'], $request->user()->tenant);
 
         $defaults = $this->calculator->getDefaults($request->user()->tenant);
         $mergedInputs = array_merge($defaults, $reading['pedido']);

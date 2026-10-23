@@ -2,7 +2,10 @@
 
 namespace App\Services\Quotes;
 
+use App\Ai\Agents\SofiQuoteEstimatorAgent;
+use App\Ai\SofiProvider;
 use App\Models\Setting;
+use App\Models\Tenant;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -17,11 +20,16 @@ class SofiQuoteEstimatorService
      * Processa a descrição do cliente e estima horas, filmmakers e drone.
      * Retorna array no formato: ['pedido' => [...], 'resumo' => '...', 'suposicoes' => [...], 'duvidas' => [...]]
      */
-    public function estimate(string $text): array
+    public function estimate(string $text, ?Tenant $tenant = null): array
     {
         $cleanText = trim($text);
         if ($cleanText === '') {
             return $this->buildFallbackEstimate($cleanText);
+        }
+
+        // Laravel AI SDK (SOFI_USE_AI_SDK=true): qualquer falha cai no fallback heurístico.
+        if (config('sofi.use_ai_sdk')) {
+            return $this->estimateViaSdk($cleanText, $tenant) ?? $this->buildFallbackEstimate($cleanText);
         }
 
         $apiKey = config('services.gemini.key')
@@ -36,6 +44,36 @@ class SofiQuoteEstimatorService
         }
 
         return $this->buildFallbackEstimate($cleanText);
+    }
+
+    /**
+     * Estimativa via SofiQuoteEstimatorAgent (saída estruturada). Null em qualquer falha.
+     */
+    protected function estimateViaSdk(string $text, ?Tenant $tenant): ?array
+    {
+        $sofiProvider = app(SofiProvider::class);
+
+        try {
+            $options = $sofiProvider->options($tenant);
+
+            if ($options === null) {
+                return null;
+            }
+
+            $response = (new SofiQuoteEstimatorAgent($tenant?->id))->prompt($text, ...$options);
+            $data = $response->structured ?? [];
+
+            if (! isset($data['pedido']) || ! is_array($data['pedido'])) {
+                return null;
+            }
+
+            return $this->normalizeParsedData($data);
+        } catch (\Throwable $e) {
+            // Só o tipo da exceção: a mensagem pode conter URL ou credenciais.
+            Log::warning('SofiQuoteEstimatorService AI SDK falhou ('.$sofiProvider->driver().'): '.get_class($e));
+
+            return null;
+        }
     }
 
     /**
