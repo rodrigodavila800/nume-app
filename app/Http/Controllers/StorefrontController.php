@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Cliente;
 use App\Models\Pack;
 use App\Models\PackPurchase;
+use App\Models\ShowcaseVideo;
 use App\Models\Tenant;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
@@ -29,36 +31,31 @@ class StorefrontController extends Controller
             return redirect()->route('marketplace.index');
         }
 
+        // Vitrine pública: tudo filtrado explicitamente pelo tenant da vitrine. Com um usuário
+        // logado de outra produtora, o scope BelongsToTenant filtraria pelo tenant DELE.
         return view('storefront.show', [
             'tenant' => $tenant,
-            'categories' => $tenant->categories()
+            'categories' => Category::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
                 ->where('is_active', true)
+                ->orderBy('sort_order')
                 ->get(),
-            'videos' => $tenant->showcaseVideos()
-                ->with('category')
+            'videos' => ShowcaseVideo::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->with(['category' => fn ($q) => $q->withoutGlobalScope('tenant')->where('categories.tenant_id', $tenant->id)])
                 ->where('is_published', true)
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get(),
-            'packs' => $tenant->packs()
-                ->with(['category', 'addons', 'showcaseVideo'])
-                ->where('status', 'active')
-                ->orderBy('price')
-                ->get(),
-            'recurringPlans' => $tenant->packs()
-                ->with(['category', 'addons', 'showcaseVideo'])
-                ->where('status', 'active')
+            'packs' => $this->storefrontPacks($tenant)->get(),
+            'recurringPlans' => $this->storefrontPacks($tenant)
                 ->where('billing_type', 'subscription')
-                ->orderBy('price')
                 ->get(),
-            'oneOffPacks' => $tenant->packs()
-                ->with(['category', 'addons', 'showcaseVideo'])
-                ->where('status', 'active')
+            'oneOffPacks' => $this->storefrontPacks($tenant)
                 ->where(function ($q) {
                     $q->where('billing_type', '!=', 'subscription')
                       ->orWhereNull('billing_type');
                 })
-                ->orderBy('price')
                 ->get(),
             'currentCliente' => auth('cliente')->user(),
             'activePaymentMethods' => \App\Models\Setting::getActivePaymentMethods($tenant),
@@ -68,6 +65,22 @@ class StorefrontController extends Controller
                 'iva_rate' => (float) \App\Models\Setting::get('tax_default_iva_rate', 21.00),
             ],
         ]);
+    }
+
+    /**
+     * Pacotes ativos da vitrine com categoria, adicionais e vídeo de destaque, todos pelo tenant da vitrine.
+     */
+    protected function storefrontPacks(Tenant $tenant): \Illuminate\Database\Eloquent\Builder
+    {
+        return Pack::withoutGlobalScope('tenant')
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'active')
+            ->with([
+                'category' => fn ($q) => $q->withoutGlobalScope('tenant')->where('categories.tenant_id', $tenant->id),
+                'addons' => fn ($q) => $q->withoutGlobalScope('tenant')->where('addons.tenant_id', $tenant->id),
+                'showcaseVideo' => fn ($q) => $q->withoutGlobalScope('tenant')->where('showcase_videos.tenant_id', $tenant->id),
+            ])
+            ->orderBy('price');
     }
 
     /**
