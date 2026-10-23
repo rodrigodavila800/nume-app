@@ -558,10 +558,12 @@ class PackManualAddonsAndSofiTest extends TestCase
 
         $response->assertStatus(200); // Redsys redirect view
 
+        // Assinatura só fica 'active' após o pagamento confirmado (PackPaymentConfirmer).
         $this->assertDatabaseHas('pack_purchases', [
             'tenant_id' => $tenant->id,
             'pack_id' => $subPack->id,
-            'subscription_status' => 'active',
+            'status' => 'pending',
+            'subscription_status' => null,
             'subscription_interval' => 'month',
             'commitment_months' => 3,
             'subscription_cycle_current' => 1,
