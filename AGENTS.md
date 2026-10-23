@@ -41,6 +41,7 @@ Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalcul
 1. **Multi-tenancy:** todo model de produtora usa `App\Traits\BelongsToTenant` (não existe `App\Models\Concerns\...`).
    - O scope global filtra por `tenant_id` do usuário autenticado (guards `web` e `cliente`).
    - **Sem usuário autenticado (fila, comando Artisan, webhook, scheduler) o scope não filtra nada** e o `creating` grava `tenant_id` nulo. Nesses contextos passe o tenant explicitamente (`where('tenant_id', $id)` ou `tenant_id` no payload do job). Isso vale em dobro para código de IA rodando em fila.
+   - Exceção: ai_usage_logs (AiUsageLog) não usa BelongsToTenant porque é gravada pelo sistema com tenant_id explícito, inclusive em fila; toda consulta deve usar AiUsageLog::forTenant().
 2. **Autorização:** toda ação de controller (exceto listagem pública) chama `$this->authorize(...)`/`Gate::authorize(...)`. Policies em `app/Policies`.
 3. **Inputs:** Form Request ou `$request->validate()`; `$fillable` explícito, nunca `$guarded = []`.
 4. **Identificadores públicos:** `Production` e `Roteiro` usam `uuid` na rota. Nunca exponha ID sequencial em link externo. Rotas aninhadas usam `Route::scopeBindings()`.
