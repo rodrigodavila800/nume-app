@@ -10,7 +10,9 @@ use App\Models\PackPurchase;
 use App\Models\Tenant;
 use App\Models\TenantSetting;
 use App\Models\User;
+use App\Services\Payment\PackPaymentConfirmer;
 use App\Services\Payment\PaymentMethodAvailability;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
@@ -283,6 +285,103 @@ class TenantBankTransferTest extends TestCase
         $this->assertSame('expired', $expiredPurchase->fresh()->status);
         $this->assertSame('pending', $activePurchase->fresh()->status);
         $this->assertSame('pending', $otherGatewayPurchase->fresh()->status);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_bank_transfer_reference_is_unique_per_tenant(): void
+    {
+        PackPurchase::create([
+            'tenant_id' => $this->tenant->id,
+            'cliente_id' => $this->cliente->id,
+            'pack_id' => $this->pack->id,
+            'video_quantity' => 5,
+            'amount' => 1000.00,
+            'payment_gateway' => 'bank_transfer',
+            'status' => 'pending',
+            'bank_transfer_reference' => 'BT-DUPLICATE1',
+            'expires_at' => now()->addDays(3),
+        ]);
+
+        // Outro tenant com a mesma referência DEVE ser permitido
+        $otherTenant = Tenant::create([
+            'name' => 'Outra Produtora Filmes',
+            'slug' => 'outra-filmes',
+        ]);
+        $otherCliente = Cliente::create([
+            'tenant_id' => $otherTenant->id,
+            'name' => 'Cliente B',
+            'email' => 'cliente_b@email.com',
+            'password' => bcrypt('secret123'),
+        ]);
+        $otherPack = Pack::create([
+            'tenant_id' => $otherTenant->id,
+            'name' => 'Pack B',
+            'type' => 'one_time',
+            'price' => 500.00,
+            'video_quantity' => 2,
+            'is_active' => true,
+        ]);
+
+        $crossTenantPurchase = PackPurchase::create([
+            'tenant_id' => $otherTenant->id,
+            'cliente_id' => $otherCliente->id,
+            'pack_id' => $otherPack->id,
+            'video_quantity' => 2,
+            'amount' => 500.00,
+            'payment_gateway' => 'bank_transfer',
+            'status' => 'pending',
+            'bank_transfer_reference' => 'BT-DUPLICATE1',
+            'expires_at' => now()->addDays(3),
+        ]);
+        $this->assertNotNull($crossTenantPurchase->id);
+
+        // Mesmo tenant com a mesma referência DEVE falhar com violação de unicidade
+        $this->expectException(QueryException::class);
+        PackPurchase::create([
+            'tenant_id' => $this->tenant->id,
+            'cliente_id' => $this->cliente->id,
+            'pack_id' => $this->pack->id,
+            'video_quantity' => 5,
+            'amount' => 1000.00,
+            'payment_gateway' => 'bank_transfer',
+            'status' => 'pending',
+            'bank_transfer_reference' => 'BT-DUPLICATE1',
+            'expires_at' => now()->addDays(3),
+        ]);
+    }
+
+    public function test_race_condition_between_manual_confirmation_and_expiration_command_preserves_paid_state(): void
+    {
+        Carbon::setTestNow('2026-10-23 12:00:00');
+
+        $purchase = PackPurchase::create([
+            'tenant_id' => $this->tenant->id,
+            'cliente_id' => $this->cliente->id,
+            'pack_id' => $this->pack->id,
+            'video_quantity' => 5,
+            'amount' => 1000.00,
+            'payment_gateway' => 'bank_transfer',
+            'status' => 'pending',
+            'bank_transfer_reference' => 'BT-RACE1234',
+            'expires_at' => now()->subMinute(), // Já venceu no relógio
+        ]);
+
+        // Simula a confirmação pelo admin que acabou de transicionar a compra para paid
+        $confirmer = app(PackPaymentConfirmer::class);
+        $result = $confirmer->confirmBankTransfer($purchase, $this->admin);
+        $this->assertSame(PackPaymentConfirmer::PAID, $result);
+        $this->assertSame('paid', $purchase->fresh()->status);
+
+        // O comando agendado roda na mesma fração de segundo e faz o lockForUpdate
+        // com double-check de status === 'pending'
+        $this->artisan('packs:expire-bank-transfers', ['--tenant' => $this->tenant->id])
+            ->assertSuccessful()
+            ->expectsOutputToContain('Total de compras expiradas: 0');
+
+        // A compra PERMANECE paid, nunca é sobrescrita para expired
+        $this->assertSame('paid', $purchase->fresh()->status);
+        $this->assertNotNull($purchase->fresh()->confirmed_at);
 
         Carbon::setTestNow();
     }

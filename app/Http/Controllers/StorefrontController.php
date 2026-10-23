@@ -304,7 +304,13 @@ class StorefrontController extends Controller
 
         // B) Transferência Bancária Manual
         if ($paymentMethod === 'bank_transfer') {
-            $ref = 'BT-'.strtoupper(Str::random(8));
+            do {
+                $ref = 'BT-'.strtoupper(Str::random(8));
+            } while (PackPurchase::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->where('bank_transfer_reference', $ref)
+                ->exists());
+
             $days = (int) (TenantSetting::get($tenant, 'bank_transfer_expiration_days')
                 ?: TenantSetting::get($tenant, 'bank_transfer_expires_days', 3));
             $purchase->update([
