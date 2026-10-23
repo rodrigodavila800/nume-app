@@ -7,16 +7,19 @@ description: Como criar ou migrar funcionalidades de IA do Nume App para o pacot
 
 Estudo completo, com riscos e plano em fases: `docs/estudo-laravel-ai-sdk.md`. Esta skill é o resumo operacional.
 
-## Estado atual (Fase 2 concluída, 23/10/2026)
+## Estado atual (Fase 3 concluída, 23/10/2026)
 
 - `laravel/ai` **v1.3.0** instalado (`^1.3`), exige PHP ≥ 8.3. Config em `config/ai.php` com `'default' => env('SOFI_AI_PROVIDER', 'gemini')`.
 - Migrations de conversa do SDK **não** foram publicadas (sem `tenant_id`; decisão na Fase 3).
 - Interruptor `SOFI_USE_AI_SDK` (`config/sofi.php`). Migrados para o SDK, com fallback heurístico preservado:
   - `SofiTranslatorService` → `app/Ai/Agents/SofiTranslatorAgent.php` (sem tenant).
   - `Quotes/SofiQuoteEstimatorService::estimate($text, ?Tenant)` → `app/Ai/Agents/SofiQuoteEstimatorAgent.php` (`HasStructuredOutput`, saída passa por `normalizeParsedData()`).
+  - `SofiSalesConsultantService::consult()` (chat **público** da vitrine) → `app/Ai/Agents/SofiSalesConsultantAgent.php` (`HasTools` + `HasStructuredOutput` + `Conversational`, `#[MaxSteps(3)]`). Regras comerciais vêm de `salesPromptParts()` (mesmo texto do prompt antigo); histórico da sessão entra por `messages()`; saída passa por `formatResult()`, que aceita só `call_to_action` `open_pack_modal`/`register_dna`/`null`.
+- **Tools:** `app/Ai/Tools/ListTenantPacksTool` (somente leitura): pacotes ativos, preço, vídeos e adicionais do tenant do construtor, com `withoutGlobalScope('tenant')` + `where('tenant_id', ...)` em pacotes **e** adicionais. Modelo para toda tool de contexto público.
+- **Rate limit do chat público:** limiters `sofi-chat` (por IP/min, por IP/hora, por vitrine/hora) e `sofi-chat-reset` no `AppServiceProvider`, números em `config('sofi.chat_rate_limits')`.
 - **Provider único:** `App\Ai\SofiProvider::options(?Tenant)` devolve `provider`/`model`/`timeout` para `prompt(...$options)` ou `null` sem chave. Nunca chame `Ai::build` direto num service. Chave ainda vem de `config('sofi.keys.*')`; o ponto da chave por tenant (via `Setting`) está marcado em `SofiProvider::apiKey()`.
 - **Uso por tenant:** middleware `App\Ai\Middleware\RecordAiUsage($tenantId, static::class)` em `middleware()` de todo agente (`HasMiddleware`), uma linha por step em `ai_usage_logs` (tokens, cache, driver, modelo, `invocation_id`, sem conteúdo). Model `AiUsageLog` **sem** `BelongsToTenant`; consulte sempre com `AiUsageLog::forTenant($id)`.
-- Ainda chamam o Gemini direto (chave no header `x-goog-api-key`, logs só com `get_class($e)`): `SofiCopywriterService`, `SofiCopilotChatService`, `SofiBrandAnalystService` e `SofiSalesConsultantService`, além do caminho antigo dos dois migrados. `MarketingPlanGeneratorService` e `BrandDnaCrawlerService` não chamam o Gemini diretamente (o crawler só faz HTTP no site do cliente).
+- Ainda chamam o Gemini direto (chave no header `x-goog-api-key`, logs só com `get_class($e)`): `SofiCopywriterService`, `SofiCopilotChatService` e `SofiBrandAnalystService`, além do caminho antigo dos três migrados. `MarketingPlanGeneratorService` e `BrandDnaCrawlerService` não chamam o Gemini diretamente (o crawler só faz HTTP no site do cliente).
 - Config em `config/services.php` → `services.gemini.{key,model,fallback_models}`; chave também em `Setting::get('gemini_api_key')`.
 - Quando todos os modelos falham, o service devolve um **fallback heurístico** (templates PT-BR/ES). Esse comportamento deve ser mantido.
 
@@ -31,6 +34,11 @@ Estudo completo, com riscos e plano em fases: `docs/estudo-laravel-ai-sdk.md`. E
 - **Uso de tokens:** `$response->usage` (`TextUsage`: `inputTokens`, `outputTokens`, `cacheReadInputTokens`, `cacheWriteInputTokens`, `reasoningTokens`) soma os steps. O middleware de agente (`HasMiddleware::middleware()`) roda **por step** (`PendingStep` → `$next($step)->then(fn (StepResponse $r) => ...)`), com `provider` (nome), `model` e `invocationId`. `Provider::driver()` devolve o driver real.
 - **Fake:** o `FakeTextGateway` passa pelo `TextGenerationLoop`, então o middleware do agente roda nos testes. Para simular tokens, devolva `new TextResponse(...)`/`new StructuredTextResponse($data, json_encode($data), new TextUsage($in, $out), new Meta)` no array do `fake()`. Arrays viram saída estruturada; closures com `throw` simulam falha.
 - Atributos de geração: `#[Temperature]`, `#[MaxTokens]`, `#[MaxSteps]`, `#[Timeout]` (classe do agente).
+- **Tools no fake:** devolva `new ToolCall('id', 'NomeDaClasseDaTool', [])` como um passo do `fake([...])`; o loop executa a tool real e usa o próximo item como resposta. Nome da tool = `class_basename` (ou `name()`). Tool inexistente → `NoSuchToolException` (o service cai no fallback). Eventos `InvokingTool`/`ToolInvoked` (com `result`) servem para asserts.
+- **Schema:** `->enum([...])->nullable()` gera `null` FORA do `enum`, e o Gemini só aceita enum de strings. Para campo anulável com valores fixos, use string anulável com `description` e valide no service.
+- Cada passo de tool reenvia as instruções: no chat da vitrine, ~3,5 mil tokens de entrada por mensagem (2 requisições).
+- **Rate limit:** o `ThrottleRequests` roda antes do `SubstituteBindings`; dentro de `RateLimiter::for`, `$request->route('tenant')` pode ser a string do slug. Trate os dois casos.
+- **Scope em contexto público:** com usuário logado de outra produtora, o `BelongsToTenant` filtra pelo tenant DELE. Em vitrine, webhook, fila e tools, consulte com `withoutGlobalScope('tenant')` + `where('tenant_id', ...)`, inclusive em relações carregadas (`with([... => fn ($q) => ...])`).
 
 ## Regras ao usar o SDK
 

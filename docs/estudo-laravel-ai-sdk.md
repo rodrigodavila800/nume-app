@@ -165,6 +165,18 @@ Pendências do dono do projeto: rotacionar a chave no Google AI Studio, atualiza
 - O teste com a Anthropic ficou dispensado por ora (evitar tokens pagos). `SofiBrandAnalystService` (previsto na seção 7) ficou para a próxima fase.
 - Detalhe herdado do caminho antigo: `normalizeParsedData()` devolve `motion` como inteiro `0` quando o valor é zero (`max(0, 0.0)`); os demais números saem como `float`.
 
+## 6.4 Resultado da Fase 3 (23/10/2026)
+
+- `ListTenantPacksTool` (somente leitura): pacotes ativos, preço, vídeos e adicionais com preço, só do tenant do construtor (scope desligado e filtro explícito em pacotes e adicionais). Nada de clientes, compras, faturas, Settings ou telemetria.
+- `SofiSalesConsultantAgent` no chat **público** da vitrine: tool de catálogo, saída estruturada com os 4 campos que o modelo já devolvia (`reply`, `recommended_pack_id`, `call_to_action`, `suggested_quick_replies`), `formatResult()` mantém o contrato do JSON. Histórico continua na sessão (`sofi_sales_history_{tenant}`, 6 mensagens) via `messages()`. Prompt antigo idêntico byte a byte após a extração de `salesPromptParts()` (24 combinações conferidas por md5).
+- `formatResult()` só aceita `call_to_action` `open_pack_modal`/`register_dna`/`null`.
+- Correção: o chat usava `$tenant->packs()`, e com usuário logado de outra produtora o scope `BelongsToTenant` filtrava pelo tenant do usuário (vitrine sem pacotes). Agora consulta explícita por `tenant_id`.
+- Rate limit dedicado: `throttle:sofi-chat` (6/min e 40/h por IP, 400/h por vitrine) e `throttle:sofi-chat-reset` (5/min por IP), valores em `config('sofi.chat_rate_limits')` / `.env` (`SOFI_CHAT_*`). Antes: `throttle:30,1` com contador compartilhado com o checkout e reset sem limite.
+- Teste real (Gemini flash-lite, tenant 1, 1 conversa de 2 mensagens fictícias): 4 requisições HTTP 200, tool usada nas duas mensagens, ~4 s por mensagem (o widget aborta em 8 s), sem fallback, 4 linhas em `ai_usage_logs` no tenant 1 (~3,5 mil tokens de entrada por mensagem). Nenhuma chave nos logs.
+- Testes: 227 → **243**, 0 falhas.
+- **Deploy (não implementado):** com Cloudflare ou outro proxy na frente, `$request->ip()` passa a ser o IP do proxy e todos os visitantes dividem o mesmo limite por IP. Nesse caso configure os proxies confiáveis (`TrustProxies`, em `bootstrap/app.php` com `$middleware->trustProxies(...)`) com as faixas do proxy, nunca `*` sem um proxy de fato na frente.
+- **Pendente de aprovação:** riscos de tenant/pagamento no `StorefrontController` (exibição, checkout, retorno Stripe e Redsys), mapeados e não corrigidos.
+
 ---
 
 ## 7. Plano em fases
