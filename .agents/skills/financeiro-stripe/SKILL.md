@@ -10,8 +10,9 @@ description: Conhecimento do módulo Financeiro, Multi-gateway & Motor Fiscal �
 2. **E-commerce de Serviços Audiovisuais (Storefront):** vitrine pública com checkout direto em 1 passo, upsell de add-ons e split/recebimento.
 3. **Multi-gateway & Comissões:**
    - **BBVA TPV Virtual (Redsys) por Produtora:** Credenciais criptografadas por tenant em `tenant_settings`. Foco na Espanha/União Europeia via **Bizum** (celular) e **Cartão** com taxas interbancárias ultrabaixas.
+   - **Transferência Bancária Manual (SEPA/PIX/Wire):** Dados bancários por produtora em `tenant_settings` (`bank_transfer_iban`, `bic`, `account_holder`, `bank_name`, `instructions`, `expiration_days`). Código de referência único `BT-XXXXXXXX`, prazo de expiração agendado (`packs:expire-bank-transfers`), confirmação manual auditada (`confirmed_by_user_id`, `confirmed_at`) restrita a admin do mesmo tenant, e comissão gravada como `pending_billing`.
    - **Stripe Connect Express:** Foco global, split na fonte com comissão retida imediatamente (`platform_fee_status = 'collected_at_gateway'`).
-   - **Comissões fora da Stripe (Decisão B):** Vendas via Redsys próprio da produtora geram `application_fee_amount` com `platform_fee_status = 'pending_billing'`, faturadas posteriormente no SaaS.
+   - **Comissões fora da Stripe (Decisão B):** Vendas via Redsys próprio da produtora e Transferência Bancária geram `application_fee_amount` com `platform_fee_status = 'pending_billing'`, faturadas posteriormente no SaaS.
 4. **Motor Fiscal por Produtora (`TenantFiscalSettings` & `TaxCalculationService`):**
    - Dados fiscais próprios da produtora (emissor legal da fatura perante o cliente final).
    - Cálculo automático de **IVA geral espanhol (21%)**, regimes especiais (Canárias 0%, Ceuta/Melilla 0%), operações intracomunitárias B2B (Inversión del sujeto pasivo 0%) e exportações fora da UE.
