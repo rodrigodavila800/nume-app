@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\Production;
 use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class DatabaseRealDataViewAuditTest extends TestCase
@@ -17,7 +18,20 @@ class DatabaseRealDataViewAuditTest extends TestCase
             'database.default' => 'mysql',
             'database.connections.mysql.database' => 'nume',
         ]);
-        \Illuminate\Support\Facades\DB::purge('mysql');
+        DB::purge('mysql');
+
+        try {
+            DB::connection('mysql')->getPdo();
+            $tenant = Tenant::where('slug', 'nume')->first();
+            $admin = User::where('email', 'admin@numecreative.com')->first();
+            $cliente = Cliente::withoutGlobalScope('tenant')->where('email', 'cliente@teste.com')->first();
+
+            if (! $tenant || ! $admin || ! $cliente) {
+                $this->markTestSkipped('Dados reais no banco MySQL incompletos para auditoria.');
+            }
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('Conexão com MySQL real não disponível para auditoria: '.$e->getMessage());
+        }
     }
 
     public function test_staff_views_render_successfully_with_real_seeded_data(): void

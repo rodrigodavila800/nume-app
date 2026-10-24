@@ -102,8 +102,13 @@
                 @endif
 
                 @if($errors->any())
-                    <div class="bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2.5 rounded-xl text-xs font-medium">
-                        {{ $errors->first() }}
+                    <div class="bg-rose-50 border border-rose-200 text-rose-700 px-3.5 py-2.5 rounded-xl text-xs font-medium space-y-1">
+                        @foreach ($errors->all() as $err)
+                            <p class="flex items-start gap-1.5">
+                                <span class="text-rose-500 mt-0.5">•</span>
+                                <span>{{ $err }}</span>
+                            </p>
+                        @endforeach
                     </div>
                 @endif
 
@@ -140,22 +145,33 @@
                             class="input-field">
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="space-y-1">
-                            <label for="password" class="text-[11px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Senha') }} <span class="text-orange-500">*</span></label>
-                            <input id="password" type="password" name="password"
-                                required autocomplete="new-password"
-                                placeholder="••••••••"
-                                class="input-field">
-                        </div>
+                    <div class="space-y-1">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label for="password" class="text-[11px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Senha') }} <span class="text-orange-500">*</span></label>
+                                <input id="password" type="password" name="password"
+                                    required autocomplete="new-password"
+                                    placeholder="••••••••"
+                                    class="input-field">
+                                @error('password')
+                                    <p class="text-[11px] text-rose-500">{{ $message }}</p>
+                                @enderror
+                            </div>
 
-                        <div class="space-y-1">
-                            <label for="password_confirmation" class="text-[11px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Confirmar Senha') }} <span class="text-orange-500">*</span></label>
-                            <input id="password_confirmation" type="password" name="password_confirmation"
-                                required autocomplete="new-password"
-                                placeholder="••••••••"
-                                class="input-field">
+                            <div class="space-y-1">
+                                <label for="password_confirmation" class="text-[11px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Confirmar Senha') }} <span class="text-orange-500">*</span></label>
+                                <input id="password_confirmation" type="password" name="password_confirmation"
+                                    required autocomplete="new-password"
+                                    placeholder="••••••••"
+                                    class="input-field">
+                                @error('password_confirmation')
+                                    <p class="text-[11px] text-rose-500">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
+                        <p class="text-[10px] text-zinc-500 pt-0.5 leading-normal">
+                            🔒 {{ __('Mínimo de 8 caracteres contendo maiúsculas, minúsculas, números e símbolos (ex: @, #, $, !).') }}
+                        </p>
                     </div>
 
                     <div class="pt-1">

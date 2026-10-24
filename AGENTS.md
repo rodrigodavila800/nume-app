@@ -60,7 +60,7 @@ Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalcul
 - Subir tudo: `composer run dev` (serve + queue + pail + vite).
 - Servidor: `php artisan serve` (nunca pelo Apache do XAMPP) · Fila: `php artisan queue:listen --tries=1`
 - Assets: `npm.cmd run dev` / `npm.cmd run build`
-- Testes: `php artisan test` ou `vendor\bin\phpunit`
+- Testes: `php artisan test` ou `vendor\bin\phpunit`. **Nunca com `config:cache` ativo**: o cache ignora o `phpunit.xml` e a suíte apontaria para o MariaDB real, onde `RefreshDatabase` roda `migrate:fresh` e apaga tudo. `tests/TestCase.php` aborta se a conexão não for SQLite em memória; depois de `config:cache`, rode `php artisan optimize:clear` antes de testar.
 - Estilo: `vendor\bin\pint` (rode nos arquivos alterados)
 - Cache: `php artisan optimize:clear`
 
