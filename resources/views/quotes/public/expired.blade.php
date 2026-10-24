@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('Presupuesto Expirado') }} · {{ $tenant?->name ?? 'NUME' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.favicons')
 </head>
 <body class="min-h-full flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full text-center space-y-6 bg-zinc-900/80 border border-zinc-800 rounded-3xl p-8 backdrop-blur-sm">

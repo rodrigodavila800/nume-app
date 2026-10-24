@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    @include('partials.favicons')
 </head>
 <body class="min-h-full bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-orange-500 selection:text-white py-6 px-4 sm:px-6 lg:px-8">
 

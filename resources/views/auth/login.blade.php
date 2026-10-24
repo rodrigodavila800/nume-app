@@ -29,6 +29,7 @@
             -webkit-text-fill-color: #fff;
         }
     </style>
+    @include('partials.favicons')
 </head>
 <body class="h-screen overflow-hidden bg-zinc-950 text-white antialiased selection:bg-orange-500 selection:text-white">
 

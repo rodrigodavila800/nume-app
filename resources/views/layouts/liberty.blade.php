@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="{{ asset('themes/liberty/css/nume-theme.css') }}">
 
     @stack('styles')
+    @include('partials.favicons')
 </head>
 <body>
 

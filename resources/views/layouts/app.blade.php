@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ asset('css/app-shell.css') }}?v={{ file_exists(public_path('css/app-shell.css')) ? filemtime(public_path('css/app-shell.css')) : time() }}">
+    @include('partials.favicons')
 </head>
 <body class="min-h-full bg-zinc-950 text-zinc-100 antialiased selection:bg-orange-500 selection:text-white overflow-x-hidden">
 

@@ -36,6 +36,7 @@
     </script>
 
     @stack('styles')
+    @include('partials.favicons')
 </head>
 <body>
     <!-- Loading Screen -->

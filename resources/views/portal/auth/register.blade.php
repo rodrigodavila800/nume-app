@@ -24,6 +24,7 @@
         .input-field::placeholder { color: #a1a1aa; }
         .input-field:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.12); }
     </style>
+    @include('partials.favicons')
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white bg-zinc-50">
 

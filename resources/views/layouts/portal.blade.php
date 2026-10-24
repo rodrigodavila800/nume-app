@@ -35,6 +35,7 @@
             }
         }
     </script>
+    @include('partials.favicons')
 </head>
 <body class="min-h-full flex flex-col bg-zinc-50 text-zinc-900 font-sans antialiased selection:bg-orange-500 selection:text-white">
     <!-- Header / Navbar Moderno -->
