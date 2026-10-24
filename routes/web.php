@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AddonController;
+use App\Http\Controllers\Admin\BankTransferConfirmationController;
 use App\Http\Controllers\Admin\GatewaySettingController;
 use App\Http\Controllers\Admin\InvoiceManagementController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\SubscriptionManagementController;
+use App\Http\Controllers\Admin\TenantBankTransferSettingsController;
 use App\Http\Controllers\Admin\TenantFiscalSettingsController;
 use App\Http\Controllers\Admin\TenantRedsysSettingsController;
 use App\Http\Controllers\Admin\TenantSettingsController;
@@ -147,7 +149,7 @@ Route::middleware('auth')->group(function () {
         ->name('admin.invoices.export');
     Route::get('/admin/invoices/{purchase}/download', [InvoiceManagementController::class, 'download'])
         ->name('admin.invoices.download');
-    Route::post('/admin/purchases/{purchase}/confirm-bank-transfer', [\App\Http\Controllers\Admin\BankTransferConfirmationController::class, 'confirm'])
+    Route::post('/admin/purchases/{purchase}/confirm-bank-transfer', [BankTransferConfirmationController::class, 'confirm'])
         ->name('admin.purchases.confirm-bank-transfer');
 
     // Orçamentos & Propostas de Produção (Presupuestos)
@@ -186,9 +188,9 @@ Route::middleware('auth')->group(function () {
         ->name('admin.settings.redsys.update');
 
     // Admin Settings / Transferência Bancária por Produtora (IBAN/BIC)
-    Route::get('/admin/settings/bank-transfer', [\App\Http\Controllers\Admin\TenantBankTransferSettingsController::class, 'index'])
+    Route::get('/admin/settings/bank-transfer', [TenantBankTransferSettingsController::class, 'index'])
         ->name('admin.settings.bank-transfer');
-    Route::post('/admin/settings/bank-transfer', [\App\Http\Controllers\Admin\TenantBankTransferSettingsController::class, 'update'])
+    Route::post('/admin/settings/bank-transfer', [TenantBankTransferSettingsController::class, 'update'])
         ->name('admin.settings.bank-transfer.update');
 
     // Productions
@@ -283,7 +285,7 @@ Route::prefix('magic')->name('magic.')->middleware('signed')->group(function () 
         ->name('roteiros.reject');
 
     Route::get('/videos/{video}', [MagicApprovalController::class, 'showVideo'])
-        ->name('videos.show');
+        ->name('videos.approval-legacy');
     Route::post('/videos/{video}/approve', [MagicApprovalController::class, 'approveVideo'])
         ->name('videos.approve');
 });

@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Video;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
@@ -17,10 +18,15 @@ class MagicApprovalTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private User $user;
+
     private Cliente $cliente;
+
     private Production $production;
+
     private Roteiro $roteiro;
+
     private Video $video;
 
     protected function setUp(): void
@@ -129,9 +135,15 @@ class MagicApprovalTest extends TestCase
         $this->assertStringContainsString('nova filial', $this->roteiro->rejection_reason);
     }
 
-    public function test_signed_magic_link_allows_unauthenticated_client_to_view_and_approve_video(): void
+    public function test_signed_magic_link_resolves_to_magic_video_controller_and_logs_in_client(): void
     {
         $signedUrl = $this->video->getMagicApprovalUrl(7);
+
+        // Garante que o link aponta para /m/videos/{video} do MagicVideoController
+        $this->assertStringContainsString('/m/videos/'.$this->video->id, $signedUrl);
+        $route = app('router')->getRoutes()->getByName('magic.videos.show');
+        $this->assertNotNull($route);
+        $this->assertSame('App\Http\Controllers\MagicVideoController@show', $route->getActionName());
 
         $response = $this->get($signedUrl);
 
@@ -150,6 +162,34 @@ class MagicApprovalTest extends TestCase
         $postResponse->assertSessionHas('success');
         $this->video->refresh();
         $this->assertEquals('ready', $this->video->status);
+    }
+
+    public function test_legacy_magic_video_approval_route_renders_standalone_view(): void
+    {
+        $signedLegacyUrl = URL::temporarySignedRoute(
+            'magic.videos.approval-legacy',
+            now()->addDays(7),
+            ['video' => $this->video->id]
+        );
+
+        $this->assertStringContainsString('/magic/videos/'.$this->video->id, $signedLegacyUrl);
+        $route = app('router')->getRoutes()->getByName('magic.videos.approval-legacy');
+        $this->assertNotNull($route);
+        $this->assertSame('App\Http\Controllers\MagicApprovalController@showVideo', $route->getActionName());
+
+        $response = $this->get($signedLegacyUrl);
+
+        $response->assertOk();
+        $response->assertViewIs('magic.video');
+        $response->assertSee('Aprovação de Vídeo Final');
+    }
+
+    public function test_route_cache_command_succeeds_without_duplicate_names(): void
+    {
+        $exitCode = Artisan::call('route:cache');
+        $this->assertSame(0, $exitCode);
+
+        Artisan::call('route:clear');
     }
 
     public function test_whatsapp_share_url_is_properly_formatted(): void
