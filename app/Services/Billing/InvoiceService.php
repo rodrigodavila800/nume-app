@@ -149,9 +149,9 @@ class InvoiceService
                 'gateway_reference' => $purchase->gateway_order_reference ?: $purchase->stripe_payment_intent_id,
             ],
             'pack' => [
-                'name' => $purchase->pack?->name ?? 'Pacote de Produção',
-                'price' => (float) ($purchase->pack?->price ?? $purchase->amount),
-                'video_quantity' => (int) ($purchase->pack?->video_quantity ?? $purchase->video_quantity),
+                'name' => $purchase->pack?->name ?? ($purchase->quote?->project_title ?? 'Proposta / Produção Audiovisual'),
+                'price' => (float) ($purchase->pack?->price ?? $purchase->subtotal ?? $purchase->amount),
+                'video_quantity' => (int) ($purchase->pack?->video_quantity ?? $purchase->video_quantity ?? 1),
             ],
             'addons' => $addonsList,
         ];
@@ -178,10 +178,17 @@ class InvoiceService
             default => 'Pasarela Bancaria Segura',
         };
 
+        $packFallback = (object) [
+            'name' => $packData['name'] ?? ($purchase->quote?->project_title ?? 'Proposta / Produção Audiovisual'),
+            'video_quantity' => (int) ($packData['video_quantity'] ?? $purchase->video_quantity ?? 1),
+            'price' => (float) ($packData['price'] ?? $purchase->subtotal ?? $purchase->amount),
+        ];
+
         return [
             'purchase' => $purchase,
-            'pack' => $purchase->pack,
-            'packBasePrice' => (float) ($packData['price'] ?? $purchase->pack?->price ?? 0),
+            'pack' => $purchase->pack ?: $packFallback,
+            'packData' => $packData,
+            'packBasePrice' => (float) ($packData['price'] ?? $purchase->pack?->price ?? $purchase->subtotal ?? $purchase->amount),
             'addonsList' => $snapshot['addons'] ?? [],
             'invoiceNumber' => $snapshot['invoice_number'] ?? $purchase->invoice_number,
             'issuedDate' => $snapshot['issued_date'] ?? ($purchase->paid_at ? $purchase->paid_at->format('d/m/Y H:i') : now()->format('d/m/Y H:i')),

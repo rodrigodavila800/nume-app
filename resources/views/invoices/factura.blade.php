@@ -230,9 +230,9 @@
         <tbody>
             <tr>
                 <td>
-                    <strong>{{ $pack->name }}</strong>
+                    <strong>{{ $pack?->name ?? ($purchase->quote?->project_title ?? 'Serviço de Produção Audiovisual') }}</strong>
                     <div class="item-subtext">
-                        Cota de {{ $pack->video_quantity }} vídeos de alto impacto con roteirização e edição estratégica.
+                        Cota de {{ $pack?->video_quantity ?? ($purchase->video_quantity ?? 1) }} vídeos de alto impacto con roteirização e edição estratégica.
                     </div>
                 </td>
                 <td class="text-center">1</td>

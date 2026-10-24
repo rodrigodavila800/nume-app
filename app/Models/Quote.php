@@ -6,12 +6,13 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Quote extends Model
 {
-    use HasFactory, SoftDeletes, BelongsToTenant;
+    use BelongsToTenant, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -41,6 +42,8 @@ class Quote extends Model
         'valid_until',
         'sent_at',
         'accepted_at',
+        'approval_token',
+        'approval_token_expires_at',
     ];
 
     protected function casts(): array
@@ -60,6 +63,7 @@ class Quote extends Model
             'valid_until' => 'date',
             'sent_at' => 'datetime',
             'accepted_at' => 'datetime',
+            'approval_token_expires_at' => 'datetime',
         ];
     }
 
@@ -100,6 +104,11 @@ class Quote extends Model
         return $this->belongsTo(Production::class);
     }
 
+    public function packPurchases(): HasMany
+    {
+        return $this->hasMany(PackPurchase::class);
+    }
+
     public function isDraft(): bool
     {
         return $this->status === 'draft';
@@ -126,6 +135,14 @@ class Quote extends Model
             return true;
         }
 
-        return $this->valid_until && $this->valid_until->isPast() && ! $this->isAccepted();
+        if ($this->isAccepted()) {
+            return false;
+        }
+
+        if ($this->approval_token_expires_at && $this->approval_token_expires_at->isPast()) {
+            return true;
+        }
+
+        return (bool) ($this->valid_until && $this->valid_until->isPast());
     }
 }

@@ -235,7 +235,7 @@
                             {{-- Concepto --}}
                             <td class="px-5 py-4 max-w-xs">
                                 <span class="font-semibold text-white block truncate">
-                                    {{ $invoice->pack?->name ?? 'Paquete Personalizado' }}
+                                    {{ $invoice->pack?->name ?? ($invoice->quote?->project_title ?? 'Presupuesto Audiovisual') }}
                                 </span>
                                 @if(!empty($invoice->addons_purchased))
                                     <div class="flex flex-wrap gap-1 mt-1">

@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class QuoteController extends Controller
@@ -234,6 +235,14 @@ class QuoteController extends Controller
             'message' => 'nullable|string|max:5000',
         ]);
 
+        if (empty($quote->approval_token)) {
+            $quote->approval_token = Str::random(48);
+            $quote->approval_token_expires_at = $quote->valid_until
+                ? Carbon::parse($quote->valid_until)->endOfDay()
+                : now()->addDays(15);
+            $quote->save();
+        }
+
         try {
             Mail::to($validated['email'])->send(
                 new QuoteProposalMail(
@@ -258,7 +267,7 @@ class QuoteController extends Controller
 
             return back()->with('success', __('Proposta enviada com sucesso para :email.', ['email' => $validated['email']]));
         } catch (\Throwable $e) {
-            Log::error("QuoteController send error: " . $e->getMessage());
+            Log::error('QuoteController send error: '.$e->getMessage());
 
             if ($request->wantsJson()) {
                 return response()->json([

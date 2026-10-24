@@ -16,6 +16,7 @@ class PackPurchase extends Model
         'tenant_id',
         'cliente_id',
         'pack_id',
+        'quote_id',
         'stripe_checkout_session_id',
         'stripe_payment_intent_id',
         'stripe_subscription_id',
@@ -146,6 +147,11 @@ class PackPurchase extends Model
     public function pack(): BelongsTo
     {
         return $this->belongsTo(Pack::class);
+    }
+
+    public function quote(): BelongsTo
+    {
+        return $this->belongsTo(Quote::class);
     }
 
     public function productions(): HasMany

@@ -342,4 +342,63 @@ class TenantFiscalSettingsAndInvoiceTest extends TestCase
         $this->assertSame('Estúdio Alpha Audiovisual', TenantSetting::get($this->tenantA, 'fiscal_company_name'));
         $this->assertNull(TenantSetting::get($this->tenantB, 'fiscal_company_name'));
     }
+
+    public function test_invoice_generation_supports_null_pack_id_with_quote_fallback(): void
+    {
+        $cliente = Cliente::create([
+            'tenant_id' => $this->tenantA->id,
+            'name' => 'Cliente Corporativo Sem Pack',
+            'email' => 'corporativo@test.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $quote = \App\Models\Quote::create([
+            'tenant_id' => $this->tenantA->id,
+            'cliente_id' => $cliente->id,
+            'user_id' => $this->adminA->id,
+            'client_name' => 'Cliente Corporativo Sem Pack',
+            'client_email' => 'corporativo@test.com',
+            'project_title' => 'Campanha Publicitária de Verão',
+            'inputs' => [],
+            'calculation' => [],
+            'subtotal' => 2000.00,
+            'total_amount' => 2420.00,
+            'tax_rate' => 21.00,
+            'tax_amount' => 420.00,
+            'deposit_amount' => 1210.00,
+            'balance_amount' => 1210.00,
+            'status' => 'sent',
+        ]);
+
+        $purchase = PackPurchase::create([
+            'tenant_id' => $this->tenantA->id,
+            'cliente_id' => $cliente->id,
+            'pack_id' => null, // Compra originada de orçamento sem pacote de catálogo
+            'quote_id' => $quote->id,
+            'video_quantity' => 1,
+            'amount' => 1210.00,
+            'subtotal' => 1000.00,
+            'tax_rate' => 21.00,
+            'tax_amount' => 210.00,
+            'total_amount' => 1210.00,
+            'payment_gateway' => 'stripe',
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        $service = app(InvoiceService::class);
+        $data = $service->prepareInvoiceData($purchase);
+
+        $this->assertNotNull($purchase->invoice_number);
+        $this->assertSame('Campanha Publicitária de Verão', $data['pack']->name ?? $data['packData']['name']);
+
+        // Valida que a renderização do PDF ocorre sem erros com pack_id null
+        $pdf = $service->renderPdf($purchase);
+        $this->assertNotEmpty($pdf->output());
+
+        // Valida a listagem administrativa de faturas
+        $response = $this->actingAs($this->adminA)->get(route('admin.invoices.index'));
+        $response->assertOk();
+        $response->assertSee('Campanha Publicitária de Verão');
+    }
 }

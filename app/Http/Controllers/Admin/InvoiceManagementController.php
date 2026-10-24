@@ -109,7 +109,7 @@ class InvoiceManagementController extends Controller
             $query->chunk(100, function ($purchases) use ($handle) {
                 foreach ($purchases as $purchase) {
                     $date = $purchase->paid_at ?? $purchase->invoice_generated_at ?? $purchase->created_at;
-                    $concept = $purchase->pack?->name ?? 'Paquete Audiovisual';
+                    $concept = $purchase->pack?->name ?? ($purchase->quote?->project_title ?? 'Presupuesto Audiovisual');
                     if (!empty($purchase->addons_purchased)) {
                         $concept .= ' (+ ' . implode(', ', (array) $purchase->addons_purchased) . ')';
                     }

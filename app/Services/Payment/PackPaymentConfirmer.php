@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\PackPurchase;
+use App\Models\Production;
 use App\Models\User;
 use App\Services\Billing\InvoiceService;
 use App\Support\Money;
@@ -77,7 +78,7 @@ class PackPaymentConfirmer
             $this->storeSplitDepositPaymentMethod($purchase, $paymentIntentId);
         }
 
-        $this->issueInvoice($purchase, 'Stripe');
+        $this->postPaymentProcessing($purchase, 'Stripe');
 
         return self::PAID;
     }
@@ -141,8 +142,7 @@ class PackPaymentConfirmer
 
         Log::info("PackPaymentConfirmer: pagamento Redsys confirmado ({$gatewayName}) para a compra #{$purchase->id}.");
 
-        $this->issueInvoice($purchase, 'Redsys');
-        $this->provisionFirstProduction($purchase);
+        $this->postPaymentProcessing($purchase, 'Redsys');
 
         return self::PAID;
     }
@@ -182,8 +182,7 @@ class PackPaymentConfirmer
 
         Log::info("PackPaymentConfirmer: transferência bancária da compra #{$purchase->id} confirmada pelo staff #{$confirmedBy->id}.");
 
-        $this->issueInvoice($purchase, 'BankTransfer');
-        $this->provisionFirstProduction($purchase);
+        $this->postPaymentProcessing($purchase, 'BankTransfer');
 
         return self::PAID;
     }
@@ -290,18 +289,41 @@ class PackPaymentConfirmer
         }
     }
 
-    protected function provisionFirstProduction(PackPurchase $purchase): void
+    protected function postPaymentProcessing(PackPurchase $purchase, string $gateway): void
     {
-        $adminUser = $purchase->tenant?->users()->first();
+        $this->issueInvoice($purchase, $gateway);
+        $production = $this->provisionFirstProduction($purchase);
 
-        if ($adminUser && $purchase->productions()->count() === 0) {
-            $purchase->productions()->create([
-                'tenant_id' => $purchase->tenant_id,
-                'created_by' => $adminUser->id,
-                'cliente_id' => $purchase->cliente_id,
-                'title' => 'Produção #1 - '.($purchase->pack->name ?? 'Pacote de Vídeos'),
-                'status' => 'draft',
+        if ($purchase->quote_id && $purchase->quote) {
+            $purchase->quote->update([
+                'status' => 'accepted',
+                'accepted_at' => now(),
+                'production_id' => $production?->id,
             ]);
         }
+    }
+
+    protected function provisionFirstProduction(PackPurchase $purchase): ?Production
+    {
+        $existing = $purchase->productions()->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $adminUser = $purchase->tenant?->users()->first();
+        if (! $adminUser) {
+            return null;
+        }
+
+        $title = $purchase->pack?->name
+            ?: ($purchase->quote?->project_title ?: 'Produção Audiovisual');
+
+        return $purchase->productions()->create([
+            'tenant_id' => $purchase->tenant_id,
+            'created_by' => $adminUser->id,
+            'cliente_id' => $purchase->cliente_id,
+            'title' => 'Produção #1 - '.$title,
+            'status' => 'draft',
+        ]);
     }
 }

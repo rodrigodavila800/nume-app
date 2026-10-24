@@ -22,6 +22,7 @@ use App\Http\Controllers\MagicVideoController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\PackController;
 use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\QuoteApprovalController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\RoteiroController;
 use App\Http\Controllers\ShowcaseVideoController;
@@ -285,6 +286,13 @@ Route::prefix('magic')->name('magic.')->middleware('signed')->group(function () 
         ->name('videos.show');
     Route::post('/videos/{video}/approve', [MagicApprovalController::class, 'approveVideo'])
         ->name('videos.approve');
+});
+
+// Aprovação e Checkout Público de Orçamento via Token
+Route::prefix('orcamento')->name('quotes.public.')->group(function () {
+    Route::get('/{token}', [QuoteApprovalController::class, 'show'])->name('show');
+    Route::post('/{token}/aprovar', [QuoteApprovalController::class, 'approve'])->name('approve');
+    Route::post('/{token}/recusar', [QuoteApprovalController::class, 'reject'])->name('reject');
 });
 
 require __DIR__.'/auth.php';

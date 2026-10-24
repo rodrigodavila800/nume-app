@@ -29,7 +29,7 @@
         <div class="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 text-left space-y-2 text-xs">
             <div class="flex justify-between text-zinc-400">
                 <span>{{ __('Serviço:') }}</span>
-                <span class="font-semibold text-white">{{ $pack->name }}</span>
+                <span class="font-semibold text-white">{{ $pack?->name ?? ($purchase->quote?->project_title ?: __('Producción Audiovisual')) }}</span>
             </div>
             <div class="flex justify-between text-zinc-400">
                 <span>{{ __('Base Imponible:') }}</span>

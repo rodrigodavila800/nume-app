@@ -91,7 +91,7 @@
         <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs flex items-center justify-between">
             <div>
                 <span class="text-zinc-400 text-[11px] block">{{ __('Pacote Contratado') }}</span>
-                <span class="font-bold text-white">{{ $purchase->pack->name ?? __('Pacote Audiovisual') }}</span>
+                <span class="font-bold text-white">{{ $purchase->pack?->name ?? ($purchase->quote?->project_title ?? __('Pacote Audiovisual')) }}</span>
             </div>
             <span class="text-emerald-400 font-bold">📦 {{ $purchase->video_quantity }} {{ __('vídeos') }}</span>
         </div>

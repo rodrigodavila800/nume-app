@@ -141,6 +141,14 @@ Un cordial saludo,
                 📄 <strong>Presupuesto oficial en PDF adjunto:</strong> <code>Presupuesto_{{ $quote->number }}.pdf</code>
             </div>
 
+            @if(!empty($quote->approval_token))
+                <div style="text-align: center; margin: 24px 0;">
+                    <a href="{{ route('quotes.public.show', $quote->approval_token) }}" style="display: inline-block; background-color: #ea580c; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 14px 28px; border-radius: 8px;">
+                        Revisar y Aprobar Propuesta Online &rarr;
+                    </a>
+                </div>
+            @endif
+
             <div class="summary-card">
                 <table class="summary-table">
                     <tr>

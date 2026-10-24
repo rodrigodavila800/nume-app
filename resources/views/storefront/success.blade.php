@@ -41,7 +41,7 @@
         @if($state === 'paid' && isset($purchase) && $purchase)
             <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-left text-xs space-y-1">
                 <p class="text-zinc-500 font-bold uppercase text-[10px]">{{ __('Pacote Contratado') }}</p>
-                <p class="text-sm font-bold text-white">{{ $purchase->pack->name ?? __('Pacote Audiovisual') }}</p>
+                <p class="text-sm font-bold text-white">{{ $purchase->pack?->name ?? ($purchase->quote?->project_title ?? __('Pacote Audiovisual')) }}</p>
                 <p class="text-orange-400 font-semibold mt-1">📦 {{ $purchase->video_quantity }} {{ __('vídeos inclusos para produção') }}</p>
             </div>
         @endif
