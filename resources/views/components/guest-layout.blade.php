@@ -11,7 +11,8 @@
         <style>
             body { font-family: 'Plus Jakarta Sans', sans-serif; }
         </style>
-    </head>
+        @include('partials.favicons')
+</head>
     <body class="bg-zinc-50 text-zinc-900 flex min-h-screen items-center justify-center p-6 antialiased selection:bg-orange-500 selection:text-white">
         <div class="w-full max-w-sm space-y-6">
             <div class="text-center">

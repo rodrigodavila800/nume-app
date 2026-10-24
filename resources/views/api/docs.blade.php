@@ -20,6 +20,7 @@
             },
         }
     </script>
+    @include('partials.favicons')
 </head>
 <body class="min-h-full flex flex-col font-sans selection:bg-rose-500 selection:text-white">
     <!-- Navbar Superior -->

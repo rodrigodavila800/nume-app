@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('Redirecionando para Pagamento Seguro | NUME') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    @include('partials.favicons')
 </head>
 <body class="h-full flex items-center justify-center p-4 bg-zinc-950 text-white font-sans antialiased">
     <div class="max-w-md w-full text-center space-y-6 p-8 rounded-3xl bg-zinc-900/90 border border-zinc-800 shadow-2xl backdrop-blur-xl">
