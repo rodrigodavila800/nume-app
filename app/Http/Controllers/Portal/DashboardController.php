@@ -18,7 +18,7 @@ class DashboardController extends Controller
             ->with('pack')
             ->where(function ($q) {
                 $q->where('status', 'paid')
-                  ->orWhere('subscription_status', 'active');
+                    ->orWhere('subscription_status', 'active');
             })
             ->latest()
             ->paginate(10, ['*'], 'purchases_page');
@@ -31,6 +31,13 @@ class DashboardController extends Controller
             ->latest()
             ->get();
 
-        return view('portal.dashboard', compact('productions', 'purchases', 'activeSubscriptions'));
+        // Propostas e orçamentos recentes do cliente
+        $recentQuotes = $cliente->allQuotes()
+            ->whereIn('status', ['sent', 'accepted', 'rejected'])
+            ->latest()
+            ->take(4)
+            ->get();
+
+        return view('portal.dashboard', compact('productions', 'purchases', 'activeSubscriptions', 'recentQuotes'));
     }
 }

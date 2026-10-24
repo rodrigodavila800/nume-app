@@ -1,15 +1,17 @@
 <?php
 
+use App\Http\Controllers\Auth\GooglePortalController;
 use App\Http\Controllers\Portal\AuthenticatedSessionController;
 use App\Http\Controllers\Portal\DashboardController;
+use App\Http\Controllers\Portal\MarketingPlanController;
 use App\Http\Controllers\Portal\PackController;
 use App\Http\Controllers\Portal\ProductionController;
+use App\Http\Controllers\Portal\ProfileController;
+use App\Http\Controllers\Portal\QuoteController;
 use App\Http\Controllers\Portal\RegisteredClientController;
 use App\Http\Controllers\Portal\RoteiroController;
-use App\Http\Controllers\Portal\ProfileController;
-use App\Http\Controllers\Portal\MarketingPlanController;
 use App\Http\Controllers\Portal\SocialDistributionController;
-use App\Http\Controllers\Auth\GooglePortalController;
+use App\Http\Controllers\Portal\VideoApprovalController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('portal')->name('portal.')->group(function () {
@@ -49,6 +51,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('marketing-plan/items/{item}/convert', [MarketingPlanController::class, 'convertToProduction'])->name('marketing-plan.convert-item');
         });
 
+        // Propostas & Orçamentos vinculados ao cliente
+        Route::get('orcamentos', [QuoteController::class, 'index'])->name('quotes.index');
+
         // Planos Recorrentes (Retainers / Assinaturas)
         Route::get('planos', [PackController::class, 'plans'])->name('plans.index');
 
@@ -84,7 +89,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
             ->name('publications.status');
 
         // Aprovação do corte final com liberação de ativos e liquidação do saldo (50/50)
-        Route::post('videos/{video}/approve-and-release', [\App\Http\Controllers\Portal\VideoApprovalController::class, 'approveAndRelease'])
+        Route::post('videos/{video}/approve-and-release', [VideoApprovalController::class, 'approveAndRelease'])
             ->name('videos.approve-and-release');
     });
 });

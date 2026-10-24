@@ -258,6 +258,92 @@
         </div>
     @endif
 
+    {{-- Seção de Propostas & Orçamentos Recentes --}}
+    @if (isset($recentQuotes) && $recentQuotes->isNotEmpty())
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-zinc-900">{{ __('Propostas & Orçamentos Recebidos') }}</h2>
+                    <p class="text-xs text-zinc-500">
+                        {{ __('Orçamentos personalizados enviados pela produtora com aprovação e início de gravação com 1 clique.') }}
+                    </p>
+                </div>
+                <a href="{{ route('portal.quotes.index') }}" class="text-xs font-bold text-orange-600 hover:text-orange-700 transition flex items-center gap-1">
+                    <span>{{ __('Ver todos') }}</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach ($recentQuotes as $q)
+                    @php
+                        $isExp = $q->isExpired();
+                        $isAcc = $q->isAccepted();
+                        $isRej = $q->isRejected();
+                        $isPend = $q->isSent() && ! $isExp;
+                    @endphp
+                    <div class="bg-white rounded-2xl p-5 border border-zinc-200 shadow-xs hover:border-orange-200 transition space-y-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <span class="font-mono text-[11px] font-bold text-zinc-500 block">#{{ $q->number }}</span>
+                                <h3 class="text-sm font-bold text-zinc-900 mt-0.5 line-clamp-1">
+                                    {{ $q->project_title ?: __('Produção Audiovisual') }}
+                                </h3>
+                            </div>
+                            <div>
+                                @if ($isAcc)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        {{ __('Aprovado') }}
+                                    </span>
+                                @elseif ($isRej)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-600 border border-zinc-200">
+                                        {{ __('Declinado') }}
+                                    </span>
+                                @elseif ($isExp)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        {{ __('Expirado') }}
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200">
+                                        {{ __('Aguardando Aprovação') }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="flex items-baseline justify-between pt-2 border-t border-zinc-100 text-xs">
+                            <span class="text-zinc-500">{{ __('Valor Total:') }}</span>
+                            <span class="font-mono font-extrabold text-zinc-900 text-sm">
+                                € {{ number_format($q->total_amount, 2, ',', '.') }}
+                            </span>
+                        </div>
+
+                        <div class="pt-2 flex items-center justify-end gap-2">
+                            @if ($isPend && !empty($q->approval_token))
+                                <a href="{{ route('quotes.public.show', $q->approval_token) }}"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-600 hover:bg-orange-500 text-white shadow-xs transition">
+                                    <span>{{ __('Revisar & Aprovar') }}</span>
+                                    <span>&rarr;</span>
+                                </a>
+                            @elseif ($isAcc && $q->production_id)
+                                <a href="{{ route('portal.productions.show', $q->production_id) }}"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition">
+                                    <span>{{ __('Ver Produção') }}</span>
+                                    <span>&rarr;</span>
+                                </a>
+                            @elseif (!empty($q->approval_token))
+                                <a href="{{ route('quotes.public.show', $q->approval_token) }}"
+                                   class="text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition">
+                                    {{ __('Ver Detalhes') }} &rarr;
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Projetos em Produção --}}
     <div class="space-y-4">
         <div class="flex items-center justify-between">

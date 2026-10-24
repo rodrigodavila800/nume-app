@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 
 class Cliente extends Authenticatable
 {
-    use HasFactory, Notifiable, BelongsToTenant;
+    use BelongsToTenant, HasFactory, Notifiable;
 
     protected $fillable = [
         'tenant_id',
@@ -98,6 +98,27 @@ class Cliente extends Authenticatable
     public function videoPublications(): HasMany
     {
         return $this->hasMany(VideoPublication::class)->orderBy('created_at', 'desc');
+    }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class);
+    }
+
+    /**
+     * Retorna query builder de todas as Quotes do cliente (por cliente_id OU client_email no mesmo tenant).
+     */
+    public function allQuotes()
+    {
+        return Quote::withoutGlobalScope('tenant')
+            ->where('tenant_id', $this->tenant_id)
+            ->where(function ($query) {
+                $query->where('cliente_id', $this->id)
+                    ->orWhere(function ($q) {
+                        $q->whereNull('cliente_id')
+                            ->where('client_email', $this->email);
+                    });
+            });
     }
 
     /**

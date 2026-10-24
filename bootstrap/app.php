@@ -1,8 +1,17 @@
 <?php
 
+use App\Http\Middleware\AuthenticateApiKey;
+use App\Http\Middleware\EnsureBrandProfileCompleted;
+use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,13 +23,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
         $middleware->web(append: [
-            \App\Http\Middleware\EnsureTenantIsActive::class,
-            \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\SecurityHeaders::class,
+            EnsureTenantIsActive::class,
+            SetLocale::class,
+            SecurityHeaders::class,
         ]);
         $middleware->alias([
-            'brand.profile.completed' => \App\Http\Middleware\EnsureBrandProfileCompleted::class,
-            'auth.api_key' => \App\Http\Middleware\AuthenticateApiKey::class,
+            'brand.profile.completed' => EnsureBrandProfileCompleted::class,
+            'auth.api_key' => AuthenticateApiKey::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
@@ -29,15 +38,23 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
         $middleware->redirectUsersTo(function () {
-            if (\Illuminate\Support\Facades\Auth::guard('cliente')->check()) {
+            if (Auth::guard('cliente')->check()) {
                 return route('portal.dashboard');
             }
+
             return route('productions.index');
+        });
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->is('portal/*') || $request->is('portal')) {
+                return route('portal.login');
+            }
+
+            return route('login');
         });
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, \Illuminate\Http\Request $request) {
-            if ($e->getStatusCode() === 419 || $e->getPrevious() instanceof \Illuminate\Session\TokenMismatchException) {
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if ($e->getStatusCode() === 419 || $e->getPrevious() instanceof TokenMismatchException) {
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json([
                         'message' => __('Sua sessão expirou por inatividade. Por favor, atualize a página e tente novamente.'),
@@ -45,8 +62,8 @@ return Application::configure(basePath: dirname(__DIR__))
                     ], 419);
                 }
 
-                $fallbackUrl = ($request->is('portal/*') || $request->is('portal')) 
-                    ? route('portal.login') 
+                $fallbackUrl = ($request->is('portal/*') || $request->is('portal'))
+                    ? route('portal.login')
                     : route('login');
 
                 return redirect()
@@ -56,4 +73,3 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
     })->create();
-
