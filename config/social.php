@@ -1,8 +1,10 @@
 <?php
 
 use App\Services\SocialPublishing\Connectors\MetaConnector;
+use App\Services\SocialPublishing\Connectors\ThreadsConnector;
 use App\Services\SocialPublishing\Meta\FacebookReelsPublisher;
 use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
+use App\Services\SocialPublishing\Meta\ThreadsVideoPublisher;
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
 use App\Services\SocialPublishing\YouTubeConnector;
 
@@ -58,12 +60,14 @@ return [
         'youtube' => YouTubeUploader::class,
         'instagram' => InstagramReelsPublisher::class,
         'facebook' => FacebookReelsPublisher::class,
+        'threads' => ThreadsVideoPublisher::class,
     ],
 
     // Conectores OAuth do portal (chave usada na rota /portal/redes-sociais/conectar/{chave}).
     'connectors' => [
         'youtube' => YouTubeConnector::class,
         'meta' => MetaConnector::class,
+        'threads' => ThreadsConnector::class,
     ],
 
     // Qual conector conecta cada rede (Instagram e Facebook saem do mesmo login da Meta).
@@ -99,6 +103,13 @@ return [
         // por até 5 minutos). Passou disso, o job tenta de novo mais tarde sem reenviar o arquivo.
         'poll_attempts' => 20,
         'poll_seconds' => 15,
+    ],
+
+    'threads' => [
+        'api_version' => env('THREADS_API_VERSION', 'v1.0'),
+        'scopes' => ['threads_basic', 'threads_content_publish'],
+        // O token longo dura 60 dias e só renova depois de 24 h de idade: renovamos semanalmente.
+        'refresh_after_days' => 7,
     ],
 
     'youtube' => [

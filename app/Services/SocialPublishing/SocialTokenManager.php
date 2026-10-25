@@ -5,6 +5,7 @@ namespace App\Services\SocialPublishing;
 use App\Models\SocialConnection;
 use App\Services\SocialPublishing\OAuth\GoogleOAuthClient;
 use App\Services\SocialPublishing\OAuth\OAuthException;
+use App\Services\SocialPublishing\OAuth\ThreadsOAuthClient;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -14,7 +15,10 @@ use Illuminate\Support\Facades\Log;
  */
 class SocialTokenManager
 {
-    public function __construct(private readonly GoogleOAuthClient $google) {}
+    public function __construct(
+        private readonly GoogleOAuthClient $google,
+        private readonly ThreadsOAuthClient $threads,
+    ) {}
 
     /**
      * @throws PublishException
@@ -46,13 +50,22 @@ class SocialTokenManager
      */
     public function refresh(SocialConnection $connection): string
     {
-        if ($connection->provider !== 'google' || ! $connection->refresh_token) {
+        $refreshable = match ($connection->provider) {
+            'google' => (bool) $connection->refresh_token,
+            // O Threads renova com o próprio token longo, enquanto ele não venceu.
+            'threads' => (bool) $connection->access_token && ! $connection->expires_at?->isPast(),
+            default => false,
+        };
+
+        if (! $refreshable) {
             $connection->markFailed('missing_refresh_token', SocialConnection::STATUS_EXPIRED);
             throw new PublishException('reconnect_required');
         }
 
         try {
-            $tokens = $this->google->refresh($connection->refresh_token);
+            $tokens = $connection->provider === 'threads'
+                ? $this->threads->refresh($connection->access_token) + ['refresh_token' => null, 'scopes' => []]
+                : $this->google->refresh($connection->refresh_token);
         } catch (OAuthException $e) {
             Log::warning('social.token.refresh_failed', [
                 'tenant_id' => $connection->tenant_id,
@@ -71,7 +84,7 @@ class SocialTokenManager
         $connection->forceFill([
             'access_token' => $tokens['access_token'],
             // O Google às vezes devolve um refresh token novo; senão o atual continua valendo.
-            'refresh_token' => $tokens['refresh_token'] ?: $connection->refresh_token,
+            'refresh_token' => ($tokens['refresh_token'] ?? null) ?: $connection->refresh_token,
             'expires_at' => now()->addSeconds($tokens['expires_in']),
             'scopes' => $tokens['scopes'] ?: $connection->scopes,
             'status' => SocialConnection::STATUS_ACTIVE,

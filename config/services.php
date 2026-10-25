@@ -61,6 +61,14 @@ return [
         'redirect' => env('META_REDIRECT_URI'),
     ],
 
+    // Caso de uso Threads do app da Meta (tem ID e segredo próprios no painel).
+    'threads' => [
+        'client_id' => env('THREADS_APP_ID'),
+        'client_secret' => env('THREADS_APP_SECRET'),
+        // Vazio: usa a rota portal.social.oauth.callback (threads).
+        'redirect' => env('THREADS_REDIRECT_URI'),
+    ],
+
     'redsys' => [
         'merchant_code' => env('REDSYS_MERCHANT_CODE', '999008881'),
         'terminal' => env('REDSYS_TERMINAL', '001'),

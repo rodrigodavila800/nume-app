@@ -21,15 +21,21 @@ class RefreshSocialTokensCommand extends Command
     public function handle(SocialTokenManager $tokens): int
     {
         $threshold = now()->subHours(max(1, (int) $this->option('hours')));
+        // Threads: token de 60 dias que só renova depois de 24 h; basta renovar a cada poucos dias.
+        $threadsThreshold = now()->subDays(max(1, (int) config('social.threads.refresh_after_days', 7)));
         $refreshed = 0;
         $needsReconnect = 0;
         $retryLater = 0;
 
         // Sem usuário autenticado o scope de tenant não filtra: cada conta é tratada com o próprio tenant_id.
+        // Contas da Meta (Página/Instagram) usam token sem validade fixa e não entram aqui.
         SocialConnection::withoutGlobalScopes()
-            ->where('provider', 'google')
             ->where('status', SocialConnection::STATUS_ACTIVE)
-            ->where(fn ($query) => $query->whereNull('last_refreshed_at')->orWhere('last_refreshed_at', '<=', $threshold))
+            ->where(fn ($query) => $query
+                ->where(fn ($google) => $google->where('provider', 'google')
+                    ->where(fn ($q) => $q->whereNull('last_refreshed_at')->orWhere('last_refreshed_at', '<=', $threshold)))
+                ->orWhere(fn ($threads) => $threads->where('provider', 'threads')
+                    ->where(fn ($q) => $q->whereNull('last_refreshed_at')->orWhere('last_refreshed_at', '<=', $threadsThreshold))))
             ->chunkById(50, function ($connections) use ($tokens, &$refreshed, &$needsReconnect, &$retryLater) {
                 foreach ($connections as $connection) {
                     try {
