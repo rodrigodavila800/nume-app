@@ -1,6 +1,6 @@
-# Deploy do Nume Social Engine (Fases 0 a 4)
+# Deploy do Nume Social Engine (Fases 0 a 5)
 
-Checklist para subir o vídeo hospedado e as redes diretas (YouTube, Instagram, Facebook, Threads, TikTok e LinkedIn) na VPS (CloudPanel). Siga na ordem. Nada aqui exige mexer no Upload-Post: as redes que não estão conectadas direto continuam saindo por ele.
+Checklist para subir o vídeo hospedado e as redes diretas (YouTube, Instagram, Facebook, Threads, TikTok, LinkedIn e Pinterest) na VPS (CloudPanel). Siga na ordem. Nada aqui exige mexer no Upload-Post: as redes que não estão conectadas direto continuam saindo por ele.
 
 ## 1. Código e banco
 
@@ -106,6 +106,21 @@ Como funciona para os clientes:
 - Vídeos de 75 KB a 500 MB, de 3 s a 30 min, MP4.
 - A versão da API (`LINKEDIN_API_VERSION`) vale por pelo menos 1 ano. Atualize quando o LinkedIn avisar o fim da versão.
 
+## 4e. App do Pinterest (uma vez)
+
+Em [developers.pinterest.com](https://developers.pinterest.com/apps/), com uma **conta empresarial** do Pinterest da NUME:
+
+1. **Conectar app** e preencher nome, descrição, site e Política de Privacidade (`/privacidade`). O Pinterest aprova o pedido de acesso (normalmente em poucos dias) e o app começa em **Trial**.
+2. **Redirect URI:** `https://SEU-DOMINIO/portal/redes-sociais/oauth/pinterest/callback`.
+3. **Escopos usados:** `user_accounts:read`, `boards:read`, `pins:read`, `pins:write`.
+4. **Trial:** os pins e pastas criados ficam visíveis só para quem criou (entidades de sandbox). Se as chamadas forem recusadas no Trial, aponte `PINTEREST_API_BASE` para `https://api-sandbox.pinterest.com/v5` (tokens e pins ficam no sandbox).
+5. **Standard (para os clientes de verdade):** pedir o upgrade no painel com um **vídeo de tela** do fluxo: Redes Sociais > Conectar Pinterest > tela do Pinterest > página da produção > "Publicar no Pinterest" > escolha da pasta > pin publicado.
+
+Como funciona para os clientes:
+- O pin precisa de uma **pasta**, então o Pinterest **não sai pelo modal "Publicar nas Redes"**: cada vídeo tem o botão **Publicar no Pinterest**, que lista as pastas da conta. Pelo painel da produtora, o Pinterest direto não é publicado (aparece um aviso).
+- Só pastas públicas (pastas secretas exigiriam escopos extras).
+- A capa do pin é um quadro do início do vídeo. O acesso renova sozinho (refresh contínuo de 60 dias).
+
 ## 5. Variáveis de ambiente (você edita o `.env`)
 
 | Variável | Valor | Observação |
@@ -125,6 +140,9 @@ Como funciona para os clientes:
 | `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` | do app do LinkedIn | aba Auth do app |
 | `LINKEDIN_API_VERSION` | `202610` | atualize antes do fim da versão (mínimo 1 ano) |
 | `SOCIAL_ROUTE_LINKEDIN` | `native` | `upload_post` desliga o LinkedIn direto sem deploy |
+| `PINTEREST_CLIENT_ID` / `PINTEREST_CLIENT_SECRET` | do app do Pinterest | App ID e App secret key do painel |
+| `PINTEREST_API_BASE` | `https://api.pinterest.com/v5` | sandbox durante o Trial, se o Pinterest exigir |
+| `SOCIAL_ROUTE_PINTEREST` | `native` | `upload_post` desliga o Pinterest direto sem deploy |
 
 Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 
@@ -154,10 +172,12 @@ Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 | Threads falha em `media_processing_failed` em ambiente local | o Threads não alcança `localhost`; teste no servidor |
 | `unaudited_client_can_only_post_to_private_accounts` | app do TikTok sem auditoria: deixe a conta do TikTok privada e publique como "Somente eu" |
 | "O TikTok limitou novas contas no app hoje" | sem auditoria, o TikTok aceita só 5 usuários publicando por dia |
+| "Sua conta do Pinterest não tem nenhuma pasta" | o cliente precisa criar ao menos uma pasta pública no Pinterest |
+| Pins só aparecem para a própria conta | app do Pinterest ainda em Trial: pedir o upgrade para Standard |
 | LinkedIn com `reconnect_required` | passaram os 60 dias do acesso: reconectar no card (um clique se estiver logado) |
 | Botão "Publicar no TikTok" não aparece | conta do TikTok não conectada direto, `SOCIAL_ROUTE_TIKTOK` não é `native` ou o vídeo não é arquivo hospedado |
 
 ## 8. Voltar atrás
 
-- Desligar uma rede direta: `SOCIAL_ROUTE_<REDE>=upload_post` (YOUTUBE, INSTAGRAM, FACEBOOK, THREADS, TIKTOK, LINKEDIN) + `config:cache`. Os canais conectados continuam salvos; novos envios saem pelo Upload-Post.
+- Desligar uma rede direta: `SOCIAL_ROUTE_<REDE>=upload_post` (YOUTUBE, INSTAGRAM, FACEBOOK, THREADS, TIKTOK, LINKEDIN, PINTEREST) + `config:cache`. Os canais conectados continuam salvos; novos envios saem pelo Upload-Post.
 - As migrations têm `down()`, mas `migrate:rollback` apaga `social_connections` (todos os canais conectados). Prefira a chave acima.
