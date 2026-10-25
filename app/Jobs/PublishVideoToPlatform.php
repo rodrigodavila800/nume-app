@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\VideoPublication;
+use App\Services\SocialPublishing\NativePublisherRegistry;
 use App\Services\SocialPublishing\PublishException;
-use App\Services\SocialPublishing\YouTube\YouTubeUploader;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -39,13 +39,15 @@ class PublishVideoToPlatform implements ShouldQueue
         return [60, 300, 900];
     }
 
-    public function handle(YouTubeUploader $youtube): void
+    public function handle(NativePublisherRegistry $publishers): void
     {
         $publication = VideoPublication::forTenant($this->tenantId)
             ->with(['video.production', 'socialConnection'])
             ->find($this->publicationId);
 
-        if (! $publication || $publication->driver !== 'youtube' || ! in_array($publication->status, ['pendente', 'processando'], true)) {
+        $publisher = $publication ? $publishers->for((string) $publication->driver) : null;
+
+        if (! $publication || ! $publisher || ! in_array($publication->status, ['pendente', 'processando'], true)) {
             return;
         }
 
@@ -58,7 +60,7 @@ class PublishVideoToPlatform implements ShouldQueue
         $publication->forceFill(['status' => 'processando', 'attempts' => $publication->attempts + 1])->save();
 
         try {
-            $result = $youtube->upload($publication);
+            $result = $publisher->publish($publication);
         } catch (PublishException $e) {
             $this->log($publication, $e->reason, $e->retryable);
 
@@ -80,20 +82,20 @@ class PublishVideoToPlatform implements ShouldQueue
             'publicado_em' => now(),
             'last_error' => null,
             'resultado' => array_merge($publication->resultado ?? [], [
-                'driver' => 'youtube_native',
+                'driver' => $publication->driver.'_native',
                 'video_id' => $result['id'],
                 'url' => $result['url'],
             ]),
         ]);
 
         if ($publication->video && $publication->video->status === 'ready') {
-            $publication->video->update(['status' => 'published', 'published_at' => now(), 'platform' => 'youtube']);
+            $publication->video->update(['status' => 'published', 'published_at' => now(), 'platform' => $publication->driver]);
         }
 
         Log::info('social.publish.succeeded', [
             'tenant_id' => $this->tenantId,
             'video_publication_id' => $publication->id,
-            'platform' => 'youtube',
+            'platform' => $publication->driver,
         ]);
     }
 
@@ -116,7 +118,7 @@ class PublishVideoToPlatform implements ShouldQueue
         $publication->update([
             'status' => 'falhou',
             'last_error' => mb_substr($reason, 0, 100),
-            'resultado' => array_merge($publication->resultado ?? [], ['driver' => 'youtube_native', 'error' => $reason]),
+            'resultado' => array_merge($publication->resultado ?? [], ['driver' => $publication->driver.'_native', 'error' => $reason]),
         ]);
     }
 

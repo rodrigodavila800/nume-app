@@ -5,6 +5,7 @@ namespace App\Services\SocialPublishing\YouTube;
 use App\Models\SocialConnection;
 use App\Models\Video;
 use App\Models\VideoPublication;
+use App\Services\SocialPublishing\NativePublisher;
 use App\Services\SocialPublishing\PublishException;
 use App\Services\SocialPublishing\SocialTokenManager;
 use GuzzleHttp\Psr7\LimitStream;
@@ -24,13 +25,18 @@ use Illuminate\Support\Str;
  * ao canal por dias: fica criptografada no cache, nunca em `resultado` (que o portal devolve ao cliente)
  * nem em log. Se a tentativa cair no meio, a próxima retoma de onde parou.
  */
-class YouTubeUploader
+class YouTubeUploader implements NativePublisher
 {
     public const UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
 
     private const SESSION_TTL_DAYS = 6;
 
     public function __construct(private readonly SocialTokenManager $tokens) {}
+
+    public function publish(VideoPublication $publication): array
+    {
+        return $this->upload($publication);
+    }
 
     /**
      * @return array{id: string, url: string}

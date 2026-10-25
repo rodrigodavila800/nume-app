@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoPublication;
+use App\Services\SocialPublishing\NativePublisherRegistry;
 use App\Services\SocialPublishing\OAuth\GoogleOAuthClient;
 use App\Services\SocialPublishing\PublishException;
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
@@ -234,7 +235,7 @@ class YouTubeNativePublishTest extends TestCase
         $outro = Tenant::create(['name' => 'Produtora B', 'slug' => 'produtora-b', 'status' => 'active']);
         $publication = $this->publication();
 
-        (new PublishVideoToPlatform($publication->id, $outro->id))->withFakeQueueInteractions()->handle(app(YouTubeUploader::class));
+        (new PublishVideoToPlatform($publication->id, $outro->id))->withFakeQueueInteractions()->handle(app(NativePublisherRegistry::class));
 
         Http::assertNothingSent();
         $this->assertSame('pendente', $publication->fresh()->status);
@@ -294,7 +295,7 @@ class YouTubeNativePublishTest extends TestCase
     private function runJob(VideoPublication $publication): PublishVideoToPlatform
     {
         $job = (new PublishVideoToPlatform($publication->id, $publication->tenant_id))->withFakeQueueInteractions();
-        $job->handle(app(YouTubeUploader::class));
+        $job->handle(app(NativePublisherRegistry::class));
 
         return $job;
     }

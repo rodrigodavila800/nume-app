@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\SocialPublishing\YouTube\YouTubeUploader;
+
 /*
 |--------------------------------------------------------------------------
 | Nume Social Engine
@@ -44,6 +46,12 @@ return [
         'x' => 'upload_post',
         'threads' => 'upload_post',
         'pinterest' => 'upload_post',
+    ],
+
+    // Publicador de cada rede no app próprio (classe que implementa NativePublisher).
+    // Uma rede só entra aqui quando o envio dela está pronto; a liberação para clientes é o 'routing'.
+    'native_publishers' => [
+        'youtube' => YouTubeUploader::class,
     ],
 
     'oauth' => [
