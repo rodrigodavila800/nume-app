@@ -25,6 +25,12 @@ return [
 
         // Validade das URLs assinadas de reprodução.
         'signed_url_minutes' => (int) env('VIDEO_SIGNED_URL_MINUTES', 120),
+
+        // Validade da URL assinada entregue a serviços externos que buscam o arquivo (hubs, redes).
+        'fetch_url_minutes' => (int) env('VIDEO_FETCH_URL_MINUTES', 720),
+
+        // Leitura opcional de largura, altura e duração (se não existir, o upload segue sem metadados).
+        'ffprobe_binary' => env('FFPROBE_BINARY', 'ffprobe'),
     ],
 
 ];

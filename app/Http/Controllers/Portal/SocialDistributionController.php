@@ -93,9 +93,18 @@ class SocialDistributionController extends Controller
 
         $scheduledAt = $request->validated('scheduled_at') ? new \DateTimeImmutable($request->validated('scheduled_at')) : null;
 
+        // Arquivo próprio da NUME: a URL de busca é gerada aqui (assinada, temporária) e só com o saldo
+        // quitado. A URL digitada pelo cliente só vale para vídeos que são apenas um link.
+        if ($video->hasSourceFile()) {
+            abort_if($video->isAssetLocked(), 403, __('Envio bloqueado: o saldo do pacote ainda não foi quitado.'));
+            $videoUrl = $video->publicFetchUrl();
+        } else {
+            $videoUrl = $request->validated('video_url');
+        }
+
         $publication = $this->service->publish(
             cliente: $cliente,
-            videoUrl: $request->validated('video_url'),
+            videoUrl: $videoUrl,
             title: $request->validated('titulo'),
             platforms: $request->validated('plataformas'),
             video: $video,

@@ -36,11 +36,24 @@ class PublishVideoRequest extends FormRequest
         throw new \Illuminate\Auth\Access\AuthorizationException(__('Você atingiu o limite de publicações do seu plano. Adquira o Add-on de Distribuição Automática para envios ilimitados.'));
     }
 
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $validator->after(function (\Illuminate\Validation\Validator $validator) {
+            $video = $this->route('video');
+            $hasSourceFile = $video instanceof \App\Models\Video && $video->hasSourceFile();
+
+            if (! $hasSourceFile && blank($this->input('video_url'))) {
+                $validator->errors()->add('video_url', __('Informe a URL pública do vídeo.'));
+            }
+        });
+    }
+
     public function rules(): array
     {
         return [
-            // URL pública do vídeo processado e hospedado (CDN / S3 / Cloud / MP4)
-            'video_url' => ['required', 'url', 'max:2048'],
+            // URL pública do vídeo (CDN / S3 / MP4). Dispensável quando o vídeo é um arquivo da NUME:
+            // nesse caso a URL de busca é gerada no servidor e a digitada é ignorada.
+            'video_url' => ['nullable', 'url', 'max:2048'],
             'titulo' => ['required', 'string', 'min:3', 'max:150'],
             'plataformas' => ['required', 'array', 'min:1', 'max:8'],
             'plataformas.*' => ['string', Rule::in(PlataformaAlvo::values())],

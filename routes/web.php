@@ -262,6 +262,12 @@ Route::get('/m/videos/{video}', [MagicVideoController::class, 'show'])
     ->name('magic.videos.show')
     ->middleware('signed');
 
+// Arquivo de vídeo hospedado na NUME: URL assinada e temporária (reprodução com Range; download com login do dono).
+Route::get('/media/videos/{video}', [\App\Http\Controllers\VideoMediaController::class, 'show'])
+    ->whereNumber('video')
+    ->middleware(['signed', 'throttle:300,1'])
+    ->name('videos.media');
+
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 Route::post('/webhooks/redsys', [RedsysWebhookController::class, 'handle'])->name('redsys.webhook');
 Route::post('/webhooks/upload-post', [UploadPostWebhookController::class, 'handle'])->name('upload-post.webhook');

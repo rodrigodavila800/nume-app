@@ -132,7 +132,9 @@ class SocialDistributionService implements SocialPublisherContract
                 'scheduled_at' => $scheduledAt,
                 'resultado' => [
                     'scheduled' => true,
-                    'video_url' => $videoUrl,
+                    // Arquivo próprio: a URL assinada expira, então não é guardada (gerada de novo no disparo).
+                    'video_url' => $video?->hasSourceFile() ? null : $videoUrl,
+                    'video_source' => $video?->hasSourceFile() ? 'file' : 'url',
                     'scheduled_for' => $scheduledAt->format('Y-m-d H:i:s'),
                 ],
             ]);
@@ -189,7 +191,10 @@ class SocialDistributionService implements SocialPublisherContract
             }
 
             $profile = $this->ensureProfile($cliente);
-            $videoUrl = $publication->resultado['video_url'] ?? $publication->video?->video_url;
+            // Arquivo próprio da NUME: URL assinada nova (a do agendamento já teria expirado).
+            $videoUrl = $publication->video?->hasSourceFile()
+                ? $publication->video->publicFetchUrl()
+                : ($publication->resultado['video_url'] ?? $publication->video?->video_url);
 
             if (! $videoUrl) {
                 $publication->update([

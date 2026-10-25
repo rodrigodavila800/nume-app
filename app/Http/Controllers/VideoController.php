@@ -8,17 +8,21 @@ use App\Models\Video;
 use App\Services\Notification\SofiVideoNotificationService;
 use App\Services\SofiCopywriterService;
 use App\Services\UploadPost\SocialDistributionService;
+use App\Services\Video\VideoUploadService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class VideoController extends Controller
 {
     public function __construct(
         protected SofiCopywriterService $sofiService,
         protected SocialDistributionService $socialService,
-        protected SofiVideoNotificationService $notificationService
+        protected SofiVideoNotificationService $notificationService,
+        protected VideoUploadService $uploads
     ) {}
 
     /**
@@ -54,6 +58,50 @@ class VideoController extends Controller
     }
 
     /**
+     * Regras de criação/edição. O vídeo é um arquivo enviado OU um link externo.
+     *
+     * @return array<string, mixed>
+     */
+    private function videoRules(Request $request, ?Video $video = null): array
+    {
+        $needsUrl = fn () => ! $request->hasFile('video_file')
+            && ! ($video?->hasSourceFile() && ! $request->boolean('remove_video_file'));
+
+        return [
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'video_url' => ['nullable', 'url', 'max:2048', Rule::requiredIf($needsUrl)],
+            'video_file' => [
+                'nullable', 'file',
+                'mimetypes:'.implode(',', config('social.video.allowed_mimes')),
+                'extensions:'.implode(',', config('social.video.allowed_extensions')),
+                'max:'.((int) config('social.video.max_upload_mb') * 1024),
+            ],
+            'remove_video_file' => 'nullable|boolean',
+            'thumbnail_url' => 'nullable|url',
+            'duration_seconds' => 'nullable|integer|min:1',
+        ];
+    }
+
+    /**
+     * Mensagens do upload: o PHP só informa "falha no envio" quando o arquivo passa do limite do servidor.
+     *
+     * @return array<string, string>
+     */
+    private function videoMessages(): array
+    {
+        $max = (int) config('social.video.max_upload_mb');
+
+        return [
+            'video_file.uploaded' => __('O arquivo não foi enviado. Ele pode passar do limite de upload do servidor (máx. :max MB); fale com o suporte se o problema continuar.', ['max' => $max]),
+            'video_file.max' => __('O vídeo excede o tamanho máximo de :max MB.', ['max' => $max]),
+            'video_file.mimetypes' => __('Envie um vídeo MP4 ou MOV.'),
+            'video_file.extensions' => __('Envie um vídeo MP4 ou MOV.'),
+            'video_url.required' => __('Informe o link do vídeo ou envie o arquivo.'),
+        ];
+    }
+
+    /**
      * Armazenar novo vídeo
      */
     public function store(Request $request, Production $production): RedirectResponse
@@ -61,18 +109,26 @@ class VideoController extends Controller
         $this->authorize('create', Video::class);
         $this->authorize('view', $production);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'video_url' => 'required|url',
-            'thumbnail_url' => 'nullable|url',
-            'duration_seconds' => 'nullable|integer|min:1',
-        ]);
+        $validated = $request->validate($this->videoRules($request), $this->videoMessages());
+        unset($validated['video_file'], $validated['remove_video_file']);
 
-        $video = $production->videos()->create([
-            ...$validated,
-            'status' => 'processing',
-        ]);
+        if ($request->hasFile('video_file')) {
+            $validated = [...$validated, ...$this->uploads->store($request->file('video_file'), (int) $production->tenant_id)];
+        }
+
+        try {
+            $video = $production->videos()->create([
+                ...$validated,
+                'status' => 'processing',
+            ]);
+        } catch (\Throwable $e) {
+            // Não deixa o arquivo órfão no disco se o registro não for criado.
+            if (! empty($validated['source_path'])) {
+                Storage::disk($validated['source_disk'])->delete($validated['source_path']);
+            }
+
+            throw $e;
+        }
 
         return redirect()->route('videos.show', [$production, $video])
             ->with('success', 'Vídeo adicionado! Processando...');
@@ -124,15 +180,23 @@ class VideoController extends Controller
                 ->with('error', 'Vídeos publicados não podem ser editados.');
         }
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'video_url' => 'required|url',
-            'thumbnail_url' => 'nullable|url',
-            'duration_seconds' => 'nullable|integer|min:1',
-        ]);
+        $validated = $request->validate($this->videoRules($request, $video), $this->videoMessages());
+        unset($validated['video_file'], $validated['remove_video_file']);
+
+        $previous = $video->hasSourceFile() ? [$video->source_disk, $video->source_path] : null;
+
+        if ($request->hasFile('video_file')) {
+            $validated = [...$validated, ...$this->uploads->store($request->file('video_file'), (int) $video->tenant_id)];
+        } elseif ($request->boolean('remove_video_file')) {
+            $validated = [...$validated, ...VideoUploadService::clearedAttributes()];
+        }
 
         $video->update($validated);
+
+        // O arquivo anterior só é apagado depois de o registro apontar para o novo (ou para nenhum).
+        if ($previous && $video->source_path !== $previous[1]) {
+            Storage::disk($previous[0])->delete($previous[1]);
+        }
 
         return redirect()->route('videos.show', [$production, $video])
             ->with('success', 'Vídeo atualizado com sucesso!');
@@ -220,7 +284,11 @@ class VideoController extends Controller
             return redirect()->back()->with('error', __('Esta produção não possui um cliente associado para distribuição social.'));
         }
 
-        $videoUrl = $validated['video_url'] ?? $video->video_url;
+        // Com arquivo próprio da NUME, a URL de busca é gerada aqui (assinada, temporária);
+        // a URL digitada no formulário só vale para vídeos que são apenas um link.
+        $videoUrl = $video->hasSourceFile()
+            ? $video->publicFetchUrl()
+            : ($validated['video_url'] ?? $video->video_url);
         if (empty($videoUrl)) {
             return redirect()->back()->with('error', __('O vídeo não possui uma URL válida para envio às redes sociais.'));
         }

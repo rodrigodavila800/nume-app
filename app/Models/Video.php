@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use App\Traits\BelongsToTenant;
 use App\Traits\HasEmbeddableVideo;
 
@@ -73,6 +74,56 @@ class Video extends Model
     public function sourceFileExists(): bool
     {
         return $this->hasSourceFile() && Storage::disk($this->source_disk)->exists($this->source_path);
+    }
+
+    /**
+     * Há algo para reproduzir: arquivo próprio da NUME ou link externo.
+     */
+    public function hasPlayableSource(): bool
+    {
+        return $this->hasSourceFile() || filled($this->video_url);
+    }
+
+    /**
+     * URL de reprodução: arquivo próprio por rota assinada (expira), ou o link externo.
+     */
+    public function playbackUrl(): ?string
+    {
+        if ($this->hasSourceFile()) {
+            return $this->signedMediaUrl((int) config('social.video.signed_url_minutes', 120));
+        }
+
+        return filled($this->video_url) ? $this->video_url : null;
+    }
+
+    /**
+     * URL de download. Para arquivo próprio, a rota exige login do dono e respeita a custódia (50/50).
+     */
+    public function downloadUrl(): ?string
+    {
+        if ($this->hasSourceFile()) {
+            return $this->signedMediaUrl((int) config('social.video.signed_url_minutes', 120), ['download' => 1]);
+        }
+
+        return filled($this->video_url) ? $this->video_url : null;
+    }
+
+    /**
+     * URL para serviços externos buscarem o arquivo (hub de redes). Gerada no momento do envio,
+     * nunca guardada: a assinatura expira.
+     */
+    public function publicFetchUrl(): ?string
+    {
+        if ($this->hasSourceFile()) {
+            return $this->signedMediaUrl((int) config('social.video.fetch_url_minutes', 720));
+        }
+
+        return filled($this->video_url) ? $this->video_url : null;
+    }
+
+    private function signedMediaUrl(int $minutes, array $query = []): string
+    {
+        return URL::temporarySignedRoute('videos.media', now()->addMinutes($minutes), ['video' => $this->id] + $query);
     }
 
     /**
