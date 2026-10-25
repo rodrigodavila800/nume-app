@@ -292,7 +292,7 @@ class VideoController extends Controller
         try {
             // Com arquivo próprio da NUME, a URL de busca é gerada no serviço (assinada, temporária);
             // a URL digitada no formulário só vale para vídeos que são apenas um link.
-            $this->publications->distribute(
+            $result = $this->publications->distribute(
                 cliente: $cliente,
                 video: $video,
                 title: $title,
@@ -302,16 +302,26 @@ class VideoController extends Controller
                 linkUrl: $video->hasSourceFile() ? null : ($validated['video_url'] ?? null),
             );
 
+            // TikTok direto exige que o dono da conta confirme as opções do post no portal.
+            $sent = array_values(array_diff($validated['plataformas'], $result['composer']));
+            $tiktokNote = in_array('tiktok', $result['composer'], true)
+                ? ' '.__('O TikTok desta conta é conectado direto: o cliente precisa publicar pelo portal, em "Publicar no TikTok".')
+                : '';
+
+            if ($sent === []) {
+                return redirect()->back()->with('warning', trim($tiktokNote));
+            }
+
             $msg = $scheduledAt
                 ? __('Postagem agendada com sucesso para :date nas plataformas: :platforms!', [
                     'date' => $scheduledAt->format('d/m/Y H:i'),
-                    'platforms' => implode(', ', $validated['plataformas'])
+                    'platforms' => implode(', ', $sent)
                 ])
                 : __('Vídeo enviado com sucesso para a esteira de postagem nas redes sociais (:platforms)!', [
-                    'platforms' => implode(', ', $validated['plataformas'])
+                    'platforms' => implode(', ', $sent)
                 ]);
 
-            return redirect()->back()->with('success', $msg);
+            return redirect()->back()->with('success', $msg.$tiktokNote);
         } catch (\DomainException $e) {
             return redirect()->back()->with('error', __('O vídeo não possui uma URL válida para envio às redes sociais.'));
         } catch (\Throwable $e) {

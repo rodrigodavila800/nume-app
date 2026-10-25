@@ -130,17 +130,29 @@ class SocialDistributionController extends Controller
             linkUrl: $video->hasSourceFile() ? null : $request->validated('video_url'),
         );
 
+        // TikTok direto exige a tela própria (escolhas do cliente a cada post).
+        $composer = collect($result['composer'])->mapWithKeys(fn (string $platform) => [$platform => route('portal.videos.'.$platform, $video)]);
+
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => $scheduledAt ? __('Publicação agendada com sucesso.') : __('Publicação enviada com sucesso.'),
                 'publication' => $result['publications'][0] ?? null,
                 'publications' => $result['publications'],
+                'composer' => $composer,
             ], 202);
+        }
+
+        if ($result['publications'] === [] && $composer->isNotEmpty()) {
+            return redirect()->to($composer->first());
         }
 
         $message = $scheduledAt
             ? __('Seu vídeo foi agendado com sucesso e será publicado automaticamente na data programada!')
             : __('Seu vídeo foi enviado para publicação nas redes sociais selecionadas! Acompanhe o processamento no painel.');
+
+        if ($composer->has('tiktok')) {
+            $message .= ' '.__('Para o TikTok, use o botão "Publicar no TikTok" e confirme as opções do post.');
+        }
 
         return redirect()
             ->back()

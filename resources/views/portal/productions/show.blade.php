@@ -190,6 +190,12 @@
                                     <span>🚀</span>
                                     <span>{{ __('Publicar nas Redes') }}</span>
                                 </button>
+                                @if($tiktokDirect && $video->hasSourceFile())
+                                    <a href="{{ route('portal.videos.tiktok', $video) }}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 shadow-xs transition active:scale-95">
+                                        <span>{{ __('Publicar no TikTok') }}</span>
+                                    </a>
+                                @endif
                                 <a href="{{ $video->downloadUrl() }}" target="_blank" rel="noopener" 
                                     class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-950 hover:bg-orange-600 text-white transition">
                                     <span>Download</span> ↗
@@ -350,8 +356,11 @@
 <!-- Modais de Distribuição Multiplataforma para cada Vídeo -->
 @php
     $portalCliente = auth('cliente')->user();
-    $socialProfile = $portalCliente?->socialProfile;
-    $hasSocialConnection = $socialProfile && $socialProfile->connected && !empty($socialProfile->platforms_connected);
+    // Redes conectadas pelo Upload-Post ou direto pela NUME. As de tela própria (TikTok direto)
+    // não entram no modal: têm botão "Publicar no TikTok".
+    $connectedPlatforms = $portalCliente?->connectedPlatforms() ?? [];
+    $hasSocialConnection = $connectedPlatforms !== [];
+    $modalPlatforms = $tiktokDirect ? array_values(array_diff($connectedPlatforms, ['tiktok'])) : $connectedPlatforms;
 @endphp
 
 @foreach($videos as $video)
@@ -424,7 +433,7 @@
                                 {{ __('Selecione os canais de destino:') }}
                             </label>
                             <div class="grid grid-cols-2 gap-2">
-                                @foreach($socialProfile->platforms_connected as $plat)
+                                @foreach($modalPlatforms as $plat)
                                     <label class="flex items-center gap-2 p-2.5 rounded-xl border border-zinc-200 hover:border-orange-300 transition cursor-pointer text-xs font-bold text-zinc-800 bg-zinc-50/50">
                                         <input type="checkbox" name="plataformas[]" value="{{ strtolower($plat) }}" checked 
                                             class="rounded text-orange-600 focus:ring-orange-500 border-zinc-300">

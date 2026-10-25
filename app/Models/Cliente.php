@@ -164,6 +164,19 @@ class Cliente extends Authenticatable
     }
 
     /**
+     * Redes conectadas por qualquer caminho (Upload-Post ou app próprio), sem repetição.
+     *
+     * @return list<string>
+     */
+    public function connectedPlatforms(): array
+    {
+        $uploadPost = $this->socialProfile?->connected ? array_map('strtolower', $this->socialProfile->platforms_connected ?? []) : [];
+        $native = $this->socialConnections->where('status', SocialConnection::STATUS_ACTIVE)->pluck('platform')->all();
+
+        return array_values(array_unique(array_merge($native, $uploadPost)));
+    }
+
+    /**
      * Tem rede conectada em algum caminho: Upload-Post ou app próprio da NUME (OAuth).
      */
     public function hasConnectedSocialAccount(): bool

@@ -13,6 +13,7 @@ use App\Http\Controllers\Portal\RegisteredClientController;
 use App\Http\Controllers\Portal\RoteiroController;
 use App\Http\Controllers\Portal\SocialConnectionController;
 use App\Http\Controllers\Portal\SocialDistributionController;
+use App\Http\Controllers\Portal\TikTokComposerController;
 use App\Http\Controllers\Portal\VideoApprovalController;
 use Illuminate\Support\Facades\Route;
 
@@ -102,6 +103,16 @@ Route::prefix('portal')->name('portal.')->group(function () {
         });
 
         // Disparo e consulta de status de publicação de vídeo
+        // TikTok: tela própria exigida pelas regras do Direct Post
+        Route::get('videos/{video}/tiktok', [TikTokComposerController::class, 'show'])
+            ->whereNumber('video')
+            ->middleware('throttle:social')
+            ->name('videos.tiktok');
+        Route::post('videos/{video}/tiktok', [TikTokComposerController::class, 'store'])
+            ->whereNumber('video')
+            ->middleware('throttle:social')
+            ->name('videos.tiktok.store');
+
         Route::post('videos/{video}/distribute', [SocialDistributionController::class, 'distribute'])
             ->middleware('throttle:social')
             ->name('videos.distribute');
