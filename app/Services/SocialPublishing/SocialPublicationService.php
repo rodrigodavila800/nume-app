@@ -4,6 +4,7 @@ namespace App\Services\SocialPublishing;
 
 use App\Jobs\PublishVideoToPlatform;
 use App\Models\Cliente;
+use App\Models\SocialConnection;
 use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoPublication;
@@ -26,7 +27,7 @@ class SocialPublicationService
 
     /**
      * @param  list<string>  $platforms
-     * @return array{publications: list<VideoPublication>, native: list<string>, upload_post: list<string>}
+     * @return array{publications: list<VideoPublication>, native: list<string>, upload_post: list<string>, composer: list<string>}
      *
      * @throws DomainException missing_video_url quando o Upload-Post precisaria de uma URL e não há
      */
@@ -45,6 +46,11 @@ class SocialPublicationService
             $plan['upload_post'] = array_values(array_unique(array_merge(array_keys($plan['native']), $plan['upload_post'])));
             $plan['native'] = [];
         }
+
+        // Redes com tela própria (TikTok): as escolhas do cliente são obrigatórias a cada post, então
+        // não saem daqui nem caem no Upload-Post; quem chamou manda o cliente para a tela da rede.
+        $composer = array_values(array_intersect(array_keys($plan['native']), config('social.composer_platforms', [])));
+        $plan['native'] = array_diff_key($plan['native'], array_flip($composer));
 
         $videoUrl = null;
         if ($plan['upload_post'] !== []) {
@@ -97,7 +103,33 @@ class SocialPublicationService
             'publications' => $publications,
             'native' => array_keys($plan['native']),
             'upload_post' => $plan['upload_post'],
+            'composer' => $composer,
         ];
+    }
+
+    /**
+     * Publicação de rede com tela própria (TikTok), com as escolhas feitas pelo cliente nela.
+     *
+     * @param  array<string, mixed>  $options  gravadas em resultado[$platform] e lidas pelo publicador
+     */
+    public function publishComposed(Cliente $cliente, Video $video, SocialConnection $connection, string $title, array $options): VideoPublication
+    {
+        $publication = VideoPublication::create([
+            'tenant_id' => $cliente->tenant_id,
+            'cliente_id' => $cliente->id,
+            'video_id' => $video->id,
+            'driver' => $connection->platform,
+            'platform' => $connection->platform,
+            'social_connection_id' => $connection->id,
+            'titulo' => mb_substr($title, 0, 255),
+            'plataformas' => [$connection->platform],
+            'status' => 'pendente',
+            'resultado' => ['driver' => $connection->platform.'_native', $connection->platform => $options],
+        ]);
+
+        PublishVideoToPlatform::dispatch($publication->id, $publication->tenant_id);
+
+        return $publication;
     }
 
     /**

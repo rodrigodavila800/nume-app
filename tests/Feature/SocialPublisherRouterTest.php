@@ -66,9 +66,9 @@ class SocialPublisherRouterTest extends TestCase
 
     public function test_networks_without_an_approved_app_never_go_native(): void
     {
-        $this->connect($this->cliente, ['platform' => 'tiktok', 'provider' => 'tiktok']);
+        $this->connect($this->cliente, ['platform' => 'pinterest', 'provider' => 'pinterest']);
 
-        $this->assertSame(['tiktok'], $this->router->route($this->cliente, ['tiktok'])['upload_post']);
+        $this->assertSame(['pinterest'], $this->router->route($this->cliente, ['pinterest'])['upload_post']);
         $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('linkedin'));
         $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('rede-inexistente'));
     }

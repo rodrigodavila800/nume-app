@@ -6,6 +6,7 @@ use App\Services\SocialPublishing\Connectors\TikTokConnector;
 use App\Services\SocialPublishing\Meta\FacebookReelsPublisher;
 use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
 use App\Services\SocialPublishing\Meta\ThreadsVideoPublisher;
+use App\Services\SocialPublishing\TikTok\TikTokPublisher;
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
 use App\Services\SocialPublishing\YouTubeConnector;
 
@@ -62,7 +63,12 @@ return [
         'instagram' => InstagramReelsPublisher::class,
         'facebook' => FacebookReelsPublisher::class,
         'threads' => ThreadsVideoPublisher::class,
+        'tiktok' => TikTokPublisher::class,
     ],
+
+    // Redes cujo envio direto exige tela própria com escolhas do cliente a cada post (regras do TikTok):
+    // nunca saem pelo modal genérico de publicação.
+    'composer_platforms' => ['tiktok'],
 
     // Conectores OAuth do portal (chave usada na rota /portal/redes-sociais/conectar/{chave}).
     'connectors' => [
