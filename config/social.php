@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\SocialPublishing\Connectors\LinkedInConnector;
 use App\Services\SocialPublishing\Connectors\MetaConnector;
 use App\Services\SocialPublishing\Connectors\ThreadsConnector;
 use App\Services\SocialPublishing\Connectors\TikTokConnector;
@@ -50,7 +51,7 @@ return [
         'instagram' => env('SOCIAL_ROUTE_INSTAGRAM', 'native'),
         'facebook' => env('SOCIAL_ROUTE_FACEBOOK', 'native'),
         'tiktok' => env('SOCIAL_ROUTE_TIKTOK', 'native'),
-        'linkedin' => 'upload_post',
+        'linkedin' => env('SOCIAL_ROUTE_LINKEDIN', 'native'),
         'x' => 'upload_post',
         'threads' => env('SOCIAL_ROUTE_THREADS', 'native'),
         'pinterest' => 'upload_post',
@@ -76,6 +77,7 @@ return [
         'meta' => MetaConnector::class,
         'threads' => ThreadsConnector::class,
         'tiktok' => TikTokConnector::class,
+        'linkedin' => LinkedInConnector::class,
     ],
 
     // Qual conector conecta cada rede (Instagram e Facebook saem do mesmo login da Meta).
@@ -85,6 +87,7 @@ return [
         'facebook' => 'meta',
         'threads' => 'threads',
         'tiktok' => 'tiktok',
+        'linkedin' => 'linkedin',
     ],
 
     'oauth' => [
@@ -112,6 +115,16 @@ return [
         // por até 5 minutos). Passou disso, o job tenta de novo mais tarde sem reenviar o arquivo.
         'poll_attempts' => 20,
         'poll_seconds' => 15,
+    ],
+
+    'linkedin' => [
+        // Versão mensal da API (YYYYMM), suportada por pelo menos 1 ano. Atualize de propósito.
+        'api_version' => env('LINKEDIN_API_VERSION', '202610'),
+        // Perfil pessoal (Share on LinkedIn, sem análise). Páginas de empresa exigem a
+        // Community Management API (w_organization_social), de acesso restrito.
+        'scopes' => ['openid', 'profile', 'w_member_social'],
+        // Sem renovação automática (só parceiros aprovados): avisar o cliente antes de vencer.
+        'reconnect_warning_days' => 7,
     ],
 
     'tiktok' => [

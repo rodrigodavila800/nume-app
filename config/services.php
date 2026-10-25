@@ -61,6 +61,14 @@ return [
         'redirect' => env('META_REDIRECT_URI'),
     ],
 
+    // App do LinkedIn Developers (Sign In with LinkedIn OIDC + Share on LinkedIn).
+    'linkedin' => [
+        'client_id' => env('LINKEDIN_CLIENT_ID'),
+        'client_secret' => env('LINKEDIN_CLIENT_SECRET'),
+        // Vazio: usa a rota portal.social.oauth.callback (linkedin).
+        'redirect' => env('LINKEDIN_REDIRECT_URI'),
+    ],
+
     // App do TikTok for Developers (Login Kit + Content Posting API).
     'tiktok' => [
         'client_key' => env('TIKTOK_CLIENT_KEY'),
