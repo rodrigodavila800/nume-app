@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\SocialProfile;
 use App\Models\VideoPublication;
+use App\Services\UploadPost\SocialAccounts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -102,11 +103,14 @@ class UploadPostWebhookController extends Controller
             return;
         }
 
-        $connectedPlatforms = array_keys($accounts);
+        // Plataforma com valor nulo/vazio ou `connected: false` não conta como conectada.
+        $connected = SocialAccounts::connected($accounts);
+        $connectedPlatforms = array_keys($connected);
 
         $profile->update([
             'connected' => ! empty($connectedPlatforms),
             'platforms_connected' => $connectedPlatforms,
+            'account_details' => $connected,
             'last_synced_at' => now(),
         ]);
     }

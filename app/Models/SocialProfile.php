@@ -18,12 +18,14 @@ class SocialProfile extends Model
         'upload_post_username',
         'connected',
         'platforms_connected',
+        'account_details',
         'last_synced_at',
     ];
 
     protected $casts = [
         'connected' => 'boolean',
         'platforms_connected' => 'array',
+        'account_details' => 'array',
         'last_synced_at' => 'datetime',
     ];
 
@@ -52,5 +54,19 @@ class SocialProfile extends Model
         }
 
         return in_array(strtolower($platform), array_map('strtolower', $this->platforms_connected));
+    }
+
+    /**
+     * Handle público da conta conectada (só existe com o Upload-Post real configurado).
+     */
+    public function connectedHandle(string $platform): ?string
+    {
+        if (! $this->isPlatformConnected($platform)) {
+            return null;
+        }
+
+        $handle = $this->account_details[strtolower($platform)]['handle'] ?? null;
+
+        return is_string($handle) && $handle !== '' ? $handle : null;
     }
 }

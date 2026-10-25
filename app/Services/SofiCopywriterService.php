@@ -32,7 +32,9 @@ class SofiCopywriterService
         $niche = $cliente?->brand_niche ?: ($isSpanish ? 'comercio y servicios' : 'empresas e serviços');
         $audience = $cliente?->target_audience ?: ($isSpanish ? 'clientes potenciales en tu sector' : 'clientes qualificados no seu setor');
         $differentials = $cliente?->key_differentials ?: ($isSpanish ? 'calidad garantizada y atención personalizada' : 'qualidade comprovada e entrega rápida');
-        $instagram = $cliente?->instagram_handle ? '@' . ltrim($cliente->instagram_handle, '@') : ($isSpanish ? 'nuestro perfil' : 'nossa bio');
+        // Conta conectada no ecossistema primeiro; depois o @ digitado no DNA da Marca.
+        $instagramHandle = $cliente?->getEffectiveSocialHandle(\App\Enums\PlataformaAlvo::INSTAGRAM);
+        $instagram = $instagramHandle ? '@' . ltrim($instagramHandle, '@') : ($isSpanish ? 'nuestro perfil' : 'nossa bio');
         $website = $cliente?->website ? preg_replace('#^https?://#', '', $cliente->website) : null;
 
         $clientContext = [

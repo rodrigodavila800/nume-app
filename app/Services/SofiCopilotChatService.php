@@ -63,6 +63,24 @@ class SofiCopilotChatService
     }
 
     /**
+     * Redes onde a marca está de fato (conectadas no ecossistema ou informadas no DNA).
+     * Nunca inventa um @: sem canais, a Sofi é avisada para não citar perfis.
+     */
+    protected function describeSocialChannels(Cliente $cliente): string
+    {
+        $channels = [];
+
+        foreach ($cliente->activeSocialChannels() as $slug => $handle) {
+            $label = \App\Enums\PlataformaAlvo::from($slug)->label();
+            $channels[] = $handle ? "{$label} ({$handle})" : $label;
+        }
+
+        return $channels === []
+            ? 'Nenhum informado (não cite @ nem perfis nos CTAs)'
+            : implode('; ', $channels);
+    }
+
+    /**
      * Constrói o prompt de sistema da Sofi com contexto corporativo.
      */
     protected function buildSystemPrompt(Cliente $cliente, ?Production $production, bool $isEs): string
@@ -74,7 +92,7 @@ class SofiCopilotChatService
                       . "PÚBLICO-ALVO (ICP): " . ($cliente->target_audience ?: 'Clientes qualificados no setor') . "\n"
                       . "DIFERENCIAIS: " . ($cliente->key_differentials ?: 'Qualidade, atendimento ágil e autoridade') . "\n"
                       . "WEBSITE: " . ($cliente->website ?: 'Não informado') . "\n"
-                      . "INSTAGRAM: @" . ltrim($cliente->instagram_handle ?: 'marca', '@');
+                      . "CANAIS ATIVOS: " . $this->describeSocialChannels($cliente);
 
         $productionContext = "NENHUMA PRODUÇÃO SELECIONADA.";
         if ($production) {

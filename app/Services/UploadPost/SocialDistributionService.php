@@ -90,12 +90,14 @@ class SocialDistributionService implements SocialPublisherContract
 
         $remote = $this->client->getUserProfile($profile->upload_post_username);
 
-        $accounts = $remote['social_accounts'] ?? [];
-        $connectedPlatforms = ! empty($accounts) ? array_keys($accounts) : [];
+        $accounts = SocialAccounts::connected($remote['social_accounts'] ?? []);
+        $connectedPlatforms = array_keys($accounts);
 
         $profile->update([
             'connected' => ! empty($connectedPlatforms),
             'platforms_connected' => $connectedPlatforms,
+            // Em modo simulação (sem UPLOAD_POST_API_KEY) os handles são fictícios: nunca são guardados.
+            'account_details' => $this->client->isConfigured() ? $accounts : null,
             'last_synced_at' => now(),
         ]);
 

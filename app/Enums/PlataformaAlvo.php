@@ -46,6 +46,40 @@ enum PlataformaAlvo: string
         };
     }
 
+    /**
+     * Coluna do DNA da Marca (clientes) que guarda o perfil digitado à mão para esta rede.
+     */
+    public function clienteField(): string
+    {
+        return match ($this) {
+            self::INSTAGRAM => 'instagram_handle',
+            self::YOUTUBE => 'youtube_channel',
+            self::TIKTOK => 'tiktok_handle',
+            self::FACEBOOK => 'facebook_url',
+            self::LINKEDIN => 'linkedin_url',
+            self::X => 'x_handle',
+            self::THREADS => 'threads_handle',
+            self::PINTEREST => 'pinterest_url',
+        };
+    }
+
+    /**
+     * Exemplo de preenchimento exibido no campo do DNA.
+     */
+    public function placeholder(): string
+    {
+        return match ($this) {
+            self::INSTAGRAM => '@suamarca',
+            self::YOUTUBE => 'youtube.com/@suamarca',
+            self::TIKTOK => '@suamarca',
+            self::FACEBOOK => 'facebook.com/suamarca',
+            self::LINKEDIN => 'linkedin.com/company/suamarca',
+            self::X => '@suamarca',
+            self::THREADS => '@suamarca',
+            self::PINTEREST => 'pinterest.com/suamarca',
+        };
+    }
+
     public function badgeColor(): string
     {
         return match ($this) {

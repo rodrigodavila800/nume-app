@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PlataformaAlvo;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,10 @@ class Cliente extends Authenticatable
         'linkedin_url',
         'youtube_channel',
         'tiktok_handle',
+        'facebook_url',
+        'x_handle',
+        'threads_handle',
+        'pinterest_url',
         'brand_niche',
         'target_audience',
         'key_differentials',
@@ -56,13 +61,46 @@ class Cliente extends Authenticatable
     {
         $hasNiche = ! empty(trim($this->brand_niche ?? ''));
         $hasPresenceOrAudience = ! empty(trim($this->website ?? ''))
-            || ! empty(trim($this->instagram_handle ?? ''))
-            || ! empty(trim($this->linkedin_url ?? ''))
-            || ! empty(trim($this->youtube_channel ?? ''))
-            || ! empty(trim($this->tiktok_handle ?? ''))
-            || ! empty(trim($this->target_audience ?? ''));
+            || ! empty(trim($this->target_audience ?? ''))
+            || $this->activeSocialChannels() !== [];
 
         return $hasNiche && $hasPresenceOrAudience;
+    }
+
+    /**
+     * Perfil da marca numa rede: primeiro a conta conectada no ecossistema (Upload-Post),
+     * depois o que foi digitado no DNA. O DNA digitado nunca é sobrescrito pela conexão.
+     */
+    public function getEffectiveSocialHandle(PlataformaAlvo $plataforma): ?string
+    {
+        $connected = $this->socialProfile?->connectedHandle($plataforma->value);
+        if ($connected !== null) {
+            return $connected;
+        }
+
+        $manual = trim((string) $this->getAttribute($plataforma->clienteField()));
+
+        return $manual === '' ? null : $manual;
+    }
+
+    /**
+     * Redes em que a marca está presente (conectada no ecossistema ou informada no DNA).
+     *
+     * @return array<string, ?string> slug da rede => handle efetivo (null se conectada sem handle conhecido)
+     */
+    public function activeSocialChannels(): array
+    {
+        $channels = [];
+
+        foreach (PlataformaAlvo::cases() as $plataforma) {
+            $handle = $this->getEffectiveSocialHandle($plataforma);
+
+            if ($handle !== null || $this->socialProfile?->isPlatformConnected($plataforma->value)) {
+                $channels[$plataforma->value] = $handle;
+            }
+        }
+
+        return $channels;
     }
 
     public function tenant(): BelongsTo
