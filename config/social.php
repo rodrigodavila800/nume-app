@@ -4,6 +4,7 @@ use App\Services\SocialPublishing\Connectors\LinkedInConnector;
 use App\Services\SocialPublishing\Connectors\MetaConnector;
 use App\Services\SocialPublishing\Connectors\ThreadsConnector;
 use App\Services\SocialPublishing\Connectors\TikTokConnector;
+use App\Services\SocialPublishing\LinkedIn\LinkedInVideoPublisher;
 use App\Services\SocialPublishing\Meta\FacebookReelsPublisher;
 use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
 use App\Services\SocialPublishing\Meta\ThreadsVideoPublisher;
@@ -65,6 +66,7 @@ return [
         'facebook' => FacebookReelsPublisher::class,
         'threads' => ThreadsVideoPublisher::class,
         'tiktok' => TikTokPublisher::class,
+        'linkedin' => LinkedInVideoPublisher::class,
     ],
 
     // Redes cujo envio direto exige tela própria com escolhas do cliente a cada post (regras do TikTok):

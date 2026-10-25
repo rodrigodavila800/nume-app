@@ -69,7 +69,7 @@ class SocialPublisherRouterTest extends TestCase
         $this->connect($this->cliente, ['platform' => 'pinterest', 'provider' => 'pinterest']);
 
         $this->assertSame(['pinterest'], $this->router->route($this->cliente, ['pinterest'])['upload_post']);
-        $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('linkedin'));
+        $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('x'));
         $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('rede-inexistente'));
     }
 
