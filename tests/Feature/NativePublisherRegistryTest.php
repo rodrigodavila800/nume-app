@@ -30,7 +30,7 @@ class NativePublisherRegistryTest extends TestCase
         $this->assertInstanceOf(YouTubeUploader::class, $registry->for('youtube'));
         $this->assertNull($registry->for('x'));
         $this->assertNull($registry->for('rede-inexistente'));
-        $this->assertFalse($registry->supports('pinterest'));
+        $this->assertFalse($registry->supports('x'));
 
         config(['social.native_publishers.x' => \stdClass::class]);
         $this->assertNull($registry->for('x'), 'classe que não implementa NativePublisher é ignorada');

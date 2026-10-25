@@ -9,6 +9,7 @@ use App\Services\SocialPublishing\LinkedIn\LinkedInVideoPublisher;
 use App\Services\SocialPublishing\Meta\FacebookReelsPublisher;
 use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
 use App\Services\SocialPublishing\Meta\ThreadsVideoPublisher;
+use App\Services\SocialPublishing\Pinterest\PinterestVideoPublisher;
 use App\Services\SocialPublishing\TikTok\TikTokPublisher;
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
 use App\Services\SocialPublishing\YouTubeConnector;
@@ -68,11 +69,13 @@ return [
         'threads' => ThreadsVideoPublisher::class,
         'tiktok' => TikTokPublisher::class,
         'linkedin' => LinkedInVideoPublisher::class,
+        'pinterest' => PinterestVideoPublisher::class,
     ],
 
     // Redes cujo envio direto exige tela própria com escolhas do cliente a cada post (regras do TikTok):
     // nunca saem pelo modal genérico de publicação.
-    'composer_platforms' => ['tiktok'],
+    // Pinterest também: o pin precisa de uma pasta escolhida pelo cliente.
+    'composer_platforms' => ['tiktok', 'pinterest'],
 
     // Conectores OAuth do portal (chave usada na rota /portal/redes-sociais/conectar/{chave}).
     'connectors' => [
