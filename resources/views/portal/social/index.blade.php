@@ -187,7 +187,7 @@
                     <div class="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between gap-2">
                         @if($native)
                             @if(! $native->isActive() && $canConnectNative)
-                                <a href="{{ route('portal.social.oauth.redirect', $platform->value) }}"
+                                <a href="{{ route('portal.social.oauth.redirect', $canConnectNative) }}"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold text-white bg-orange-600 hover:bg-orange-500 shadow-xs transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                                     {{ __('Reconectar') }}
                                 </a>
@@ -207,7 +207,7 @@
                             <span class="text-[10px] font-mono font-medium text-zinc-400 uppercase">
                                 Slug: {{ $platform->value }}
                             </span>
-                            <a href="{{ route('portal.social.oauth.redirect', $platform->value) }}"
+                            <a href="{{ route('portal.social.oauth.redirect', $canConnectNative) }}"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                                 {{ __('Conectar :rede', ['rede' => $platform->label()]) }}
                             </a>

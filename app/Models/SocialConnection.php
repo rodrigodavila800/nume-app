@@ -86,10 +86,23 @@ class SocialConnection extends Model
 
     /**
      * O token de acesso vence em até $minutes (ou já venceu): renovar antes de usar.
+     * Sem expires_at o token não tem validade fixa (ex.: token de Página do Facebook).
      */
     public function expiresWithin(int $minutes = 5): bool
     {
-        return $this->expires_at === null || $this->expires_at->lte(now()->addMinutes($minutes));
+        return $this->expires_at !== null && $this->expires_at->lte(now()->addMinutes($minutes));
+    }
+
+    /**
+     * Envios nativos ainda não feitos por esta conta são cancelados (ao desconectar).
+     */
+    public function cancelPendingPublications(string $reason = 'disconnected'): int
+    {
+        return $this->publications()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $this->tenant_id)
+            ->whereIn('status', ['pendente', 'agendado'])
+            ->update(['status' => 'falhou', 'last_error' => $reason]);
     }
 
     /**

@@ -83,11 +83,11 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
             // App próprio da NUME (OAuth oficial da rede)
             Route::get('conectar/{platform}', [SocialConnectionController::class, 'redirect'])
-                ->whereIn('platform', ['youtube'])
+                ->whereIn('platform', ['youtube', 'meta', 'threads'])
                 ->middleware('throttle:social')
                 ->name('oauth.redirect');
             Route::get('oauth/{platform}/callback', [SocialConnectionController::class, 'callback'])
-                ->whereIn('platform', ['youtube'])
+                ->whereIn('platform', ['youtube', 'meta', 'threads'])
                 ->middleware('throttle:social')
                 ->name('oauth.callback');
             Route::delete('conexoes/{socialConnection}', [SocialConnectionController::class, 'destroy'])

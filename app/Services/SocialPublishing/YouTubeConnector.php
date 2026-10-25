@@ -4,6 +4,9 @@ namespace App\Services\SocialPublishing;
 
 use App\Models\Cliente;
 use App\Models\SocialConnection;
+use App\Services\SocialPublishing\Connectors\ConnectResult;
+use App\Services\SocialPublishing\Connectors\ManagesOAuthState;
+use App\Services\SocialPublishing\Connectors\SocialConnector;
 use App\Services\SocialPublishing\OAuth\GoogleOAuthClient;
 use App\Services\SocialPublishing\OAuth\OAuthException;
 use Illuminate\Contracts\Session\Session;
@@ -16,11 +19,18 @@ use Illuminate\Support\Str;
  * O state (anti-CSRF) e o code_verifier (PKCE) ficam só na sessão, presos ao cliente logado,
  * e valem uma única vez. O tenant vem sempre do cliente, nunca da requisição.
  */
-class YouTubeConnector
+class YouTubeConnector implements SocialConnector
 {
+    use ManagesOAuthState;
+
     private const SESSION_KEY = 'social_oauth.youtube';
 
     public function __construct(private readonly GoogleOAuthClient $google) {}
+
+    public function provider(): string
+    {
+        return 'google';
+    }
 
     public function isConfigured(): bool
     {
@@ -29,15 +39,8 @@ class YouTubeConnector
 
     public function start(Cliente $cliente, Session $session): string
     {
-        $state = Str::random(40);
         $verifier = Str::random(96);
-
-        $session->put(self::SESSION_KEY, [
-            'state' => $state,
-            'verifier' => $verifier,
-            'cliente_id' => $cliente->id,
-            'expires_at' => now()->addMinutes((int) config('social.oauth.state_ttl_minutes', 10))->getTimestamp(),
-        ]);
+        $state = $this->putState($session, self::SESSION_KEY, $cliente, ['verifier' => $verifier]);
 
         $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
 
@@ -47,17 +50,9 @@ class YouTubeConnector
     /**
      * Conclui o retorno do Google. Erros viram OAuthException com código curto.
      */
-    public function finish(Cliente $cliente, Session $session, ?string $state, ?string $code, ?string $error): SocialConnection
+    public function finish(Cliente $cliente, Session $session, ?string $state, ?string $code, ?string $error): ConnectResult
     {
-        $pending = $session->pull(self::SESSION_KEY);
-
-        if (! is_array($pending) || ! is_string($state) || ! hash_equals((string) ($pending['state'] ?? ''), $state)) {
-            throw new OAuthException('invalid_state');
-        }
-
-        if (($pending['cliente_id'] ?? null) !== $cliente->id || ($pending['expires_at'] ?? 0) < now()->getTimestamp()) {
-            throw new OAuthException('invalid_state');
-        }
+        $pending = $this->pullState($session, self::SESSION_KEY, $cliente, $state);
 
         if ($error !== null) {
             throw new OAuthException($error === 'access_denied' ? 'access_denied' : 'authorization_failed');
@@ -114,7 +109,7 @@ class YouTubeConnector
             'social_connection_id' => $connection->id,
         ]);
 
-        return $connection;
+        return ConnectResult::connected([$connection]);
     }
 
     /**
@@ -126,11 +121,7 @@ class YouTubeConnector
         $token = $connection->refresh_token ?: $connection->access_token;
         $revoked = $token ? $this->google->revoke($token) : true;
 
-        $connection->publications()
-            ->withoutGlobalScopes()
-            ->where('tenant_id', $connection->tenant_id)
-            ->whereIn('status', ['pendente', 'agendado'])
-            ->update(['status' => 'falhou', 'last_error' => 'disconnected']);
+        $connection->cancelPendingPublications();
 
         Log::info('social.youtube.disconnected', [
             'tenant_id' => $connection->tenant_id,
@@ -140,5 +131,23 @@ class YouTubeConnector
         ]);
 
         $connection->delete();
+    }
+
+    public function successMessage(array $connections): string
+    {
+        $connection = $connections[0] ?? null;
+
+        return __('Canal do YouTube :canal conectado com sucesso!', ['canal' => $connection?->handle ?? $connection?->display_name ?? '']);
+    }
+
+    public function failureMessage(string $reason): ?string
+    {
+        return match ($reason) {
+            'access_denied' => __('Você cancelou a autorização no Google. Nada foi conectado.'),
+            'scope_not_granted' => __('Para publicar, autorize o envio de vídeos ao seu canal na tela do Google.'),
+            'no_channel' => __('Esta conta Google não tem um canal do YouTube. Crie o canal e tente de novo.'),
+            'invalid_state' => null,
+            default => __('Não foi possível conectar o YouTube agora. Tente novamente em alguns minutos.'),
+        };
     }
 }

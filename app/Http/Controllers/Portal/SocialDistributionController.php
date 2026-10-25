@@ -9,7 +9,7 @@ use App\Models\Video;
 use App\Models\VideoPublication;
 use App\Services\SocialPublishing\SocialPublicationService;
 use App\Services\SocialPublishing\SocialPublisherRouter;
-use App\Services\SocialPublishing\YouTubeConnector;
+use App\Services\SocialPublishing\Connectors\ConnectorRegistry;
 use App\Services\UploadPost\SocialDistributionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +21,7 @@ class SocialDistributionController extends Controller
     public function __construct(
         private readonly SocialDistributionService $service,
         private readonly SocialPublicationService $publications,
-        private readonly YouTubeConnector $youtube,
+        private readonly ConnectorRegistry $connectors,
         private readonly SocialPublisherRouter $router,
     ) {
     }
@@ -47,9 +47,14 @@ class SocialDistributionController extends Controller
                 || $connections->get($platform->value)?->isActive())
             ->map(fn (PlataformaAlvo $platform) => $platform->value)
             ->values();
-        $nativeAvailable = [
-            'youtube' => $this->youtube->isConfigured() && $this->router->routeFor('youtube') === SocialPublisherRouter::NATIVE,
-        ];
+        // Rede => chave do conector que a conecta direto (só quando configurado e liberado).
+        $nativeAvailable = [];
+        foreach (config('social.platform_connectors', []) as $platform => $key) {
+            $connector = $this->connectors->for($key);
+            if ($connector?->isConfigured() && $this->router->routeFor($platform) === SocialPublisherRouter::NATIVE) {
+                $nativeAvailable[$platform] = $key;
+            }
+        }
 
         return view('portal.social.index', compact('cliente', 'profile', 'publications', 'platforms', 'connections', 'connectedPlatforms', 'nativeAvailable'));
     }

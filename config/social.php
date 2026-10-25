@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
+use App\Services\SocialPublishing\YouTubeConnector;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,6 +53,19 @@ return [
     // Uma rede só entra aqui quando o envio dela está pronto; a liberação para clientes é o 'routing'.
     'native_publishers' => [
         'youtube' => YouTubeUploader::class,
+    ],
+
+    // Conectores OAuth do portal (chave usada na rota /portal/redes-sociais/conectar/{chave}).
+    'connectors' => [
+        'youtube' => YouTubeConnector::class,
+    ],
+
+    // Qual conector conecta cada rede (Instagram e Facebook saem do mesmo login da Meta).
+    'platform_connectors' => [
+        'youtube' => 'youtube',
+        'instagram' => 'meta',
+        'facebook' => 'meta',
+        'threads' => 'threads',
     ],
 
     'oauth' => [

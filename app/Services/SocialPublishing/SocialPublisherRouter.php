@@ -16,6 +16,8 @@ class SocialPublisherRouter
 
     public const UPLOAD_POST = 'upload_post';
 
+    public function __construct(private readonly NativePublisherRegistry $publishers) {}
+
     /**
      * @param  list<string>  $platforms
      * @return array{native: array<string, SocialConnection>, upload_post: list<string>}
@@ -47,8 +49,13 @@ class SocialPublisherRouter
         return ['native' => $native, 'upload_post' => $uploadPost];
     }
 
+    /**
+     * Nativo só se a rede estiver liberada E tiver publicador pronto (config('social.native_publishers')).
+     */
     public function routeFor(string $platform): string
     {
-        return config("social.routing.{$platform}") === self::NATIVE ? self::NATIVE : self::UPLOAD_POST;
+        return config("social.routing.{$platform}") === self::NATIVE && $this->publishers->supports($platform)
+            ? self::NATIVE
+            : self::UPLOAD_POST;
     }
 }
