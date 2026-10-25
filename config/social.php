@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\SocialPublishing\Connectors\MetaConnector;
+use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
 use App\Services\SocialPublishing\YouTubeConnector;
 
@@ -41,12 +42,12 @@ return [
     // Upload-Post) ou 'upload_post'. Só libere uma rede quando o app dela estiver aprovado.
     'routing' => [
         'youtube' => env('SOCIAL_ROUTE_YOUTUBE', 'native'),
-        'instagram' => 'upload_post',
-        'facebook' => 'upload_post',
+        'instagram' => env('SOCIAL_ROUTE_INSTAGRAM', 'native'),
+        'facebook' => env('SOCIAL_ROUTE_FACEBOOK', 'native'),
         'tiktok' => 'upload_post',
         'linkedin' => 'upload_post',
         'x' => 'upload_post',
-        'threads' => 'upload_post',
+        'threads' => env('SOCIAL_ROUTE_THREADS', 'native'),
         'pinterest' => 'upload_post',
     ],
 
@@ -54,6 +55,7 @@ return [
     // Uma rede só entra aqui quando o envio dela está pronto; a liberação para clientes é o 'routing'.
     'native_publishers' => [
         'youtube' => YouTubeUploader::class,
+        'instagram' => InstagramReelsPublisher::class,
     ],
 
     // Conectores OAuth do portal (chave usada na rota /portal/redes-sociais/conectar/{chave}).
@@ -90,6 +92,11 @@ return [
 
         // Validade da lista de Páginas guardada (criptografada) enquanto o cliente escolhe uma.
         'page_selection_minutes' => 10,
+
+        // Espera do processamento do vídeo pela Meta antes de publicar (a Meta sugere checar
+        // por até 5 minutos). Passou disso, o job tenta de novo mais tarde sem reenviar o arquivo.
+        'poll_attempts' => 20,
+        'poll_seconds' => 15,
     ],
 
     'youtube' => [

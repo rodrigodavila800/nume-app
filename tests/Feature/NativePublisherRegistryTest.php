@@ -28,12 +28,12 @@ class NativePublisherRegistryTest extends TestCase
         $registry = app(NativePublisherRegistry::class);
 
         $this->assertInstanceOf(YouTubeUploader::class, $registry->for('youtube'));
-        $this->assertNull($registry->for('instagram'));
+        $this->assertNull($registry->for('linkedin'));
         $this->assertNull($registry->for('rede-inexistente'));
         $this->assertFalse($registry->supports('tiktok'));
 
-        config(['social.native_publishers.instagram' => \stdClass::class]);
-        $this->assertNull($registry->for('instagram'), 'classe que não implementa NativePublisher é ignorada');
+        config(['social.native_publishers.linkedin' => \stdClass::class]);
+        $this->assertNull($registry->for('linkedin'), 'classe que não implementa NativePublisher é ignorada');
     }
 
     public function test_job_uses_the_publisher_of_the_publication_driver(): void
@@ -70,7 +70,7 @@ class NativePublisherRegistryTest extends TestCase
 
     public function test_job_ignores_publications_of_networks_without_a_publisher(): void
     {
-        $publication = $this->publication('instagram');
+        $publication = $this->publication('linkedin');
 
         (new PublishVideoToPlatform($publication->id, $publication->tenant_id))->withFakeQueueInteractions()
             ->handle(app(NativePublisherRegistry::class));

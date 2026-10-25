@@ -69,7 +69,7 @@ class SocialPublisherRouterTest extends TestCase
         $this->connect($this->cliente, ['platform' => 'tiktok', 'provider' => 'tiktok']);
 
         $this->assertSame(['tiktok'], $this->router->route($this->cliente, ['tiktok'])['upload_post']);
-        $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('instagram'));
+        $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('linkedin'));
         $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('rede-inexistente'));
     }
 
