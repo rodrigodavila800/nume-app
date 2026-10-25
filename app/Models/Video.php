@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 use App\Traits\BelongsToTenant;
 use App\Traits\HasEmbeddableVideo;
 
@@ -21,6 +22,13 @@ class Video extends Model
         'description',
         'video_url',
         'thumbnail_url',
+        'source_disk',
+        'source_path',
+        'source_mime',
+        'source_size',
+        'source_width',
+        'source_height',
+        'source_sha256',
         'duration_seconds',
         'status',
         'platform',
@@ -41,6 +49,40 @@ class Video extends Model
             'sofi_hashtags'         => 'array',
             'sofi_seo_generated_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // O arquivo só é apagado depois que o registro saiu do banco.
+        static::deleted(function (Video $video) {
+            $video->deleteSourceFile();
+        });
+    }
+
+    /**
+     * O vídeo tem arquivo próprio da NUME (enviado), e não só um link externo.
+     */
+    public function hasSourceFile(): bool
+    {
+        return filled($this->source_path) && filled($this->source_disk);
+    }
+
+    /**
+     * Arquivo realmente presente no disco (hasSourceFile() só olha o registro).
+     */
+    public function sourceFileExists(): bool
+    {
+        return $this->hasSourceFile() && Storage::disk($this->source_disk)->exists($this->source_path);
+    }
+
+    /**
+     * Remove o arquivo enviado e limpa os campos do registro (sem apagar o vídeo).
+     */
+    public function deleteSourceFile(): void
+    {
+        if ($this->hasSourceFile()) {
+            Storage::disk($this->source_disk)->delete($this->source_path);
+        }
     }
 
     /**

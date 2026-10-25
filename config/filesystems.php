@@ -47,6 +47,15 @@ return [
             'report' => false,
         ],
 
+        // Vídeos enviados pela produtora: privado, nunca servido direto (rota assinada com Range).
+        'videos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/videos'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
