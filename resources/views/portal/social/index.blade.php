@@ -170,12 +170,17 @@
                                 </p>
                             @elseif($native)
                                 <p class="text-[11px] text-amber-700 mt-0.5">
-                                    {{ __('O acesso ao canal expirou ou foi revogado. Reconecte para voltar a publicar direto.') }}
+                                    {{ __('O acesso à conta expirou ou foi revogado. Reconecte para voltar a publicar direto.') }}
                                 </p>
                             @elseif($canConnectNative)
                                 <p class="text-[11px] text-zinc-500 mt-0.5">
-                                    {{ __('Conecte o canal direto pela NUME: o vídeo sai do nosso servidor para o seu canal, sem intermediários.') }}
+                                    {{ __('Conecte direto pela NUME: o vídeo sai do nosso servidor para a sua conta, sem intermediários.') }}
                                 </p>
+                                @if($platform->value === 'instagram')
+                                    <p class="text-[11px] text-zinc-500 mt-1">
+                                        {{ __('Precisa ser conta profissional (Empresa ou Criador) ligada a uma Página do Facebook. A Página é conectada junto.') }}
+                                    </p>
+                                @endif
                             @else
                                 <p class="text-[11px] text-zinc-500 mt-0.5">
                                     {{ $isConnected ? __('Pronto para receber publicações em 1 clique.') : __('Clique no botão acima para vincular esta rede.') }}
@@ -195,7 +200,7 @@
                                 <span class="text-xs text-emerald-600 font-extrabold">✓ OK</span>
                             @endif
                             <form action="{{ route('portal.social.connections.destroy', $native) }}" method="POST"
-                                onsubmit="return confirm({{ \Illuminate\Support\Js::from(__('Desconectar este canal? Envios agendados para ele serão cancelados.')) }})">
+                                onsubmit="return confirm({{ \Illuminate\Support\Js::from(__('Desconectar esta conta? Envios agendados para ela serão cancelados.')) }})">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
@@ -289,12 +294,12 @@
                                         @if($pub->driver !== 'upload_post')
                                             <div class="text-[10px] text-zinc-500 mt-1">{{ __('Envio direto pela NUME') }}</div>
                                         @endif
-                                        @if($pub->driver === 'youtube' && $pub->status === 'publicado' && filled($pub->resultado['url'] ?? null))
+                                        @if($pub->driver !== 'upload_post' && $pub->status === 'publicado' && filled($pub->resultado['url'] ?? null))
                                             <a href="{{ $pub->resultado['url'] }}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-orange-600 font-semibold hover:underline">
-                                                {{ __('Ver no YouTube') }}
+                                                {{ __('Ver publicação') }}
                                             </a>
-                                        @elseif($pub->status === 'falhou' && $pub->last_error === 'reconnect_required')
-                                            <div class="text-[10px] text-rose-600 mt-1">{{ __('Reconecte o canal para publicar.') }}</div>
+                                        @elseif($pub->status === 'falhou' && $pub->failureHint())
+                                            <div class="text-[10px] text-rose-600 mt-1">{{ $pub->failureHint() }}</div>
                                         @endif
                                     </td>
                                     <td class="px-5 py-4">

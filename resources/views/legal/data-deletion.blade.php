@@ -21,12 +21,12 @@
                 <li>No cartão da rede, clique em <strong>Desconectar</strong>.</li>
             </ol>
             <p>
-                O acesso é revogado na própria rede e os tokens são apagados do nosso servidor na hora. Envios ainda não feitos para essa conta são cancelados.
+                Os tokens de acesso são apagados do nosso servidor na hora (no YouTube/Google o acesso também é revogado na própria rede). Envios ainda não feitos para essa conta são cancelados.
             </p>
             <p>
                 Você também pode revogar pelo lado da rede, sem passar por nós: no Google em
                 <a href="https://myaccount.google.com/permissions" class="text-orange-600 underline font-bold" target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a>;
-                no Facebook e no Instagram, em Configurações > Apps e sites; no TikTok, em Configurações > Segurança e permissões > Apps e serviços.
+                no Facebook e no Instagram, em Configurações > Apps e sites; no Threads, nas configurações de apps e sites da conta; no TikTok, em Configurações > Segurança e permissões > Apps e serviços.
             </p>
         </section>
 

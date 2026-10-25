@@ -79,6 +79,23 @@ class VideoPublication extends Model
     }
 
     /**
+     * Explicação para o cliente do motivo de uma falha do envio direto (null quando não há).
+     */
+    public function failureHint(): ?string
+    {
+        return match ($this->last_error) {
+            'reconnect_required' => __('Reconecte a conta para publicar.'),
+            'disconnected' => __('Cancelado: a conta foi desconectada.'),
+            'reel_format_invalid' => __('O vídeo precisa ser vertical (9:16) e ter pelo menos 540x960 para virar Reel.'),
+            'reel_duration_invalid' => __('Reels do Facebook precisam ter entre 3 e 90 segundos.'),
+            'publish_limit_reached', 'quotaExceeded' => __('A rede atingiu o limite diário de publicações. Tente amanhã.'),
+            'media_processing_failed' => __('A rede não conseguiu processar o vídeo. Confira o formato do arquivo.'),
+            'source_missing' => __('O arquivo do vídeo não está mais disponível.'),
+            default => null,
+        };
+    }
+
+    /**
      * Scope para recuperar publicações agendadas prontas para envio imediato.
      */
     public function scopeReadyToPublish($query)
