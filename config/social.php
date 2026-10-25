@@ -12,6 +12,7 @@ use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
 use App\Services\SocialPublishing\Meta\ThreadsVideoPublisher;
 use App\Services\SocialPublishing\Pinterest\PinterestVideoPublisher;
 use App\Services\SocialPublishing\TikTok\TikTokPublisher;
+use App\Services\SocialPublishing\X\XVideoPublisher;
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
 use App\Services\SocialPublishing\YouTubeConnector;
 
@@ -71,6 +72,7 @@ return [
         'tiktok' => TikTokPublisher::class,
         'linkedin' => LinkedInVideoPublisher::class,
         'pinterest' => PinterestVideoPublisher::class,
+        'x' => XVideoPublisher::class,
     ],
 
     // Redes cujo envio direto exige tela própria com escolhas do cliente a cada post (regras do TikTok):
