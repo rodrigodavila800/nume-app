@@ -74,7 +74,11 @@
 
             <!-- Player de Vídeo -->
             <div class="rounded-2xl overflow-hidden bg-black border border-zinc-800 aspect-video flex items-center justify-center relative shadow-inner">
-                @if($video->embed_url)
+                @if($video->hasSourceFile())
+                    <video controls preload="metadata" controlsList="nodownload" class="w-full h-full object-contain">
+                        <source src="{{ $video->playbackUrl() }}" type="{{ $video->source_mime ?: 'video/mp4' }}">
+                    </video>
+                @elseif($video->embed_url)
                     <iframe src="{{ $video->embed_url }}"
                             class="w-full h-full border-0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -93,7 +97,10 @@
             </div>
 
             <!-- Botão de Download / Link Externo -->
-            @if($video->video_url)
+            @if($video->hasSourceFile())
+                {{-- Arquivo da NUME: o download exige login no portal e respeita a custódia (50/50). --}}
+                <p class="text-xs text-zinc-400 px-1">{{ __('O arquivo em alta resolução fica disponível para download no seu portal.') }}</p>
+            @elseif($video->video_url)
                 <div class="flex items-center justify-between text-xs text-zinc-400 px-1">
                     <span>{{ __('Arquivo Original em Alta Resolução:') }}</span>
                     <a href="{{ $video->video_url }}" target="_blank" rel="noopener noreferrer"

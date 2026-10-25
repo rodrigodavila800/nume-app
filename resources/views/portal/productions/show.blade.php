@@ -184,13 +184,13 @@
                                 <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed" title="{{ __('Liberação após aprovação do corte final') }}">
                                     <span>🔒 {{ __('Download Bloqueado') }}</span>
                                 </span>
-                            @elseif($video->video_url)
+                            @elseif($video->hasPlayableSource())
                                 <button type="button" onclick="openDistributeModal({{ $video->id }})" 
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition active:scale-95">
                                     <span>🚀</span>
                                     <span>{{ __('Publicar nas Redes') }}</span>
                                 </button>
-                                <a href="{{ $video->video_url }}" target="_blank" rel="noopener" 
+                                <a href="{{ $video->downloadUrl() }}" target="_blank" rel="noopener" 
                                     class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-950 hover:bg-orange-600 text-white transition">
                                     <span>Download</span> ↗
                                 </a>
@@ -203,9 +203,14 @@
                     @endif
 
                     <!-- Video Player Embutido (YouTube Shorts, YouTube, Vimeo, MP4) -->
-                    @if($video->video_url)
+                    @if($video->hasPlayableSource())
                         <div class="relative w-full rounded-xl overflow-hidden bg-zinc-950 aspect-video flex items-center justify-center border border-zinc-200 shadow-inner">
-                            @if($video->video_type === 'youtube' || $video->video_type === 'vimeo')
+                            @if($video->hasSourceFile())
+                                <video controls preload="metadata" controlsList="nodownload" class="w-full h-full object-contain bg-black">
+                                    <source src="{{ $video->playbackUrl() }}" type="{{ $video->source_mime ?: 'video/mp4' }}">
+                                    {{ __('Seu navegador não suporta a tag de vídeo.') }}
+                                </video>
+                            @elseif($video->video_type === 'youtube' || $video->video_type === 'vimeo')
                                 <iframe 
                                     src="{{ $video->embed_url }}" 
                                     class="w-full h-full border-0" 
@@ -350,7 +355,7 @@
 @endphp
 
 @foreach($videos as $video)
-    @if($video->video_url)
+    @if($video->hasPlayableSource())
         <div id="distribute-modal-{{ $video->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">
             <div class="bg-white rounded-2xl max-w-lg w-full p-6 border border-zinc-200 shadow-xl space-y-5 animate-in fade-in zoom-in-95">
                 <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
@@ -400,7 +405,9 @@
                 @else
                     <form action="{{ route('portal.videos.distribute', $video) }}" method="POST" class="space-y-4">
                         @csrf
-                        <input type="hidden" name="video_url" value="{{ $video->video_url }}">
+                        @unless($video->hasSourceFile())
+                            <input type="hidden" name="video_url" value="{{ $video->video_url }}">
+                        @endunless
 
                         <div>
                             <label class="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1">

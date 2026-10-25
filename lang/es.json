@@ -511,5 +511,16 @@
     "O arquivo não foi enviado. Ele pode passar do limite de upload do servidor (máx. :max MB); fale com o suporte se o problema continuar.": "El archivo no se ha enviado. Puede superar el límite de subida del servidor (máx. :max MB); contacta con soporte si el problema continúa.",
     "O vídeo excede o tamanho máximo de :max MB.": "El vídeo supera el tamaño máximo de :max MB.",
     "Envie um vídeo MP4 ou MOV.": "Sube un vídeo MP4 o MOV.",
-    "Informe o link do vídeo ou envie o arquivo.": "Indica el enlace del vídeo o sube el archivo."
+    "Informe o link do vídeo ou envie o arquivo.": "Indica el enlace del vídeo o sube el archivo.",
+    "envie o arquivo ou informe um link": "sube el archivo o indica un enlace",
+    "Arquivo hospedado na NUME": "Archivo alojado en NUME",
+    "Remover arquivo (exige um link abaixo)": "Eliminar archivo (requiere un enlace abajo)",
+    "Substituir arquivo de vídeo": "Sustituir archivo de vídeo",
+    "Arquivo de vídeo (MP4 ou MOV)": "Archivo de vídeo (MP4 o MOV)",
+    "Até :max MB. Necessário para publicar nas redes pela NUME.": "Hasta :max MB. Necesario para publicar en redes con NUME.",
+    "Ou link do vídeo (YouTube, Shorts, Vimeo, Google Drive ou MP4)": "O enlace del vídeo (YouTube, Shorts, Vimeo, Google Drive o MP4)",
+    "Baixar arquivo do vídeo": "Descargar archivo del vídeo",
+    "Será enviado o arquivo hospedado na NUME (link seguro e temporário gerado no envio).": "Se enviará el archivo alojado en NUME (enlace seguro y temporal generado en el envío).",
+    "O arquivo em alta resolução fica disponível para download no seu portal.": "El archivo en alta resolución está disponible para descargar en tu portal.",
+    "Vídeo": "Vídeo"
 }

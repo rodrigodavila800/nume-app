@@ -43,7 +43,7 @@ class VideoController extends Controller
     /**
      * Exibir formulário para criar novo vídeo
      */
-    public function create(Production $production): View
+    public function create(Production $production): View|RedirectResponse
     {
         $this->authorize('create', Video::class);
         $this->authorize('view', $production);

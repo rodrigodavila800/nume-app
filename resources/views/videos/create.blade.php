@@ -16,7 +16,7 @@
         </a>
     </div>
 
-    <form action="{{ route('videos.store', $production) }}" method="POST" class="p-6 sm:p-8 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-5">
+    <form action="{{ route('videos.store', $production) }}" method="POST" enctype="multipart/form-data" class="p-6 sm:p-8 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-5">
         @csrf
 
         <div class="space-y-1.5">
@@ -40,16 +40,7 @@
             @error('description') <p class="text-rose-400 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
 
-        <div class="space-y-1.5">
-            <label for="video_url" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                {{ __('URL do Vídeo') }} <span class="text-orange-500">*</span>
-            </label>
-            <input type="url" name="video_url" id="video_url" required
-                   placeholder="https://drive.google.com/... ou https://vimeo.com/..."
-                   class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600 @error('video_url') border-rose-500 @enderror"
-                   value="{{ old('video_url') }}">
-            @error('video_url') <p class="text-rose-400 text-xs mt-1">{{ $message }}</p> @enderror
-        </div>
+        @include('videos._source-fields')
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">

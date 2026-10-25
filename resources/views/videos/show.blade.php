@@ -32,7 +32,12 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-            @if ($video->video_url)
+            @if ($video->hasSourceFile())
+                <a href="{{ $video->downloadUrl() }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-extrabold shadow-lg shadow-orange-600/20 transition">
+                    ⬇️ {{ __('Baixar arquivo do vídeo') }}
+                </a>
+            @elseif ($video->video_url)
                 <a href="{{ $video->video_url }}" target="_blank" rel="noopener noreferrer"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold shadow-lg shadow-red-600/20 transition">
                     @if ($video->video_type === 'youtube' && $video->is_vertical)
@@ -219,7 +224,12 @@
         <!-- Video Player Container (Suporta YouTube Shorts 9:16, YouTube 16:9, Vimeo e MP4) -->
         <div class="w-full flex items-center justify-center py-2">
             <div id="player-frame-wrapper" class="relative {{ $isVertical ? 'w-full max-w-[340px] aspect-[9/16]' : 'w-full aspect-video' }} rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800 shadow-2xl transition-all duration-300">
-                @if ($video->video_type === 'youtube' || $video->video_type === 'vimeo')
+                @if ($video->hasSourceFile())
+                    <video controls preload="metadata" class="w-full h-full object-contain bg-black">
+                        <source src="{{ $video->playbackUrl() }}" type="{{ $video->source_mime ?: 'video/mp4' }}">
+                        {{ __('Seu navegador não suporta a tag de vídeo.') }}
+                    </video>
+                @elseif ($video->video_type === 'youtube' || $video->video_type === 'vimeo')
                     <iframe 
                         src="{{ $video->embed_url }}" 
                         class="w-full h-full border-0" 
@@ -390,7 +400,14 @@
                         @endif
                     </p>
                 </div>
-                @if ($video->video_url)
+                @if ($video->hasSourceFile())
+                    <div class="mt-3 pt-3 border-t border-zinc-900 flex items-center justify-between">
+                        <span class="text-[10px] text-zinc-500">{{ __('Destino do Arquivo:') }}</span>
+                        <a href="{{ $video->downloadUrl() }}" class="text-[11px] font-bold text-orange-400 hover:text-orange-300 transition flex items-center gap-1">
+                            <span>{{ __('Arquivo hospedado na NUME') }}</span> ⬇️
+                        </a>
+                    </div>
+                @elseif ($video->video_url)
                     <div class="mt-3 pt-3 border-t border-zinc-900 flex items-center justify-between">
                         <span class="text-[10px] text-zinc-500">{{ __('Destino do Arquivo:') }}</span>
                         <a href="{{ $video->video_url }}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-orange-400 hover:text-orange-300 transition flex items-center gap-1">
@@ -640,16 +657,22 @@
                             </span>
                         </div>
 
-                        <div>
-                            <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1.5">
-                                {{ __('URL do Vídeo a Enviar:') }}
-                            </label>
-                            <input type="url" name="video_url" value="{{ $video->video_url }}" required
-                                   class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-semibold focus:outline-none focus:border-orange-500 transition">
-                            <span class="text-[10px] text-zinc-500 mt-1 block">
-                                {{ __('Link direto do arquivo ou YouTube Shorts cadastrado na produção.') }}
-                            </span>
-                        </div>
+                        @if ($video->hasSourceFile())
+                            <p class="rounded-xl border border-emerald-800/60 bg-emerald-950/30 px-3 py-2 text-[11px] font-semibold text-emerald-300">
+                                {{ __('Será enviado o arquivo hospedado na NUME (link seguro e temporário gerado no envio).') }}
+                            </p>
+                        @else
+                            <div>
+                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1.5">
+                                    {{ __('URL do Vídeo a Enviar:') }}
+                                </label>
+                                <input type="url" name="video_url" value="{{ $video->video_url }}" required
+                                       class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-semibold focus:outline-none focus:border-orange-500 transition">
+                                <span class="text-[10px] text-zinc-500 mt-1 block">
+                                    {{ __('Link direto do arquivo ou YouTube Shorts cadastrado na produção.') }}
+                                </span>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Aviso de Metadados Injetados -->
