@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Cliente;
 use App\Models\Production;
+use App\Models\SocialConnection;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Video;
@@ -13,6 +14,7 @@ use App\Services\SocialPublishing\Drivers\UploadPostDriver;
 use App\Services\SocialPublishing\Drivers\YouTubeDataDriver;
 use App\Services\SocialPublishing\SocialPublisherManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class NativeDriversTest extends TestCase
@@ -75,66 +77,60 @@ class NativeDriversTest extends TestCase
         $this->assertInstanceOf(TikTokDriver::class, $manager->driver('tiktok_native'));
     }
 
-    public function test_meta_graph_driver_publishes_reels_and_refreshes(): void
+    public function test_pending_native_drivers_never_fake_a_publication(): void
     {
-        $driver = new MetaGraphDriver();
-        $publication = $driver->publish(
-            cliente: $this->cliente,
-            videoUrl: $this->video->video_url,
-            title: 'Lançamento Instagram Reels #viral',
-            platforms: ['instagram'],
-            video: $this->video
-        );
+        Http::preventStrayRequests();
 
-        $this->assertDatabaseHas('video_publications', [
-            'id' => $publication->id,
-            'tenant_id' => $this->tenant->id,
-            'cliente_id' => $this->cliente->id,
-        ]);
-        $this->assertEquals(['instagram'], $publication->plataformas);
+        foreach ([new MetaGraphDriver, new TikTokDriver, new YouTubeDataDriver] as $driver) {
+            $publication = $driver->publish(
+                cliente: $this->cliente,
+                videoUrl: $this->video->video_url,
+                title: 'Lançamento',
+                platforms: $driver->supportedPlatforms(),
+                video: $this->video
+            );
 
-        // Atualiza status (refreshStatus)
-        $refreshed = $driver->refreshStatus($publication);
-        $this->assertNotNull($refreshed->status);
+            $this->assertSame('falhou', $publication->status, $driver->getName());
+            $this->assertSame('driver_unavailable', $publication->last_error);
+            $this->assertSame($driver->getName(), $publication->driver);
+            $this->assertSame($this->tenant->id, $publication->tenant_id);
+            $this->assertSame('falhou', $driver->refreshStatus($publication)->status);
+        }
+
+        // O vídeo não é marcado como publicado por um envio que não aconteceu.
+        $this->assertSame('ready', $this->video->fresh()->status);
     }
 
-    public function test_youtube_data_driver_publishes_shorts(): void
+    public function test_pending_native_drivers_do_not_claim_connected_accounts(): void
     {
-        $driver = new YouTubeDataDriver();
-        $publication = $driver->publish(
-            cliente: $this->cliente,
-            videoUrl: $this->video->video_url,
-            title: 'Shorts de Alta Retenção Sofi',
-            platforms: ['youtube'],
-            video: $this->video
-        );
+        foreach ([new MetaGraphDriver, new TikTokDriver, new YouTubeDataDriver] as $driver) {
+            $profile = $driver->syncConnectionStatus($this->cliente);
 
-        $this->assertDatabaseHas('video_publications', [
-            'id' => $publication->id,
-            'titulo' => 'Shorts de Alta Retenção Sofi',
-        ]);
-
-        $refreshed = $driver->refreshStatus($publication);
-        $this->assertEquals('publicado', $refreshed->status);
+            $this->assertFalse((bool) $profile->connected, $driver->getName());
+            $this->assertSame([], $profile->platforms_connected);
+        }
     }
 
-    public function test_tiktok_driver_publishes_video(): void
+    public function test_youtube_driver_reflects_a_real_active_connection_and_keeps_other_networks(): void
     {
-        $driver = new TikTokDriver();
-        $publication = $driver->publish(
-            cliente: $this->cliente,
-            videoUrl: $this->video->video_url,
-            title: 'Trend TikTok Vídeo',
-            platforms: ['tiktok'],
-            video: $this->video
-        );
+        (new YouTubeDataDriver)->ensureProfile($this->cliente)->update(['platforms_connected' => ['instagram']]);
+        $this->cliente->refresh();
 
-        $this->assertDatabaseHas('video_publications', [
-            'id' => $publication->id,
-            'plataformas' => json_encode(['tiktok']),
+        SocialConnection::create([
+            'tenant_id' => $this->tenant->id, 'cliente_id' => $this->cliente->id, 'platform' => 'youtube', 'provider' => 'google',
+            'external_account_id' => 'UC-canal-ficticio', 'access_token' => 'ya29.ficticio', 'refresh_token' => '1//ficticio',
         ]);
 
-        $refreshed = $driver->refreshStatus($publication);
-        $this->assertEquals('publicado', $refreshed->status);
+        $profile = (new YouTubeDataDriver)->syncConnectionStatus($this->cliente);
+        $this->assertTrue((bool) $profile->connected);
+        $this->assertEqualsCanonicalizing(['instagram', 'youtube'], $profile->platforms_connected);
+
+        SocialConnection::forTenant($this->tenant->id)->update(['status' => SocialConnection::STATUS_REVOKED]);
+        $this->assertSame(['instagram'], (new YouTubeDataDriver)->syncConnectionStatus($this->cliente->fresh())->platforms_connected);
+    }
+
+    public function test_youtube_connect_url_points_to_the_own_oauth_flow(): void
+    {
+        $this->assertSame(route('portal.social.oauth.redirect', 'youtube'), (new YouTubeDataDriver)->generateConnectUrl($this->cliente));
     }
 }

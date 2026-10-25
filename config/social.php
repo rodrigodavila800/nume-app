@@ -33,6 +33,19 @@ return [
         'ffprobe_binary' => env('FFPROBE_BINARY', 'ffprobe'),
     ],
 
+    // Quem publica cada rede: 'native' (app próprio, exige conta conectada; sem ela cai no
+    // Upload-Post) ou 'upload_post'. Só libere uma rede quando o app dela estiver aprovado.
+    'routing' => [
+        'youtube' => env('SOCIAL_ROUTE_YOUTUBE', 'native'),
+        'instagram' => 'upload_post',
+        'facebook' => 'upload_post',
+        'tiktok' => 'upload_post',
+        'linkedin' => 'upload_post',
+        'x' => 'upload_post',
+        'threads' => 'upload_post',
+        'pinterest' => 'upload_post',
+    ],
+
     'oauth' => [
         // Validade do state/PKCE guardado na sessão entre a ida ao provedor e o retorno.
         'state_ttl_minutes' => 10,
