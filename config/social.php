@@ -33,4 +33,17 @@ return [
         'ffprobe_binary' => env('FFPROBE_BINARY', 'ffprobe'),
     ],
 
+    'oauth' => [
+        // Validade do state/PKCE guardado na sessão entre a ida ao provedor e o retorno.
+        'state_ttl_minutes' => 10,
+    ],
+
+    'youtube' => [
+        // Mínimo necessário: enviar vídeos e ler o próprio canal (handle, nome, foto).
+        'scopes' => [
+            'https://www.googleapis.com/auth/youtube.upload',
+            'https://www.googleapis.com/auth/youtube.readonly',
+        ],
+    ],
+
 ];

@@ -10,6 +10,7 @@ use App\Http\Controllers\Portal\ProfileController;
 use App\Http\Controllers\Portal\QuoteController;
 use App\Http\Controllers\Portal\RegisteredClientController;
 use App\Http\Controllers\Portal\RoteiroController;
+use App\Http\Controllers\Portal\SocialConnectionController;
 use App\Http\Controllers\Portal\SocialDistributionController;
 use App\Http\Controllers\Portal\VideoApprovalController;
 use Illuminate\Support\Facades\Route;
@@ -79,6 +80,16 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::post('sync', [SocialDistributionController::class, 'sync'])
                 ->middleware('throttle:social')
                 ->name('sync');
+
+            // App próprio da NUME (OAuth oficial da rede)
+            Route::get('conectar/{platform}', [SocialConnectionController::class, 'redirect'])
+                ->whereIn('platform', ['youtube'])
+                ->middleware('throttle:social')
+                ->name('oauth.redirect');
+            Route::get('oauth/{platform}/callback', [SocialConnectionController::class, 'callback'])
+                ->whereIn('platform', ['youtube'])
+                ->middleware('throttle:social')
+                ->name('oauth.callback');
         });
 
         // Disparo e consulta de status de publicação de vídeo

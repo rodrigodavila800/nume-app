@@ -47,6 +47,8 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
+        // Retorno do OAuth do YouTube (mesmo cliente OAuth). Vazio: usa a rota portal.social.oauth.callback.
+        'youtube_redirect' => env('GOOGLE_YOUTUBE_REDIRECT_URI'),
     ],
 
     'redsys' => [
