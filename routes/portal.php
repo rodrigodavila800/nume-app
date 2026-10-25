@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\GooglePortalController;
 use App\Http\Controllers\Portal\AuthenticatedSessionController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\MarketingPlanController;
+use App\Http\Controllers\Portal\MetaPageSelectionController;
 use App\Http\Controllers\Portal\PackController;
 use App\Http\Controllers\Portal\ProductionController;
 use App\Http\Controllers\Portal\ProfileController;
@@ -90,6 +91,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 ->whereIn('platform', ['youtube', 'meta', 'threads'])
                 ->middleware('throttle:social')
                 ->name('oauth.callback');
+            Route::get('meta/paginas', [MetaPageSelectionController::class, 'show'])->name('meta.pages');
+            Route::post('meta/paginas', [MetaPageSelectionController::class, 'store'])
+                ->middleware('throttle:social')
+                ->name('meta.pages.store');
             Route::delete('conexoes/{socialConnection}', [SocialConnectionController::class, 'destroy'])
                 ->whereNumber('socialConnection')
                 ->middleware('throttle:social')

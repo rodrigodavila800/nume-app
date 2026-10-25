@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\SocialPublishing\Connectors\MetaConnector;
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
 use App\Services\SocialPublishing\YouTubeConnector;
 
@@ -58,6 +59,7 @@ return [
     // Conectores OAuth do portal (chave usada na rota /portal/redes-sociais/conectar/{chave}).
     'connectors' => [
         'youtube' => YouTubeConnector::class,
+        'meta' => MetaConnector::class,
     ],
 
     // Qual conector conecta cada rede (Instagram e Facebook saem do mesmo login da Meta).
@@ -71,6 +73,23 @@ return [
     'oauth' => [
         // Validade do state/PKCE guardado na sessão entre a ida ao provedor e o retorno.
         'state_ttl_minutes' => 10,
+    ],
+
+    'meta' => [
+        // Versão fixa da Graph API (atualizar conscientemente; a Meta desativa versões antigas).
+        'graph_version' => env('META_GRAPH_VERSION', 'v26.0'),
+
+        // Mínimo para publicar Reels na Página e no Instagram profissional ligado a ela.
+        'scopes' => [
+            'pages_show_list',
+            'pages_read_engagement',
+            'pages_manage_posts',
+            'instagram_basic',
+            'instagram_content_publish',
+        ],
+
+        // Validade da lista de Páginas guardada (criptografada) enquanto o cliente escolhe uma.
+        'page_selection_minutes' => 10,
     ],
 
     'youtube' => [

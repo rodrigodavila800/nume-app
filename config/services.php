@@ -51,6 +51,16 @@ return [
         'youtube_redirect' => env('GOOGLE_YOUTUBE_REDIRECT_URI'),
     ],
 
+    // App da Meta (Facebook Login for Business): Facebook Pages + Instagram profissional.
+    'meta' => [
+        'client_id' => env('META_APP_ID'),
+        'client_secret' => env('META_APP_SECRET'),
+        // Opcional: configuração do Facebook Login for Business (substitui a lista de escopos).
+        'config_id' => env('META_LOGIN_CONFIG_ID'),
+        // Vazio: usa a rota portal.social.oauth.callback (meta).
+        'redirect' => env('META_REDIRECT_URI'),
+    ],
+
     'redsys' => [
         'merchant_code' => env('REDSYS_MERCHANT_CODE', '999008881'),
         'terminal' => env('REDSYS_TERMINAL', '001'),
