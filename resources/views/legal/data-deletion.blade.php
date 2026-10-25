@@ -21,7 +21,7 @@
                 <li>No cartão da rede, clique em <strong>Desconectar</strong>.</li>
             </ol>
             <p>
-                Os tokens de acesso são apagados do nosso servidor na hora (no YouTube/Google o acesso também é revogado na própria rede). Envios ainda não feitos para essa conta são cancelados.
+                Os tokens de acesso são apagados do nosso servidor na hora (no YouTube/Google e no TikTok o acesso também é revogado na própria rede). Envios ainda não feitos para essa conta são cancelados.
             </p>
             <p>
                 Você também pode revogar pelo lado da rede, sem passar por nós: no Google em

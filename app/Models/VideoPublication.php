@@ -91,6 +91,10 @@ class VideoPublication extends Model
             'publish_limit_reached', 'quotaExceeded' => __('A rede atingiu o limite diário de publicações. Tente amanhã.'),
             'media_processing_failed' => __('A rede não conseguiu processar o vídeo. Confira o formato do arquivo.'),
             'source_missing' => __('O arquivo do vídeo não está mais disponível.'),
+            'unaudited_client_can_only_post_to_private_accounts' => __('Enquanto o app da NUME não for auditado pelo TikTok, só dá para publicar em conta privada, como "Somente eu".'),
+            'tiktok_duration_invalid' => __('O vídeo é mais longo do que o TikTok permite para esta conta.'),
+            'privacy_level_option_mismatch' => __('A privacidade escolhida não está mais disponível nesta conta do TikTok. Publique de novo.'),
+            'spam_risk_user_banned_from_posting' => __('O TikTok bloqueou publicações desta conta. Verifique a conta no aplicativo do TikTok.'),
             default => null,
         };
     }

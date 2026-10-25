@@ -1,6 +1,6 @@
-# Deploy do Nume Social Engine (Fases 0, 1 e 2)
+# Deploy do Nume Social Engine (Fases 0 a 3)
 
-Checklist para subir o vídeo hospedado e as redes diretas (YouTube, Instagram, Facebook e Threads) na VPS (CloudPanel). Siga na ordem. Nada aqui exige mexer no Upload-Post: as redes que não estão conectadas direto continuam saindo por ele.
+Checklist para subir o vídeo hospedado e as redes diretas (YouTube, Instagram, Facebook, Threads e TikTok) na VPS (CloudPanel). Siga na ordem. Nada aqui exige mexer no Upload-Post: as redes que não estão conectadas direto continuam saindo por ele.
 
 ## 1. Código e banco
 
@@ -75,6 +75,22 @@ Requisitos que valem para os clientes:
 - **Limites da Meta (24 h):** 100 posts por conta de Instagram, 30 Reels por Página, 250 posts por perfil do Threads.
 - **Threads** só aceita buscar o vídeo por URL pública: o servidor precisa estar acessível pela internet (não funciona em `localhost`).
 
+## 4c. App do TikTok (uma vez)
+
+Em [developers.tiktok.com](https://developers.tiktok.com), com a conta da NUME:
+
+1. **Criar app** (Web) e preencher ícone, nome "NUME Creative", categoria, e as URLs de Termos (`/termos`) e Privacidade (`/privacidade`).
+2. **Produtos:** adicionar **Login Kit** e **Content Posting API**, com **Direct Post** ligado.
+3. **Login Kit > Redirect URI:** `https://SEU-DOMINIO/portal/redes-sociais/oauth/tiktok/callback` (https, sem parâmetros).
+4. **Escopos:** `user.info.basic` e `video.publish`.
+5. **Sandbox / sem auditoria:** só contas adicionadas como usuários de teste conseguem conectar. Os posts saem **privados (Somente eu)**, a conta precisa estar privada na hora do post e o limite é de 5 usuários publicando por dia. É o modo para testarmos.
+6. **Auditoria (para publicar público):** enviar o app para análise com vídeo de tela do fluxo completo: Redes Sociais > Conectar TikTok > tela do TikTok > página da produção > "Publicar no TikTok" > escolhas (privacidade, interações, divulgação comercial) > publicar > post no perfil. A tela "Publicar no TikTok" já segue as regras de UX obrigatórias do Direct Post (dados do criador a cada abertura, privacidade sem padrão, interações desmarcadas, divulgação comercial, declaração de uso de música, prévia).
+
+Regras que valem para os clientes:
+- O TikTok **não sai pelo modal "Publicar nas Redes"**. Quem conectou direto usa o botão **Publicar no TikTok** em cada vídeo, porque o TikTok exige que o dono da conta escolha as opções a cada post. Pelo painel da produtora, o TikTok direto não é publicado: aparece um aviso.
+- Duração máxima, privacidades possíveis e interações dependem da conta (vêm do TikTok na hora).
+- Conteúdo de marca não pode ser "Somente eu".
+
 ## 5. Variáveis de ambiente (você edita o `.env`)
 
 | Variável | Valor | Observação |
@@ -89,7 +105,8 @@ Requisitos que valem para os clientes:
 | `META_LOGIN_CONFIG_ID` | vazio ou ID da configuração | opcional (Facebook Login for Business) |
 | `META_GRAPH_VERSION` | `v26.0` | atualize de propósito quando a Meta avisar que a versão vai expirar |
 | `THREADS_APP_ID` / `THREADS_APP_SECRET` | do caso de uso Threads | diferentes dos da Meta |
-| `SOCIAL_ROUTE_INSTAGRAM` / `_FACEBOOK` / `_THREADS` | `native` | `upload_post` desliga a rede direta sem deploy |
+| `SOCIAL_ROUTE_INSTAGRAM` / `_FACEBOOK` / `_THREADS` / `_TIKTOK` | `native` | `upload_post` desliga a rede direta sem deploy |
+| `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET` | do app do TikTok | Client key e Client secret do painel |
 
 Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 
@@ -117,8 +134,11 @@ Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 | Ninguém de fora consegue conectar a Meta | app ainda sem Análise aprovada: só pessoas com função no app |
 | `publish_limit_reached` | limite diário da Meta atingido para aquela conta |
 | Threads falha em `media_processing_failed` em ambiente local | o Threads não alcança `localhost`; teste no servidor |
+| `unaudited_client_can_only_post_to_private_accounts` | app do TikTok sem auditoria: deixe a conta do TikTok privada e publique como "Somente eu" |
+| "O TikTok limitou novas contas no app hoje" | sem auditoria, o TikTok aceita só 5 usuários publicando por dia |
+| Botão "Publicar no TikTok" não aparece | conta do TikTok não conectada direto, `SOCIAL_ROUTE_TIKTOK` não é `native` ou o vídeo não é arquivo hospedado |
 
 ## 8. Voltar atrás
 
-- Desligar uma rede direta: `SOCIAL_ROUTE_<REDE>=upload_post` (YOUTUBE, INSTAGRAM, FACEBOOK, THREADS) + `config:cache`. Os canais conectados continuam salvos; novos envios saem pelo Upload-Post.
+- Desligar uma rede direta: `SOCIAL_ROUTE_<REDE>=upload_post` (YOUTUBE, INSTAGRAM, FACEBOOK, THREADS, TIKTOK) + `config:cache`. Os canais conectados continuam salvos; novos envios saem pelo Upload-Post.
 - As migrations têm `down()`, mas `migrate:rollback` apaga `social_connections` (todos os canais conectados). Prefira a chave acima.
