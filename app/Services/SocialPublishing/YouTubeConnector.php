@@ -116,4 +116,29 @@ class YouTubeConnector
 
         return $connection;
     }
+
+    /**
+     * Desconecta: revoga no Google (o refresh token derruba também os access tokens) e apaga os
+     * tokens daqui mesmo se a revogação falhar. Envios nativos ainda não feitos são cancelados.
+     */
+    public function disconnect(SocialConnection $connection): void
+    {
+        $token = $connection->refresh_token ?: $connection->access_token;
+        $revoked = $token ? $this->google->revoke($token) : true;
+
+        $connection->publications()
+            ->withoutGlobalScopes()
+            ->where('tenant_id', $connection->tenant_id)
+            ->whereIn('status', ['pendente', 'agendado'])
+            ->update(['status' => 'falhou', 'last_error' => 'disconnected']);
+
+        Log::info('social.youtube.disconnected', [
+            'tenant_id' => $connection->tenant_id,
+            'cliente_id' => $connection->cliente_id,
+            'social_connection_id' => $connection->id,
+            'revoked' => $revoked,
+        ]);
+
+        $connection->delete();
+    }
 }

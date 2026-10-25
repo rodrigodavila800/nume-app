@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
+use App\Models\SocialConnection;
 use App\Services\SocialPublishing\OAuth\OAuthException;
 use App\Services\SocialPublishing\YouTubeConnector;
 use Illuminate\Http\RedirectResponse;
@@ -50,6 +51,21 @@ class SocialConnectionController extends Controller
 
         return redirect()->route('portal.social.index')
             ->with('success', __('Canal do YouTube :canal conectado com sucesso!', ['canal' => $connection->handle ?? $connection->display_name ?? '']));
+    }
+
+    public function destroy(SocialConnection $socialConnection): RedirectResponse
+    {
+        $cliente = auth('cliente')->user();
+
+        abort_unless(
+            $socialConnection->cliente_id === $cliente->id && $socialConnection->tenant_id === $cliente->tenant_id,
+            403
+        );
+
+        $this->youtube->disconnect($socialConnection);
+
+        return redirect()->route('portal.social.index')
+            ->with('success', __('Canal do YouTube desconectado. A NUME não tem mais acesso a ele.'));
     }
 
     private function failureMessage(string $reason): string

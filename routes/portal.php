@@ -90,6 +90,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
                 ->whereIn('platform', ['youtube'])
                 ->middleware('throttle:social')
                 ->name('oauth.callback');
+            Route::delete('conexoes/{socialConnection}', [SocialConnectionController::class, 'destroy'])
+                ->whereNumber('socialConnection')
+                ->middleware('throttle:social')
+                ->name('connections.destroy');
         });
 
         // Disparo e consulta de status de publicação de vídeo

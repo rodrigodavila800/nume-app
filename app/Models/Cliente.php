@@ -68,11 +68,17 @@ class Cliente extends Authenticatable
     }
 
     /**
-     * Perfil da marca numa rede: primeiro a conta conectada no ecossistema (Upload-Post),
-     * depois o que foi digitado no DNA. O DNA digitado nunca é sobrescrito pela conexão.
+     * Perfil da marca numa rede: primeiro a conta conectada pelo app próprio da NUME (OAuth),
+     * depois a do Upload-Post e por fim o que foi digitado no DNA. O DNA digitado nunca é
+     * sobrescrito pela conexão.
      */
     public function getEffectiveSocialHandle(PlataformaAlvo $plataforma): ?string
     {
+        $native = $this->activeSocialConnection($plataforma->value);
+        if ($native !== null && filled($native->handle)) {
+            return $native->handle;
+        }
+
         $connected = $this->socialProfile?->connectedHandle($plataforma->value);
         if ($connected !== null) {
             return $connected;
@@ -95,7 +101,9 @@ class Cliente extends Authenticatable
         foreach (PlataformaAlvo::cases() as $plataforma) {
             $handle = $this->getEffectiveSocialHandle($plataforma);
 
-            if ($handle !== null || $this->socialProfile?->isPlatformConnected($plataforma->value)) {
+            if ($handle !== null
+                || $this->activeSocialConnection($plataforma->value) !== null
+                || $this->socialProfile?->isPlatformConnected($plataforma->value)) {
                 $channels[$plataforma->value] = $handle;
             }
         }
@@ -141,6 +149,18 @@ class Cliente extends Authenticatable
     public function socialConnections(): HasMany
     {
         return $this->hasMany(SocialConnection::class);
+    }
+
+    /**
+     * Conta ativa numa rede pelo app próprio (usa a relação carregada: uma consulta por cliente).
+     */
+    public function activeSocialConnection(string $platform): ?SocialConnection
+    {
+        return $this->socialConnections
+            ->where('platform', $platform)
+            ->where('status', SocialConnection::STATUS_ACTIVE)
+            ->sortByDesc('id')
+            ->first();
     }
 
     /**

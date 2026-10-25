@@ -95,7 +95,7 @@
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Redes Vinculadas') }}</span>
                 <span class="text-sm font-extrabold text-zinc-900 mt-0.5 block">
-                    {{ count($profile->platforms_connected ?? []) }} {{ __('de') }} {{ count($platforms) }}
+                    {{ $connectedPlatforms->count() }} {{ __('de') }} {{ count($platforms) }}
                 </span>
             </div>
         </div>
@@ -148,7 +148,9 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @foreach($platforms as $platform)
                 @php
-                    $isConnected = $profile->isPlatformConnected($platform->value);
+                    $isConnected = $connectedPlatforms->contains($platform->value);
+                    $native = $connections->get($platform->value);
+                    $canConnectNative = $nativeAvailable[$platform->value] ?? false;
                 @endphp
                 <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs flex flex-col justify-between transition hover:border-zinc-300">
                     <div class="space-y-3">
@@ -162,20 +164,62 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-bold text-zinc-900">{{ $platform->label() }}</h3>
-                            <p class="text-[11px] text-zinc-500 mt-0.5">
-                                {{ $isConnected ? __('Pronto para receber publicações em 1 clique.') : __('Clique no botão acima para vincular esta rede.') }}
-                            </p>
+                            @if($native?->isActive())
+                                <p class="text-[11px] text-zinc-600 mt-0.5">
+                                    {{ __('Conectado direto pela NUME') }}@if($native->handle || $native->display_name): <span class="font-semibold text-zinc-900">{{ $native->handle ?? $native->display_name }}</span>@endif
+                                </p>
+                            @elseif($native)
+                                <p class="text-[11px] text-amber-700 mt-0.5">
+                                    {{ __('O acesso ao canal expirou ou foi revogado. Reconecte para voltar a publicar direto.') }}
+                                </p>
+                            @elseif($canConnectNative)
+                                <p class="text-[11px] text-zinc-500 mt-0.5">
+                                    {{ __('Conecte o canal direto pela NUME: o vídeo sai do nosso servidor para o seu canal, sem intermediários.') }}
+                                </p>
+                            @else
+                                <p class="text-[11px] text-zinc-500 mt-0.5">
+                                    {{ $isConnected ? __('Pronto para receber publicações em 1 clique.') : __('Clique no botão acima para vincular esta rede.') }}
+                                </p>
+                            @endif
                         </div>
                     </div>
 
-                    <div class="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between">
-                        <span class="text-[10px] font-mono font-medium text-zinc-400 uppercase">
-                            Slug: {{ $platform->value }}
-                        </span>
-                        @if($isConnected)
-                            <span class="text-xs text-emerald-600 font-extrabold">✓ OK</span>
+                    <div class="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between gap-2">
+                        @if($native)
+                            @if(! $native->isActive() && $canConnectNative)
+                                <a href="{{ route('portal.social.oauth.redirect', $platform->value) }}"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold text-white bg-orange-600 hover:bg-orange-500 shadow-xs transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                    {{ __('Reconectar') }}
+                                </a>
+                            @else
+                                <span class="text-xs text-emerald-600 font-extrabold">✓ OK</span>
+                            @endif
+                            <form action="{{ route('portal.social.connections.destroy', $native) }}" method="POST"
+                                onsubmit="return confirm({{ \Illuminate\Support\Js::from(__('Desconectar este canal? Envios agendados para ele serão cancelados.')) }})">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">
+                                    {{ __('Desconectar') }}
+                                </button>
+                            </form>
+                        @elseif($canConnectNative)
+                            <span class="text-[10px] font-mono font-medium text-zinc-400 uppercase">
+                                Slug: {{ $platform->value }}
+                            </span>
+                            <a href="{{ route('portal.social.oauth.redirect', $platform->value) }}"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                {{ __('Conectar :rede', ['rede' => $platform->label()]) }}
+                            </a>
                         @else
-                            <span class="text-xs text-zinc-400 font-bold">-</span>
+                            <span class="text-[10px] font-mono font-medium text-zinc-400 uppercase">
+                                Slug: {{ $platform->value }}
+                            </span>
+                            @if($isConnected)
+                                <span class="text-xs text-emerald-600 font-extrabold">✓ OK</span>
+                            @else
+                                <span class="text-xs text-zinc-400 font-bold">-</span>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -242,6 +286,16 @@
                                                 </span>
                                             @endforeach
                                         </div>
+                                        @if($pub->driver !== 'upload_post')
+                                            <div class="text-[10px] text-zinc-500 mt-1">{{ __('Envio direto pela NUME') }}</div>
+                                        @endif
+                                        @if($pub->driver === 'youtube' && $pub->status === 'publicado' && filled($pub->resultado['url'] ?? null))
+                                            <a href="{{ $pub->resultado['url'] }}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-orange-600 font-semibold hover:underline">
+                                                {{ __('Ver no YouTube') }}
+                                            </a>
+                                        @elseif($pub->status === 'falhou' && $pub->last_error === 'reconnect_required')
+                                            <div class="text-[10px] text-rose-600 mt-1">{{ __('Reconecte o canal para publicar.') }}</div>
+                                        @endif
                                     </td>
                                     <td class="px-5 py-4">
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider
