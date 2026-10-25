@@ -21,6 +21,7 @@ description: Conhecimento do módulo Produções, Roteiros e Vídeos — Pipelin
 
 ### `videos`
 - `id`, `tenant_id`, `production_id`, `title`, `description`, `video_url`, `thumbnail_url`, `duration_seconds`, `status` (`pending`, `ready`, `published`), `platform` (`youtube`, `instagram`, `tiktok`, `other`), `platform_video_id`, `published_at`, `sofi_seo_title`, `sofi_seo_description`, `sofi_hashtags` (array), `sofi_seo_keywords`, `sofi_seo_generated_at`.
+- Arquivo hospedado na NUME (opcional, `video_url` passa a ser nullable): `source_disk` (disco privado `videos`), `source_path` (`{tenant}/{uuid}.mp4`), `source_mime`, `source_size`, `source_width`, `source_height`, `source_sha256`. Entrega só por URL assinada (`playbackUrl()`, `downloadUrl()`, `publicFetchUrl()` → rota `videos.media`); download e distribuição respeitam a custódia 50/50 (`isAssetLocked()`).
 
 ### `showcase_videos`
 - `id`, `tenant_id`, `title`, `description`, `video_url`, `thumbnail_url`, `category`, `sort_order`, `is_featured`.
@@ -83,12 +84,20 @@ Isso garante que um ID de vídeo ou roteiro só será acessado se pertencer estr
 
 ## 5. Distribuição Multiplataforma & Publicação Automatizada
 
-Para competir com soluções como Upload-Post e Ayrshare sem vendor lock-in, o ecossistema utiliza:
+Nume Social Engine: app próprio da NUME nas APIs oficiais de cada rede, com o Upload-Post como caminho para as redes ainda não aprovadas. Sem engenharia reversa.
 
-- **Contrato Agnóstico:** `App\Contracts\SocialPublisherContract`.
-- **Driver Proxy Atual:** `App\Services\UploadPost\SocialDistributionService` consumindo `UploadPostClient` (white-label).
-- **Webhooks Seguros:** `POST /webhooks/upload-post` com validação HMAC-SHA256 (`X-Upload-Post-Signature`) atualiza o status de `VideoPublication` para `publicado` em tempo real e finaliza o vídeo.
-- **Isolamento Total:** `social_profiles` e `video_publications` implementam `BelongsToTenant` e autorização por `cliente_id`.
+- **Ponto único de disparo:** `App\Services\SocialPublishing\SocialPublicationService::distribute()` (portal, painel e agendador). Não chame `SocialDistributionService::publish()` direto de controller.
+- **Roteamento por rede:** `SocialPublisherRouter` + `config('social.routing')`. A rede só vai para o nativo se estiver liberada (`native`) **e** o cliente tiver `SocialConnection` ativa nela; senão segue pelo Upload-Post. Vídeo que é só link nunca vai para o nativo. Hoje só o YouTube está liberado; Meta e TikTok esperam App Review / auditoria.
+- **Contas conectadas:** tabela `social_connections` (model `SocialConnection`, `BelongsToTenant`). Tokens com cast `encrypted` + `$hidden`; nunca em log, JSON ou view. Trocar a `APP_KEY` sem `APP_PREVIOUS_KEYS` invalida todos os tokens.
+- **OAuth do YouTube:** `YouTubeConnector` + `OAuth\GoogleOAuthClient` (PKCE S256, `access_type=offline`, `prompt=consent`, escopos `youtube.upload` + `youtube.readonly`). O state fica na sessão, preso ao cliente, vale 10 min e uma única vez. Rotas `portal.social.oauth.redirect|callback` e `portal.social.connections.destroy` (desconectar revoga no Google).
+- **Envio nativo:** uma `VideoPublication` por rede (`driver`/`platform` = `youtube`, `social_connection_id`, `attempts`, `last_error`, `external_id`). O job `App\Jobs\PublishVideoToPlatform` recebe `tenant_id` no payload, é idempotente e roda na conexão de fila **`social-uploads`** (`retry_after` maior que o upload, senão o vídeo sai duplicado). `YouTube\YouTubeUploader` faz upload resumable do arquivo hospedado; a URL da sessão fica criptografada no cache, nunca em `resultado` (o portal devolve `resultado` ao cliente).
+- **Tokens:** `SocialTokenManager` renova sob lock; `invalid_grant` marca a conta como `expired` (pede reconexão). `social:refresh-tokens` roda todo dia às 04:15.
+- **Erros:** `PublishException(reason, retryable)`. `last_error` guarda só o código curto (ex.: `quotaExceeded`, `reconnect_required`, `upload_interrupted`).
+- **Drivers antigos:** `MetaGraphDriver`, `TikTokDriver` e `YouTubeDataDriver` estendem `PendingNativeDriver`: nunca marcam conta como conectada sem `social_connections`, nunca viram "publicado" sem confirmação e não usam token global de `env()`.
+- **Upload-Post:** `SocialDistributionService` + `UploadPostClient` (white-label). `processScheduled()` só pega linhas com `driver = upload_post`; as nativas agendadas vão para a fila em `SocialPublicationService::dispatchDueNative()`.
+- **Webhooks seguros:** `POST /webhooks/upload-post` com validação HMAC-SHA256 (`X-Upload-Post-Signature`).
+- **Cota:** um envio com várias redes conta como uma distribuição (`Cliente::getDistributionsUsedCount()` agrupa linhas do mesmo vídeo criadas no mesmo envio).
+- **Isolamento total:** `social_profiles`, `social_connections` e `video_publications` usam `BelongsToTenant`; portal confere `cliente_id`; job e comandos usam `forTenant()` / `tenant_id` explícito.
 
 ---
 

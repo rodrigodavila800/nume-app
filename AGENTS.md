@@ -18,7 +18,7 @@ Você é um **Engenheiro DevSecOps Sênior em Laravel** (SaaS B2B multi-tenant, 
 - Vite 6 + **Tailwind CSS 4** (`@tailwindcss/vite`). Frontend: Blade + JS vanilla/Alpine.
 - Banco: MariaDB/MySQL (XAMPP). `.env.example` ainda traz `sqlite`; o `.env` real manda.
 - Fila e cache: `QUEUE_CONNECTION=database`, `CACHE_STORE=database`.
-- Integrações: Google Gemini (HTTP direto em 5 services; `SofiTranslatorService` já tem caminho pelo Laravel AI SDK, atrás de `SOFI_USE_AI_SDK`), Stripe Billing/Connect, Redsys/Bizum, UploadPost + drivers Meta/TikTok/YouTube, Google OAuth.
+- Integrações: Google Gemini (HTTP direto em 5 services; `SofiTranslatorService` já tem caminho pelo Laravel AI SDK, atrás de `SOFI_USE_AI_SDK`), Stripe Billing/Connect, Redsys/Bizum, Nume Social Engine (YouTube nativo por OAuth + Upload-Post para as demais redes), Google OAuth.
 
 ## Mapa de módulos → skills (carregue a skill antes de mexer no módulo)
 
@@ -54,11 +54,12 @@ Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalcul
 9. **Redsys:** TPV Virtual é por produtora via `TenantSetting`. O TPV global existente é do tenant oficial `nume`. Em produção, sem credenciais no tenant, Redsys e Bizum não operam e recusam fallback para chaves globais. Defaults de teste só se aplicam em `local`/`testing` ou para o tenant `nume`.
 10. **Comissões fora da Stripe (Decisão B):** compras via Stripe Connect gravam `platform_fee_status = 'collected_at_gateway'`. Vendas por TPV Redsys próprio da produtora gravam `application_fee_amount` e `platform_fee_status = 'pending_billing'` para faturamento posterior na assinatura SaaS.
 11. **IA:** toda chamada a modelo precisa de fallback gracioso (o projeto já cai para motores heurísticos), timeout explícito, log sem dados sensíveis e conteúdo de terceiros (site rastreado, texto do cliente) tratado como **dados não confiáveis** dentro do prompt.
+12. **Publicação social (Nume Social Engine):** todo disparo passa por `SocialPublicationService::distribute()`. Tokens de rede só em `SocialConnection` (cast `encrypted`, nunca em log/JSON/view). Envio nativo só do arquivo hospedado (nunca de URL digitada) e só pelo job `PublishVideoToPlatform` na fila `social-uploads`. Nenhum driver pode marcar conta como conectada ou vídeo como publicado sem confirmação da rede. Detalhes: skill `producoes-videos`.
 
 ## Comandos (Windows/PowerShell)
 
-- Subir tudo: `composer run dev` (serve + queue + pail + vite).
-- Servidor: `php artisan serve` (nunca pelo Apache do XAMPP) · Fila: `php artisan queue:listen --tries=1`
+- Subir tudo: `composer run dev` (serve + queue + uploads + pail + vite).
+- Servidor: `php artisan serve` (nunca pelo Apache do XAMPP) · Fila: `php artisan queue:listen --tries=1` · Envios às redes: `php artisan queue:listen social-uploads --queue=social-uploads --timeout=3800`
 - Assets: `npm.cmd run dev` / `npm.cmd run build`
 - Testes: `php artisan test` ou `vendor\bin\phpunit`. **Nunca com `config:cache` ativo**: o cache ignora o `phpunit.xml` e a suíte apontaria para o MariaDB real, onde `RefreshDatabase` roda `migrate:fresh` e apaga tudo. `tests/TestCase.php` aborta se a conexão não for SQLite em memória; depois de `config:cache`, rode `php artisan optimize:clear` antes de testar.
 - Estilo: `vendor\bin\pint` (rode nos arquivos alterados)
