@@ -17,10 +17,14 @@ class ProductionController extends Controller
         $roteiros = $production->roteiros()->latest()->get();
         $videos = $production->videos()->latest()->get();
 
-        // TikTok conectado direto publica pela tela própria (regras do Direct Post), não pelo modal.
-        $tiktokDirect = $request->user('cliente')->activeSocialConnection('tiktok') !== null
-            && $router->routeFor('tiktok') === SocialPublisherRouter::NATIVE;
+        // Redes conectadas direto que publicam por tela própria (TikTok: regras do Direct Post;
+        // Pinterest: escolha da pasta), não pelo modal genérico.
+        $composerPlatforms = collect(config('social.composer_platforms', []))
+            ->filter(fn (string $platform) => $request->user('cliente')->activeSocialConnection($platform) !== null
+                && $router->routeFor($platform) === SocialPublisherRouter::NATIVE)
+            ->values()
+            ->all();
 
-        return view('portal.productions.show', compact('production', 'roteiros', 'videos', 'tiktokDirect'));
+        return view('portal.productions.show', compact('production', 'roteiros', 'videos', 'composerPlatforms'));
     }
 }

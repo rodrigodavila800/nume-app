@@ -190,11 +190,13 @@
                                     <span>🚀</span>
                                     <span>{{ __('Publicar nas Redes') }}</span>
                                 </button>
-                                @if($tiktokDirect && $video->hasSourceFile())
-                                    <a href="{{ route('portal.videos.tiktok', $video) }}"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 shadow-xs transition active:scale-95">
-                                        <span>{{ __('Publicar no TikTok') }}</span>
-                                    </a>
+                                @if($video->hasSourceFile())
+                                    @foreach($composerPlatforms as $composerPlatform)
+                                        <a href="{{ route('portal.videos.'.$composerPlatform, $video) }}"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 shadow-xs transition active:scale-95">
+                                            <span>{{ __('Publicar no :rede', ['rede' => \App\Enums\PlataformaAlvo::from($composerPlatform)->label()]) }}</span>
+                                        </a>
+                                    @endforeach
                                 @endif
                                 <a href="{{ $video->downloadUrl() }}" target="_blank" rel="noopener" 
                                     class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-950 hover:bg-orange-600 text-white transition">
@@ -360,7 +362,7 @@
     // não entram no modal: têm botão "Publicar no TikTok".
     $connectedPlatforms = $portalCliente?->connectedPlatforms() ?? [];
     $hasSocialConnection = $connectedPlatforms !== [];
-    $modalPlatforms = $tiktokDirect ? array_values(array_diff($connectedPlatforms, ['tiktok'])) : $connectedPlatforms;
+    $modalPlatforms = array_values(array_diff($connectedPlatforms, $composerPlatforms));
 @endphp
 
 @foreach($videos as $video)

@@ -302,11 +302,16 @@ class VideoController extends Controller
                 linkUrl: $video->hasSourceFile() ? null : ($validated['video_url'] ?? null),
             );
 
-            // TikTok direto exige que o dono da conta confirme as opções do post no portal.
+            // Redes com tela própria (TikTok: confirmação do dono da conta; Pinterest: escolha da
+            // pasta) não saem pelo painel: o cliente publica pelo portal.
             $sent = array_values(array_diff($validated['plataformas'], $result['composer']));
-            $tiktokNote = in_array('tiktok', $result['composer'], true)
-                ? ' '.__('O TikTok desta conta é conectado direto: o cliente precisa publicar pelo portal, em "Publicar no TikTok".')
-                : '';
+            $tiktokNote = '';
+            if (in_array('tiktok', $result['composer'], true)) {
+                $tiktokNote .= ' '.__('O TikTok desta conta é conectado direto: o cliente precisa publicar pelo portal, em "Publicar no TikTok".');
+            }
+            if (in_array('pinterest', $result['composer'], true)) {
+                $tiktokNote .= ' '.__('O Pinterest desta conta é conectado direto: o cliente escolhe a pasta e publica pelo portal, em "Publicar no Pinterest".');
+            }
 
             if ($sent === []) {
                 return redirect()->back()->with('warning', trim($tiktokNote));

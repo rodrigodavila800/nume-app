@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Portal\Concerns\GuardsComposerPublishing;
 use App\Models\Cliente;
 use App\Models\SocialConnection;
 use App\Models\Video;
@@ -28,6 +29,8 @@ use Illuminate\View\View;
  */
 class TikTokComposerController extends Controller
 {
+    use GuardsComposerPublishing;
+
     public function __construct(
         private readonly TikTokContentApi $content,
         private readonly SocialTokenManager $tokens,
@@ -119,22 +122,9 @@ class TikTokComposerController extends Controller
             ->with('success', __('Vídeo enviado ao TikTok. O processamento pode levar alguns minutos até aparecer no seu perfil.'));
     }
 
-    /**
-     * Mesmas regras do envio pelo portal: vídeo do cliente, arquivo hospedado, saldo quitado,
-     * cota disponível e conta do TikTok conectada direto.
-     */
     private function guard(Cliente $cliente, Video $video): SocialConnection
     {
-        abort_unless($video->production?->cliente_id === $cliente->id, 403);
-        abort_unless($video->hasSourceFile(), 404);
-        abort_if($video->isAssetLocked(), 403, __('Envio bloqueado: o saldo do pacote ainda não foi quitado.'));
-        abort_unless($cliente->canDistributeSocial(), 403, __('Você atingiu o limite de publicações do seu plano.'));
-        abort_unless($this->router->routeFor('tiktok') === SocialPublisherRouter::NATIVE, 404);
-
-        $connection = $cliente->activeSocialConnection('tiktok');
-        abort_if($connection === null, 404);
-
-        return $connection;
+        return $this->guardComposer($cliente, $video, 'tiktok', $this->router);
     }
 
     private function unavailable(Video $video, string $reason): RedirectResponse

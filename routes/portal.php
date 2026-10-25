@@ -6,6 +6,7 @@ use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\MarketingPlanController;
 use App\Http\Controllers\Portal\MetaPageSelectionController;
 use App\Http\Controllers\Portal\PackController;
+use App\Http\Controllers\Portal\PinterestComposerController;
 use App\Http\Controllers\Portal\ProductionController;
 use App\Http\Controllers\Portal\ProfileController;
 use App\Http\Controllers\Portal\QuoteController;
@@ -112,6 +113,16 @@ Route::prefix('portal')->name('portal.')->group(function () {
             ->whereNumber('video')
             ->middleware('throttle:social')
             ->name('videos.tiktok.store');
+
+        // Pinterest: tela própria para escolher a pasta do pin
+        Route::get('videos/{video}/pinterest', [PinterestComposerController::class, 'show'])
+            ->whereNumber('video')
+            ->middleware('throttle:social')
+            ->name('videos.pinterest');
+        Route::post('videos/{video}/pinterest', [PinterestComposerController::class, 'store'])
+            ->whereNumber('video')
+            ->middleware('throttle:social')
+            ->name('videos.pinterest.store');
 
         Route::post('videos/{video}/distribute', [SocialDistributionController::class, 'distribute'])
             ->middleware('throttle:social')
