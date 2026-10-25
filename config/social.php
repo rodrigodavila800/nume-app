@@ -2,6 +2,7 @@
 
 use App\Services\SocialPublishing\Connectors\LinkedInConnector;
 use App\Services\SocialPublishing\Connectors\MetaConnector;
+use App\Services\SocialPublishing\Connectors\PinterestConnector;
 use App\Services\SocialPublishing\Connectors\ThreadsConnector;
 use App\Services\SocialPublishing\Connectors\TikTokConnector;
 use App\Services\SocialPublishing\LinkedIn\LinkedInVideoPublisher;
@@ -55,7 +56,7 @@ return [
         'linkedin' => env('SOCIAL_ROUTE_LINKEDIN', 'native'),
         'x' => 'upload_post',
         'threads' => env('SOCIAL_ROUTE_THREADS', 'native'),
-        'pinterest' => 'upload_post',
+        'pinterest' => env('SOCIAL_ROUTE_PINTEREST', 'native'),
     ],
 
     // Publicador de cada rede no app próprio (classe que implementa NativePublisher).
@@ -80,6 +81,7 @@ return [
         'threads' => ThreadsConnector::class,
         'tiktok' => TikTokConnector::class,
         'linkedin' => LinkedInConnector::class,
+        'pinterest' => PinterestConnector::class,
     ],
 
     // Qual conector conecta cada rede (Instagram e Facebook saem do mesmo login da Meta).
@@ -90,6 +92,7 @@ return [
         'threads' => 'threads',
         'tiktok' => 'tiktok',
         'linkedin' => 'linkedin',
+        'pinterest' => 'pinterest',
     ],
 
     'oauth' => [
@@ -117,6 +120,14 @@ return [
         // por até 5 minutos). Passou disso, o job tenta de novo mais tarde sem reenviar o arquivo.
         'poll_attempts' => 20,
         'poll_seconds' => 15,
+    ],
+
+    'pinterest' => [
+        // Host da API v5. Se o Pinterest exigir o sandbox enquanto o app estiver em Trial,
+        // use https://api-sandbox.pinterest.com/v5 (tokens e pins ficam lá).
+        'api_base' => env('PINTEREST_API_BASE', 'https://api.pinterest.com/v5'),
+        // Pins em pastas públicas: ler conta e pastas, criar pins.
+        'scopes' => ['user_accounts:read', 'boards:read', 'pins:read', 'pins:write'],
     ],
 
     'linkedin' => [

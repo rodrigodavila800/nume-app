@@ -61,6 +61,14 @@ return [
         'redirect' => env('META_REDIRECT_URI'),
     ],
 
+    // App do Pinterest Developers (API v5).
+    'pinterest' => [
+        'client_id' => env('PINTEREST_CLIENT_ID'),
+        'client_secret' => env('PINTEREST_CLIENT_SECRET'),
+        // Vazio: usa a rota portal.social.oauth.callback (pinterest).
+        'redirect' => env('PINTEREST_REDIRECT_URI'),
+    ],
+
     // App do LinkedIn Developers (Sign In with LinkedIn OIDC + Share on LinkedIn).
     'linkedin' => [
         'client_id' => env('LINKEDIN_CLIENT_ID'),

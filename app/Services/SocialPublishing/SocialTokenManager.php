@@ -6,6 +6,7 @@ use App\Models\SocialConnection;
 use App\Services\SocialPublishing\OAuth\GoogleOAuthClient;
 use App\Services\SocialPublishing\OAuth\LinkedInOAuthClient;
 use App\Services\SocialPublishing\OAuth\OAuthException;
+use App\Services\SocialPublishing\OAuth\PinterestOAuthClient;
 use App\Services\SocialPublishing\OAuth\ThreadsOAuthClient;
 use App\Services\SocialPublishing\OAuth\TikTokOAuthClient;
 use Illuminate\Support\Facades\Cache;
@@ -22,6 +23,7 @@ class SocialTokenManager
         private readonly ThreadsOAuthClient $threads,
         private readonly TikTokOAuthClient $tiktok,
         private readonly LinkedInOAuthClient $linkedin,
+        private readonly PinterestOAuthClient $pinterest,
     ) {}
 
     /**
@@ -56,7 +58,7 @@ class SocialTokenManager
     {
         $refreshable = match ($connection->provider) {
             // LinkedIn só tem refresh token para parceiros aprovados; sem ele, o cliente reconecta.
-            'google', 'tiktok', 'linkedin' => (bool) $connection->refresh_token,
+            'google', 'tiktok', 'linkedin', 'pinterest' => (bool) $connection->refresh_token,
             // O Threads renova com o próprio token longo, enquanto ele não venceu.
             'threads' => (bool) $connection->access_token && ! $connection->expires_at?->isPast(),
             default => false,
@@ -73,6 +75,7 @@ class SocialTokenManager
                 // O TikTok pode devolver um refresh token novo: o atual deixa de valer.
                 'tiktok' => $this->tiktok->refresh($connection->refresh_token),
                 'linkedin' => $this->linkedin->refresh($connection->refresh_token),
+                'pinterest' => $this->pinterest->refresh($connection->refresh_token),
                 default => $this->google->refresh($connection->refresh_token),
             };
         } catch (OAuthException $e) {
