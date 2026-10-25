@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\SocialPublishing\Connectors\MetaConnector;
+use App\Services\SocialPublishing\Meta\FacebookReelsPublisher;
 use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
 use App\Services\SocialPublishing\YouTube\YouTubeUploader;
 use App\Services\SocialPublishing\YouTubeConnector;
@@ -56,6 +57,7 @@ return [
     'native_publishers' => [
         'youtube' => YouTubeUploader::class,
         'instagram' => InstagramReelsPublisher::class,
+        'facebook' => FacebookReelsPublisher::class,
     ],
 
     // Conectores OAuth do portal (chave usada na rota /portal/redes-sociais/conectar/{chave}).
