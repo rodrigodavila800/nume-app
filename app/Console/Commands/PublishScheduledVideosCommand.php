@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Contracts\SocialPublisherContract;
+use App\Services\SocialPublishing\SocialPublicationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -25,12 +26,12 @@ class PublishScheduledVideosCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(SocialPublisherContract $publisher): int
+    public function handle(SocialPublisherContract $publisher, SocialPublicationService $native): int
     {
         $this->info('Iniciando verificação de publicações sociais agendadas...');
 
         try {
-            $processed = $publisher->processScheduled();
+            $processed = $native->dispatchDueNative() + $publisher->processScheduled();
 
             if ($processed > 0) {
                 $this->info("{$processed} publicações agendadas foram disparadas com sucesso.");

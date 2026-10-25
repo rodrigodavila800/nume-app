@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\PublishVideoRequest;
 use App\Models\Video;
 use App\Models\VideoPublication;
+use App\Services\SocialPublishing\SocialPublicationService;
 use App\Services\UploadPost\SocialDistributionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -15,8 +16,10 @@ use Illuminate\View\View;
 
 class SocialDistributionController extends Controller
 {
-    public function __construct(private readonly SocialDistributionService $service)
-    {
+    public function __construct(
+        private readonly SocialDistributionService $service,
+        private readonly SocialPublicationService $publications,
+    ) {
     }
 
     /**
@@ -93,29 +96,25 @@ class SocialDistributionController extends Controller
 
         $scheduledAt = $request->validated('scheduled_at') ? new \DateTimeImmutable($request->validated('scheduled_at')) : null;
 
-        // Arquivo próprio da NUME: a URL de busca é gerada aqui (assinada, temporária) e só com o saldo
-        // quitado. A URL digitada pelo cliente só vale para vídeos que são apenas um link.
-        if ($video->hasSourceFile()) {
-            abort_if($video->isAssetLocked(), 403, __('Envio bloqueado: o saldo do pacote ainda não foi quitado.'));
-            $videoUrl = $video->publicFetchUrl();
-        } else {
-            $videoUrl = $request->validated('video_url');
-        }
+        // Arquivo próprio da NUME só sai (nativo ou por URL assinada) com o saldo quitado.
+        // A URL digitada pelo cliente só vale para vídeos que são apenas um link.
+        abort_if($video->hasSourceFile() && $video->isAssetLocked(), 403, __('Envio bloqueado: o saldo do pacote ainda não foi quitado.'));
 
-        $publication = $this->service->publish(
+        $result = $this->publications->distribute(
             cliente: $cliente,
-            videoUrl: $videoUrl,
+            video: $video,
             title: $request->validated('titulo'),
             platforms: $request->validated('plataformas'),
-            video: $video,
             user: null,
             scheduledAt: $scheduledAt,
+            linkUrl: $video->hasSourceFile() ? null : $request->validated('video_url'),
         );
 
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => $scheduledAt ? __('Publicação agendada com sucesso.') : __('Publicação enviada com sucesso.'),
-                'publication' => $publication,
+                'publication' => $result['publications'][0] ?? null,
+                'publications' => $result['publications'],
             ], 202);
         }
 

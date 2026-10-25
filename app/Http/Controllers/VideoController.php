@@ -6,6 +6,7 @@ use App\Enums\PlataformaAlvo;
 use App\Models\Production;
 use App\Models\Video;
 use App\Services\Notification\SofiVideoNotificationService;
+use App\Services\SocialPublishing\SocialPublicationService;
 use App\Services\SofiCopywriterService;
 use App\Services\UploadPost\SocialDistributionService;
 use App\Services\Video\VideoUploadService;
@@ -22,7 +23,8 @@ class VideoController extends Controller
         protected SofiCopywriterService $sofiService,
         protected SocialDistributionService $socialService,
         protected SofiVideoNotificationService $notificationService,
-        protected VideoUploadService $uploads
+        protected VideoUploadService $uploads,
+        protected SocialPublicationService $publications
     ) {}
 
     /**
@@ -284,27 +286,20 @@ class VideoController extends Controller
             return redirect()->back()->with('error', __('Esta produção não possui um cliente associado para distribuição social.'));
         }
 
-        // Com arquivo próprio da NUME, a URL de busca é gerada aqui (assinada, temporária);
-        // a URL digitada no formulário só vale para vídeos que são apenas um link.
-        $videoUrl = $video->hasSourceFile()
-            ? $video->publicFetchUrl()
-            : ($validated['video_url'] ?? $video->video_url);
-        if (empty($videoUrl)) {
-            return redirect()->back()->with('error', __('O vídeo não possui uma URL válida para envio às redes sociais.'));
-        }
-
         $title = $validated['titulo'] ?? ($video->sofi_seo_title ?: $video->title);
         $scheduledAt = !empty($validated['scheduled_at']) ? new \DateTimeImmutable($validated['scheduled_at']) : null;
 
         try {
-            $this->socialService->publish(
+            // Com arquivo próprio da NUME, a URL de busca é gerada no serviço (assinada, temporária);
+            // a URL digitada no formulário só vale para vídeos que são apenas um link.
+            $this->publications->distribute(
                 cliente: $cliente,
-                videoUrl: $videoUrl,
+                video: $video,
                 title: $title,
                 platforms: $validated['plataformas'],
-                video: $video,
                 user: auth()->user(),
                 scheduledAt: $scheduledAt,
+                linkUrl: $video->hasSourceFile() ? null : ($validated['video_url'] ?? null),
             );
 
             $msg = $scheduledAt
@@ -317,9 +312,13 @@ class VideoController extends Controller
                 ]);
 
             return redirect()->back()->with('success', $msg);
+        } catch (\DomainException $e) {
+            return redirect()->back()->with('error', __('O vídeo não possui uma URL válida para envio às redes sociais.'));
         } catch (\Throwable $e) {
-            Log::error('Erro ao disparar distribuição social do vídeo: ' . $e->getMessage());
-            return redirect()->back()->with('error', __('Falha ao conectar com o serviço de distribuição: :msg', ['msg' => $e->getMessage()]));
+            // A mensagem de exceções HTTP traz a URL chamada (com URL assinada): não vai para log nem para a tela.
+            Log::error('Erro ao disparar distribuição social do vídeo.', ['video_id' => $video->id, 'exception' => $e::class]);
+
+            return redirect()->back()->with('error', __('Falha ao conectar com o serviço de distribuição. Tente novamente em alguns minutos.'));
         }
     }
 

@@ -57,6 +57,15 @@ return [
             'https://www.googleapis.com/auth/youtube.upload',
             'https://www.googleapis.com/auth/youtube.readonly',
         ],
+
+        // Privacidade do vídeo enviado. Enquanto o app não passar pela auditoria do Google, o próprio
+        // YouTube força "private" em envios pela API; só troque para public depois da aprovação.
+        'privacy' => env('SOCIAL_YOUTUBE_PRIVACY', 'private'),
+
+        'category_id' => '22',
+
+        // Tempo máximo de um envio (segundos). O job usa um pouco mais que isso.
+        'upload_timeout' => (int) env('SOCIAL_YOUTUBE_UPLOAD_TIMEOUT', 3600),
     ],
 
 ];

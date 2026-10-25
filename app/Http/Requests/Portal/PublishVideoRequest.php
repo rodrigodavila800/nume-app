@@ -16,8 +16,8 @@ class PublishVideoRequest extends FormRequest
             return false;
         }
 
-        // Permite disparar se possuir perfil conectado
-        if ($cliente->socialProfile?->connected !== true) {
+        // Permite disparar se possuir rede conectada (Upload-Post ou app próprio)
+        if (! $cliente->hasConnectedSocialAccount()) {
             return false;
         }
 
@@ -29,7 +29,7 @@ class PublishVideoRequest extends FormRequest
     {
         $cliente = auth('cliente')->user();
 
-        if ($cliente && $cliente->socialProfile?->connected !== true) {
+        if ($cliente && ! $cliente->hasConnectedSocialAccount()) {
             throw new \Illuminate\Auth\Access\AuthorizationException(__('Por favor, conecte suas redes sociais antes de realizar publicações.'));
         }
 

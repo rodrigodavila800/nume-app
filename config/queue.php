@@ -43,6 +43,19 @@ return [
             'after_commit' => false,
         ],
 
+        // Envio de vídeos às redes (job PublishVideoToPlatform). Um upload grande passa de 90 s:
+        // retry_after precisa ser maior que o timeout do job, senão outro worker pega o mesmo
+        // job no meio do envio e o vídeo sai duplicado. Worker próprio:
+        // php artisan queue:work social-uploads --queue=social-uploads --timeout=3800
+        'social-uploads' => [
+            'driver' => 'database',
+            'connection' => env('DB_QUEUE_CONNECTION'),
+            'table' => env('DB_QUEUE_TABLE', 'jobs'),
+            'queue' => 'social-uploads',
+            'retry_after' => (int) env('SOCIAL_UPLOADS_RETRY_AFTER', 4000),
+            'after_commit' => true,
+        ],
+
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => env('BEANSTALKD_QUEUE_HOST', 'localhost'),

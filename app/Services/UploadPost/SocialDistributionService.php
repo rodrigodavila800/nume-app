@@ -179,8 +179,10 @@ class SocialDistributionService implements SocialPublisherContract
      */
     public function processScheduled(): int
     {
+        // Só as do Upload-Post: as nativas (uma por rede) vão para a fila em SocialPublicationService.
         $pending = VideoPublication::withoutGlobalScopes()
             ->readyToPublish()
+            ->where('driver', 'upload_post')
             ->with(['cliente', 'video'])
             ->get();
 

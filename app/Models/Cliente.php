@@ -138,6 +138,20 @@ class Cliente extends Authenticatable
         return $this->hasMany(VideoPublication::class)->orderBy('created_at', 'desc');
     }
 
+    public function socialConnections(): HasMany
+    {
+        return $this->hasMany(SocialConnection::class);
+    }
+
+    /**
+     * Tem rede conectada em algum caminho: Upload-Post ou app próprio da NUME (OAuth).
+     */
+    public function hasConnectedSocialAccount(): bool
+    {
+        return $this->socialProfile?->connected === true
+            || SocialConnection::forTenant($this->tenant_id)->where('cliente_id', $this->id)->active()->exists();
+    }
+
     public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class);
@@ -206,13 +220,31 @@ class Cliente extends Authenticatable
     }
 
     /**
-     * Quantidade de publicações sociais já disparadas.
+     * Quantidade de distribuições já disparadas (1 envio = 1 unidade da cota).
+     *
+     * A publicação nativa grava uma linha por rede; as linhas do mesmo vídeo criadas no mesmo
+     * envio (até 60 s de diferença) contam como uma distribuição só, como era com o Upload-Post.
      */
     public function getDistributionsUsedCount(): int
     {
-        return (int) $this->videoPublications()
+        $rows = $this->videoPublications()
+            ->reorder('created_at')
             ->whereIn('status', ['processando', 'publicado'])
-            ->count();
+            ->get(['id', 'video_id', 'created_at']);
+
+        $count = 0;
+        $batchStart = [];
+        foreach ($rows as $row) {
+            $key = $row->video_id ?? 'sem-video-'.$row->id;
+            $start = $batchStart[$key] ?? null;
+
+            if ($start === null || $start->diffInSeconds($row->created_at) > 60) {
+                $batchStart[$key] = $row->created_at;
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**
