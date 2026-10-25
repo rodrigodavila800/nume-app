@@ -70,7 +70,7 @@ class YouTubeOAuthConnectTest extends TestCase
 
     public function test_only_supported_platforms_have_routes(): void
     {
-        $this->actingAs($this->cliente, 'cliente')->get('/portal/redes-sociais/conectar/tiktok')->assertNotFound();
+        $this->actingAs($this->cliente, 'cliente')->get('/portal/redes-sociais/conectar/linkedin')->assertNotFound();
     }
 
     public function test_callback_rejects_a_state_that_does_not_match(): void

@@ -6,6 +6,7 @@ use App\Models\SocialConnection;
 use App\Services\SocialPublishing\OAuth\GoogleOAuthClient;
 use App\Services\SocialPublishing\OAuth\OAuthException;
 use App\Services\SocialPublishing\OAuth\ThreadsOAuthClient;
+use App\Services\SocialPublishing\OAuth\TikTokOAuthClient;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -18,6 +19,7 @@ class SocialTokenManager
     public function __construct(
         private readonly GoogleOAuthClient $google,
         private readonly ThreadsOAuthClient $threads,
+        private readonly TikTokOAuthClient $tiktok,
     ) {}
 
     /**
@@ -51,7 +53,7 @@ class SocialTokenManager
     public function refresh(SocialConnection $connection): string
     {
         $refreshable = match ($connection->provider) {
-            'google' => (bool) $connection->refresh_token,
+            'google', 'tiktok' => (bool) $connection->refresh_token,
             // O Threads renova com o próprio token longo, enquanto ele não venceu.
             'threads' => (bool) $connection->access_token && ! $connection->expires_at?->isPast(),
             default => false,
@@ -63,9 +65,12 @@ class SocialTokenManager
         }
 
         try {
-            $tokens = $connection->provider === 'threads'
-                ? $this->threads->refresh($connection->access_token) + ['refresh_token' => null, 'scopes' => []]
-                : $this->google->refresh($connection->refresh_token);
+            $tokens = match ($connection->provider) {
+                'threads' => $this->threads->refresh($connection->access_token) + ['refresh_token' => null, 'scopes' => []],
+                // O TikTok pode devolver um refresh token novo: o atual deixa de valer.
+                'tiktok' => $this->tiktok->refresh($connection->refresh_token),
+                default => $this->google->refresh($connection->refresh_token),
+            };
         } catch (OAuthException $e) {
             Log::warning('social.token.refresh_failed', [
                 'tenant_id' => $connection->tenant_id,

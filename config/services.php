@@ -61,6 +61,14 @@ return [
         'redirect' => env('META_REDIRECT_URI'),
     ],
 
+    // App do TikTok for Developers (Login Kit + Content Posting API).
+    'tiktok' => [
+        'client_key' => env('TIKTOK_CLIENT_KEY'),
+        'client_secret' => env('TIKTOK_CLIENT_SECRET'),
+        // Vazio: usa a rota portal.social.oauth.callback (tiktok).
+        'redirect' => env('TIKTOK_REDIRECT_URI'),
+    ],
+
     // Caso de uso Threads do app da Meta (tem ID e segredo próprios no painel).
     'threads' => [
         'client_id' => env('THREADS_APP_ID'),

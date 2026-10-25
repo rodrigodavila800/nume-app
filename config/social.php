@@ -2,6 +2,7 @@
 
 use App\Services\SocialPublishing\Connectors\MetaConnector;
 use App\Services\SocialPublishing\Connectors\ThreadsConnector;
+use App\Services\SocialPublishing\Connectors\TikTokConnector;
 use App\Services\SocialPublishing\Meta\FacebookReelsPublisher;
 use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
 use App\Services\SocialPublishing\Meta\ThreadsVideoPublisher;
@@ -47,7 +48,7 @@ return [
         'youtube' => env('SOCIAL_ROUTE_YOUTUBE', 'native'),
         'instagram' => env('SOCIAL_ROUTE_INSTAGRAM', 'native'),
         'facebook' => env('SOCIAL_ROUTE_FACEBOOK', 'native'),
-        'tiktok' => 'upload_post',
+        'tiktok' => env('SOCIAL_ROUTE_TIKTOK', 'native'),
         'linkedin' => 'upload_post',
         'x' => 'upload_post',
         'threads' => env('SOCIAL_ROUTE_THREADS', 'native'),
@@ -68,6 +69,7 @@ return [
         'youtube' => YouTubeConnector::class,
         'meta' => MetaConnector::class,
         'threads' => ThreadsConnector::class,
+        'tiktok' => TikTokConnector::class,
     ],
 
     // Qual conector conecta cada rede (Instagram e Facebook saem do mesmo login da Meta).
@@ -76,6 +78,7 @@ return [
         'instagram' => 'meta',
         'facebook' => 'meta',
         'threads' => 'threads',
+        'tiktok' => 'tiktok',
     ],
 
     'oauth' => [
@@ -103,6 +106,12 @@ return [
         // por até 5 minutos). Passou disso, o job tenta de novo mais tarde sem reenviar o arquivo.
         'poll_attempts' => 20,
         'poll_seconds' => 15,
+    ],
+
+    'tiktok' => [
+        'scopes' => ['user.info.basic', 'video.publish'],
+        // Partes do envio: a API aceita de 5 a 64 MB (a última pode ir até 128 MB).
+        'chunk_mb' => 10,
     ],
 
     'threads' => [
