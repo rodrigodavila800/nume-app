@@ -659,5 +659,10 @@
     "Link de destino (opcional)": "Enlace de destino (opcional)",
     "Para onde o pin leva quem clicar (site, agendamento, loja).": "Adónde lleva el pin a quien haga clic (web, reservas, tienda).",
     "Publicar no :rede": "Publicar en :rede",
-    "O Pinterest desta conta é conectado direto: o cliente escolhe a pasta e publica pelo portal, em \"Publicar no Pinterest\".": "El Pinterest de esta cuenta está conectado directamente: el cliente elige el tablero y publica desde el portal, en \"Publicar en Pinterest\"."
+    "O Pinterest desta conta é conectado direto: o cliente escolhe a pasta e publica pelo portal, em \"Publicar no Pinterest\".": "El Pinterest de esta cuenta está conectado directamente: el cliente elige el tablero y publica desde el portal, en \"Publicar en Pinterest\".",
+    "X :perfil conectado com sucesso!": "¡X :perfil conectado correctamente!",
+    "Você cancelou a autorização no X. Nada foi conectado.": "Cancelaste la autorización en X. No se conectó nada.",
+    "Para publicar, autorize a criação de posts e o envio de mídia na tela do X.": "Para publicar, autoriza la creación de posts y la subida de contenido multimedia en la pantalla de X.",
+    "Não foi possível conectar o X agora. Tente novamente em alguns minutos.": "No se pudo conectar X ahora. Inténtalo de nuevo en unos minutos.",
+    "O envio ao X está temporariamente indisponível. Fale com a sua produtora.": "El envío a X no está disponible temporalmente. Habla con tu productora."
 }

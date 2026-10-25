@@ -97,6 +97,7 @@ class VideoPublication extends Model
             'spam_risk_user_banned_from_posting' => __('O TikTok bloqueou publicações desta conta. Verifique a conta no aplicativo do TikTok.'),
             'linkedin_file_size_invalid' => __('O LinkedIn aceita vídeos de 75 KB a 500 MB.'),
             'linkedin_duration_invalid' => __('O LinkedIn aceita vídeos de 3 segundos a 30 minutos.'),
+            'x_credits_exhausted' => __('O envio ao X está temporariamente indisponível. Fale com a sua produtora.'),
             default => null,
         };
     }

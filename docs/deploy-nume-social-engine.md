@@ -1,6 +1,6 @@
-# Deploy do Nume Social Engine (Fases 0 a 5)
+# Deploy do Nume Social Engine (Fases 0 a 6)
 
-Checklist para subir o vídeo hospedado e as redes diretas (YouTube, Instagram, Facebook, Threads, TikTok, LinkedIn e Pinterest) na VPS (CloudPanel). Siga na ordem. Nada aqui exige mexer no Upload-Post: as redes que não estão conectadas direto continuam saindo por ele.
+Checklist para subir o vídeo hospedado e as 8 redes diretas (YouTube, Instagram, Facebook, Threads, TikTok, LinkedIn, Pinterest e X) na VPS (CloudPanel). Siga na ordem. O Upload-Post deixa de ser necessário: ele só é usado para uma rede se você mudar a chave dela para `upload_post` ou se o cliente não tiver a conta conectada direto.
 
 ## 1. Código e banco
 
@@ -121,6 +121,21 @@ Como funciona para os clientes:
 - Só pastas públicas (pastas secretas exigiriam escopos extras).
 - A capa do pin é um quadro do início do vídeo. O acesso renova sozinho (refresh contínuo de 60 dias).
 
+## 4f. App do X (uma vez)
+
+Em [developer.x.com](https://developer.x.com/en/portal/dashboard):
+
+1. **Projeto e app:** criar o app e, em *User authentication settings*, ligar **OAuth 2.0** como **Web App (confidential client)**, com permissão **Read and write**.
+2. **Callback URI:** `https://SEU-DOMINIO/portal/redes-sociais/oauth/x/callback`. Website, Termos (`/termos`) e Privacidade (`/privacidade`).
+3. Copiar **Client ID** e **Client Secret** (OAuth 2.0) para o `.env`.
+4. **Créditos:** a API é **paga por uso** (o plano gratuito fechou para novos desenvolvedores em fevereiro de 2026). Comprar créditos e definir um **limite de gasto** no painel. Referência de out/2026: cerca de US$ 0,015 por post (post com link custa bem mais, por isso a NUME publica sem link). Sem crédito, o X recusa e o histórico mostra "O envio ao X está temporariamente indisponível".
+
+Como funciona para os clientes:
+- O X sai pelo modal "Publicar nas Redes" normalmente (não tem tela própria).
+- Texto de até 280 caracteres, sem link, com até 3 hashtags.
+- O acesso dura 2 h e renova sozinho (o refresh token é trocado a cada renovação); desconectar revoga no X.
+- Se o custo não fizer sentido, `SOCIAL_ROUTE_X=upload_post` volta o X para o Upload-Post sem deploy.
+
 ## 5. Variáveis de ambiente (você edita o `.env`)
 
 | Variável | Valor | Observação |
@@ -143,6 +158,8 @@ Como funciona para os clientes:
 | `PINTEREST_CLIENT_ID` / `PINTEREST_CLIENT_SECRET` | do app do Pinterest | App ID e App secret key do painel |
 | `PINTEREST_API_BASE` | `https://api.pinterest.com/v5` | sandbox durante o Trial, se o Pinterest exigir |
 | `SOCIAL_ROUTE_PINTEREST` | `native` | `upload_post` desliga o Pinterest direto sem deploy |
+| `X_CLIENT_ID` / `X_CLIENT_SECRET` | do app do X (OAuth 2.0) | exige créditos pré-pagos na conta de desenvolvedor |
+| `SOCIAL_ROUTE_X` | `native` | `upload_post` desliga o X direto sem deploy |
 
 Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 
@@ -172,6 +189,7 @@ Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 | Threads falha em `media_processing_failed` em ambiente local | o Threads não alcança `localhost`; teste no servidor |
 | `unaudited_client_can_only_post_to_private_accounts` | app do TikTok sem auditoria: deixe a conta do TikTok privada e publique como "Somente eu" |
 | "O TikTok limitou novas contas no app hoje" | sem auditoria, o TikTok aceita só 5 usuários publicando por dia |
+| "O envio ao X está temporariamente indisponível" | créditos da API do X acabaram: recarregar no painel do X |
 | "Sua conta do Pinterest não tem nenhuma pasta" | o cliente precisa criar ao menos uma pasta pública no Pinterest |
 | Pins só aparecem para a própria conta | app do Pinterest ainda em Trial: pedir o upgrade para Standard |
 | LinkedIn com `reconnect_required` | passaram os 60 dias do acesso: reconectar no card (um clique se estiver logado) |
@@ -179,5 +197,5 @@ Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 
 ## 8. Voltar atrás
 
-- Desligar uma rede direta: `SOCIAL_ROUTE_<REDE>=upload_post` (YOUTUBE, INSTAGRAM, FACEBOOK, THREADS, TIKTOK, LINKEDIN, PINTEREST) + `config:cache`. Os canais conectados continuam salvos; novos envios saem pelo Upload-Post.
+- Desligar uma rede direta: `SOCIAL_ROUTE_<REDE>=upload_post` (YOUTUBE, INSTAGRAM, FACEBOOK, THREADS, TIKTOK, LINKEDIN, PINTEREST, X) + `config:cache`. Os canais conectados continuam salvos; novos envios saem pelo Upload-Post.
 - As migrations têm `down()`, mas `migrate:rollback` apaga `social_connections` (todos os canais conectados). Prefira a chave acima.
