@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VideoPublication extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use BelongsToTenant, HasFactory;
 
     protected $fillable = [
         'tenant_id',
@@ -17,9 +17,15 @@ class VideoPublication extends Model
         'video_id',
         'user_id',
         'upload_post_request_id',
+        'driver',
+        'platform',
+        'social_connection_id',
+        'external_id',
         'titulo',
         'plataformas',
         'status',
+        'attempts',
+        'last_error',
         'scheduled_at',
         'resultado',
         'publicado_em',
@@ -50,6 +56,11 @@ class VideoPublication extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function socialConnection(): BelongsTo
+    {
+        return $this->belongsTo(SocialConnection::class);
     }
 
     public function isSuccess(): bool
