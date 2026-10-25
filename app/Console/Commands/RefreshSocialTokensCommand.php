@@ -32,7 +32,7 @@ class RefreshSocialTokensCommand extends Command
         SocialConnection::withoutGlobalScopes()
             ->where('status', SocialConnection::STATUS_ACTIVE)
             ->where(fn ($query) => $query
-                ->where(fn ($google) => $google->whereIn('provider', ['google', 'tiktok', 'pinterest'])
+                ->where(fn ($google) => $google->whereIn('provider', ['google', 'tiktok', 'pinterest', 'x'])
                     ->where(fn ($q) => $q->whereNull('last_refreshed_at')->orWhere('last_refreshed_at', '<=', $threshold)))
                 ->orWhere(fn ($threads) => $threads->where('provider', 'threads')
                     ->where(fn ($q) => $q->whereNull('last_refreshed_at')->orWhere('last_refreshed_at', '<=', $threadsThreshold))))

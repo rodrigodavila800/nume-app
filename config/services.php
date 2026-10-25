@@ -61,6 +61,14 @@ return [
         'redirect' => env('META_REDIRECT_URI'),
     ],
 
+    // App do X Developer Platform (OAuth 2.0 com PKCE). A API é paga por uso (créditos pré-pagos).
+    'x' => [
+        'client_id' => env('X_CLIENT_ID'),
+        'client_secret' => env('X_CLIENT_SECRET'),
+        // Vazio: usa a rota portal.social.oauth.callback (x).
+        'redirect' => env('X_REDIRECT_URI'),
+    ],
+
     // App do Pinterest Developers (API v5).
     'pinterest' => [
         'client_id' => env('PINTEREST_CLIENT_ID'),

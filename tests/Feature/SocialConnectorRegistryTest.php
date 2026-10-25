@@ -40,10 +40,10 @@ class SocialConnectorRegistryTest extends TestCase
 
     public function test_network_goes_native_only_with_a_ready_publisher(): void
     {
-        config(['social.routing.x' => 'native']);
+        config(['social.routing.rede-inexistente' => 'native']);
         $router = app(SocialPublisherRouter::class);
 
-        $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $router->routeFor('x'), 'liberada, mas sem publicador');
+        $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $router->routeFor('rede-inexistente'), 'liberada, mas sem publicador');
         $this->assertSame(SocialPublisherRouter::NATIVE, $router->routeFor('youtube'));
     }
 

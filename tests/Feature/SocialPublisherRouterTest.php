@@ -66,10 +66,10 @@ class SocialPublisherRouterTest extends TestCase
 
     public function test_networks_without_an_approved_app_never_go_native(): void
     {
-        $this->connect($this->cliente, ['platform' => 'x', 'provider' => 'x']);
+        $this->connect($this->cliente, ['platform' => 'rede-inexistente', 'provider' => 'rede-inexistente']);
 
-        $this->assertSame(['x'], $this->router->route($this->cliente, ['x'])['upload_post']);
-        $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('x'));
+        $this->assertSame(['rede-inexistente'], $this->router->route($this->cliente, ['rede-inexistente'])['upload_post']);
+        $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('rede-inexistente'));
         $this->assertSame(SocialPublisherRouter::UPLOAD_POST, $this->router->routeFor('rede-inexistente'));
     }
 

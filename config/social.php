@@ -5,6 +5,7 @@ use App\Services\SocialPublishing\Connectors\MetaConnector;
 use App\Services\SocialPublishing\Connectors\PinterestConnector;
 use App\Services\SocialPublishing\Connectors\ThreadsConnector;
 use App\Services\SocialPublishing\Connectors\TikTokConnector;
+use App\Services\SocialPublishing\Connectors\XConnector;
 use App\Services\SocialPublishing\LinkedIn\LinkedInVideoPublisher;
 use App\Services\SocialPublishing\Meta\FacebookReelsPublisher;
 use App\Services\SocialPublishing\Meta\InstagramReelsPublisher;
@@ -55,7 +56,7 @@ return [
         'facebook' => env('SOCIAL_ROUTE_FACEBOOK', 'native'),
         'tiktok' => env('SOCIAL_ROUTE_TIKTOK', 'native'),
         'linkedin' => env('SOCIAL_ROUTE_LINKEDIN', 'native'),
-        'x' => 'upload_post',
+        'x' => env('SOCIAL_ROUTE_X', 'native'),
         'threads' => env('SOCIAL_ROUTE_THREADS', 'native'),
         'pinterest' => env('SOCIAL_ROUTE_PINTEREST', 'native'),
     ],
@@ -85,6 +86,7 @@ return [
         'tiktok' => TikTokConnector::class,
         'linkedin' => LinkedInConnector::class,
         'pinterest' => PinterestConnector::class,
+        'x' => XConnector::class,
     ],
 
     // Qual conector conecta cada rede (Instagram e Facebook saem do mesmo login da Meta).
@@ -96,6 +98,7 @@ return [
         'tiktok' => 'tiktok',
         'linkedin' => 'linkedin',
         'pinterest' => 'pinterest',
+        'x' => 'x',
     ],
 
     'oauth' => [
@@ -123,6 +126,12 @@ return [
         // por até 5 minutos). Passou disso, o job tenta de novo mais tarde sem reenviar o arquivo.
         'poll_attempts' => 20,
         'poll_seconds' => 15,
+    ],
+
+    'x' => [
+        'scopes' => ['tweet.read', 'tweet.write', 'users.read', 'media.write', 'offline.access'],
+        // Texto do post: 280 caracteres (contas sem Premium). Sem link, que custa muito mais por post.
+        'text_limit' => 280,
     ],
 
     'pinterest' => [
