@@ -12,7 +12,7 @@
             {{ __('Política de Privacidade, Proteção de Dados e Gestão de Cookies') }}
         </h1>
         <p class="text-xs text-zinc-500 mt-2">
-            Última atualização: {{ date('d/m/Y') }} · Aplicável à plataforma NUME Creative (Espanha & Brasil).
+            Última atualização: 25/10/2026 · Aplicável à plataforma NUME Creative (Espanha & Brasil).
         </p>
     </div>
 
@@ -106,6 +106,59 @@
             <p class="text-xs text-zinc-500">
                 Para exercer qualquer direito, envie solicitação para <a href="mailto:admin@numecreative.com" class="text-orange-600 underline font-bold">admin@numecreative.com</a> com resposta garantida em até 15 dias úteis.
             </p>
+        </section>
+
+        <section id="redes-sociais" class="bg-white p-6 rounded-2xl border border-zinc-200 space-y-3">
+            <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
+                <span>5.</span>
+                <span>Contas de Redes Sociais Conectadas (YouTube, Instagram, Facebook, TikTok e outras)</span>
+            </h2>
+            <p>
+                Quando você conecta uma rede social no portal, a autorização é feita na página da própria rede (login oficial). A NUME nunca recebe nem guarda a sua senha.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                    <strong>Dados que recebemos:</strong> identificador, nome, @ e foto de perfil do canal ou da conta conectada, e as chaves de acesso (tokens) que a rede fornece.
+                </div>
+                <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                    <strong>Para que usamos:</strong> exclusivamente para publicar, na sua conta e por pedido seu, os vídeos produzidos pela NUME, e para mostrar no portal qual conta está conectada.
+                </div>
+                <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                    <strong>O que não fazemos:</strong> não lemos mensagens, não lemos seus outros vídeos ou posts, não vendemos nem compartilhamos esses dados e não os usamos para publicidade ou para treinar modelos de IA.
+                </div>
+                <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                    <strong>Como guardamos:</strong> os tokens ficam criptografados no nosso servidor e só são usados no momento da publicação ou da renovação do acesso.
+                </div>
+            </div>
+            <p>
+                <strong>YouTube e Google.</strong> Usamos a YouTube API Services. Ao conectar o YouTube, você também concorda com os
+                <a href="https://www.youtube.com/t/terms" class="text-orange-600 underline font-bold" target="_blank" rel="noopener noreferrer">Termos de Serviço do YouTube</a>
+                e com a
+                <a href="https://policies.google.com/privacy" class="text-orange-600 underline font-bold" target="_blank" rel="noopener noreferrer">Política de Privacidade do Google</a>.
+                Você pode revogar o acesso da NUME a qualquer momento em
+                <a href="https://myaccount.google.com/permissions" class="text-orange-600 underline font-bold" target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a>.
+            </p>
+            <p class="text-xs text-zinc-600">
+                NUME Creative's use and transfer to any other app of information received from Google APIs will adhere to the
+                <a href="https://developers.google.com/terms/api-services-user-data-policy" class="text-orange-600 underline font-bold" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>,
+                including the Limited Use requirements.
+            </p>
+            <p>
+                <strong>Como desconectar e apagar:</strong> no portal, em Redes Sociais, use o botão <em>Desconectar</em>: o acesso é revogado na rede e os tokens são apagados na hora. Para apagar também o histórico de publicações e demais dados, veja
+                <a href="{{ route('legal.data-deletion') }}" class="text-orange-600 underline font-bold">Exclusão de dados</a>.
+            </p>
+        </section>
+
+        <section class="bg-white p-6 rounded-2xl border border-zinc-200 space-y-3">
+            <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
+                <span>6.</span>
+                <span>Armazenamento, Compartilhamento e Retenção</span>
+            </h2>
+            <ul class="list-disc pl-5 space-y-1 text-xs sm:text-sm">
+                <li><strong>Vídeos enviados:</strong> ficam em armazenamento privado e só são entregues por links temporários assinados.</li>
+                <li><strong>Compartilhamento:</strong> só com a rede social escolhida por você, no ato da publicação, e com provedores de infraestrutura e pagamento necessários à prestação do serviço.</li>
+                <li><strong>Retenção:</strong> tokens de redes são apagados ao desconectar. O histórico de publicações (título, status e link) é mantido enquanto a conta existir, para consulta e faturamento, e apagado mediante solicitação.</li>
+            </ul>
         </section>
     </div>
 

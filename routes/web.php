@@ -57,6 +57,9 @@ Route::get('/privacidade', function () {
     return view('legal.privacy');
 })->name('legal.privacy');
 
+Route::view('/termos', 'legal.terms')->name('legal.terms');
+Route::view('/exclusao-de-dados', 'legal.data-deletion')->name('legal.data-deletion');
+
 Route::get('/', [MarketplaceController::class, 'index'])->name('marketplace.index');
 
 // Vitrine pÃºblica de cada produtora: portfÃ³lio, pacotes e checkout para visitantes.
