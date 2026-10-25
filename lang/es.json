@@ -630,5 +630,12 @@
     "Para o TikTok, use o botão \"Publicar no TikTok\" e confirme as opções do post.": "Para TikTok, usa el botón \"Publicar en TikTok\" y confirma las opciones de la publicación.",
     "O TikTok desta conta é conectado direto: o cliente precisa publicar pelo portal, em \"Publicar no TikTok\".": "El TikTok de esta cuenta está conectado directamente: el cliente debe publicar desde el portal, en \"Publicar en TikTok\".",
     "Enquanto o app da NUME não for auditado pelo TikTok, só dá para publicar em conta privada, como \"Somente eu\".": "Mientras TikTok no audite la app de NUME, solo se puede publicar en cuenta privada, como \"Solo yo\".",
-    "A privacidade escolhida não está mais disponível nesta conta do TikTok. Publique de novo.": "La privacidad elegida ya no está disponible en esta cuenta de TikTok. Vuelve a publicar."
+    "A privacidade escolhida não está mais disponível nesta conta do TikTok. Publique de novo.": "La privacidad elegida ya no está disponible en esta cuenta de TikTok. Vuelve a publicar.",
+    "LinkedIn de :perfil conectado com sucesso!": "¡LinkedIn de :perfil conectado correctamente!",
+    "Você cancelou a autorização no LinkedIn. Nada foi conectado.": "Cancelaste la autorización en LinkedIn. No se conectó nada.",
+    "Para publicar, autorize o compartilhamento de posts na tela do LinkedIn.": "Para publicar, autoriza compartir publicaciones en la pantalla de LinkedIn.",
+    "Não foi possível conectar o LinkedIn agora. Tente novamente em alguns minutos.": "No se pudo conectar LinkedIn ahora. Inténtalo de nuevo en unos minutos.",
+    "O LinkedIn pede reconexão a cada 60 dias. Reconecte até :data para não interromper as publicações.": "LinkedIn pide volver a conectar cada 60 días. Vuelve a conectar antes del :data para no interrumpir las publicaciones.",
+    "O LinkedIn aceita vídeos de 75 KB a 500 MB.": "LinkedIn acepta vídeos de 75 KB a 500 MB.",
+    "O LinkedIn aceita vídeos de 3 segundos a 30 minutos.": "LinkedIn acepta vídeos de 3 segundos a 30 minutos."
 }

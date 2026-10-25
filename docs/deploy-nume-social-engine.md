@@ -1,6 +1,6 @@
-# Deploy do Nume Social Engine (Fases 0 a 3)
+# Deploy do Nume Social Engine (Fases 0 a 4)
 
-Checklist para subir o vídeo hospedado e as redes diretas (YouTube, Instagram, Facebook, Threads e TikTok) na VPS (CloudPanel). Siga na ordem. Nada aqui exige mexer no Upload-Post: as redes que não estão conectadas direto continuam saindo por ele.
+Checklist para subir o vídeo hospedado e as redes diretas (YouTube, Instagram, Facebook, Threads, TikTok e LinkedIn) na VPS (CloudPanel). Siga na ordem. Nada aqui exige mexer no Upload-Post: as redes que não estão conectadas direto continuam saindo por ele.
 
 ## 1. Código e banco
 
@@ -91,6 +91,21 @@ Regras que valem para os clientes:
 - Duração máxima, privacidades possíveis e interações dependem da conta (vêm do TikTok na hora).
 - Conteúdo de marca não pode ser "Somente eu".
 
+## 4d. App do LinkedIn (uma vez)
+
+Em [linkedin.com/developers](https://www.linkedin.com/developers/apps):
+
+1. **Criar app** associado à Página da NUME no LinkedIn (o LinkedIn pede que um administrador da Página confirme o vínculo). Logo, Termos (`/termos`) e Privacidade (`/privacidade`).
+2. **Products:** adicionar **Sign In with LinkedIn using OpenID Connect** e **Share on LinkedIn**. Os dois são de liberação imediata, sem análise.
+3. **Auth > Authorized redirect URLs:** `https://SEU-DOMINIO/portal/redes-sociais/oauth/linkedin/callback`.
+4. Copiar **Client ID** e **Client Secret** para o `.env`.
+
+Como funciona para os clientes:
+- Publica no **perfil pessoal** do cliente. **Páginas de empresa** exigem a *Community Management API*, que é restrita e passa por aprovação do LinkedIn. Fica para uma fase futura, se fizer sentido para o negócio.
+- O acesso dura **60 dias e não renova sozinho** (renovação automática é só para parceiros aprovados). A partir de 7 dias antes de vencer, o card mostra o aviso e o botão **Reconectar**. Se o cliente estiver logado no LinkedIn, é um clique, sem nova tela de autorização.
+- Vídeos de 75 KB a 500 MB, de 3 s a 30 min, MP4.
+- A versão da API (`LINKEDIN_API_VERSION`) vale por pelo menos 1 ano. Atualize quando o LinkedIn avisar o fim da versão.
+
 ## 5. Variáveis de ambiente (você edita o `.env`)
 
 | Variável | Valor | Observação |
@@ -107,6 +122,9 @@ Regras que valem para os clientes:
 | `THREADS_APP_ID` / `THREADS_APP_SECRET` | do caso de uso Threads | diferentes dos da Meta |
 | `SOCIAL_ROUTE_INSTAGRAM` / `_FACEBOOK` / `_THREADS` / `_TIKTOK` | `native` | `upload_post` desliga a rede direta sem deploy |
 | `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET` | do app do TikTok | Client key e Client secret do painel |
+| `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` | do app do LinkedIn | aba Auth do app |
+| `LINKEDIN_API_VERSION` | `202610` | atualize antes do fim da versão (mínimo 1 ano) |
+| `SOCIAL_ROUTE_LINKEDIN` | `native` | `upload_post` desliga o LinkedIn direto sem deploy |
 
 Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 
@@ -136,9 +154,10 @@ Depois de editar: `php artisan config:cache` e `php artisan queue:restart`.
 | Threads falha em `media_processing_failed` em ambiente local | o Threads não alcança `localhost`; teste no servidor |
 | `unaudited_client_can_only_post_to_private_accounts` | app do TikTok sem auditoria: deixe a conta do TikTok privada e publique como "Somente eu" |
 | "O TikTok limitou novas contas no app hoje" | sem auditoria, o TikTok aceita só 5 usuários publicando por dia |
+| LinkedIn com `reconnect_required` | passaram os 60 dias do acesso: reconectar no card (um clique se estiver logado) |
 | Botão "Publicar no TikTok" não aparece | conta do TikTok não conectada direto, `SOCIAL_ROUTE_TIKTOK` não é `native` ou o vídeo não é arquivo hospedado |
 
 ## 8. Voltar atrás
 
-- Desligar uma rede direta: `SOCIAL_ROUTE_<REDE>=upload_post` (YOUTUBE, INSTAGRAM, FACEBOOK, THREADS, TIKTOK) + `config:cache`. Os canais conectados continuam salvos; novos envios saem pelo Upload-Post.
+- Desligar uma rede direta: `SOCIAL_ROUTE_<REDE>=upload_post` (YOUTUBE, INSTAGRAM, FACEBOOK, THREADS, TIKTOK, LINKEDIN) + `config:cache`. Os canais conectados continuam salvos; novos envios saem pelo Upload-Post.
 - As migrations têm `down()`, mas `migrate:rollback` apaga `social_connections` (todos os canais conectados). Prefira a chave acima.

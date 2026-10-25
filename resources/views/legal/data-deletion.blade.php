@@ -26,7 +26,7 @@
             <p>
                 Você também pode revogar pelo lado da rede, sem passar por nós: no Google em
                 <a href="https://myaccount.google.com/permissions" class="text-orange-600 underline font-bold" target="_blank" rel="noopener noreferrer">myaccount.google.com/permissions</a>;
-                no Facebook e no Instagram, em Configurações > Apps e sites; no Threads, nas configurações de apps e sites da conta; no TikTok, em Configurações > Segurança e permissões > Apps e serviços.
+                no Facebook e no Instagram, em Configurações > Apps e sites; no Threads, nas configurações de apps e sites da conta; no LinkedIn, em Configurações > Privacidade de dados > Serviços permitidos; no TikTok, em Configurações > Segurança e permissões > Apps e serviços.
             </p>
         </section>
 

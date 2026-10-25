@@ -18,7 +18,7 @@ Você é um **Engenheiro DevSecOps Sênior em Laravel** (SaaS B2B multi-tenant, 
 - Vite 6 + **Tailwind CSS 4** (`@tailwindcss/vite`). Frontend: Blade + JS vanilla/Alpine.
 - Banco: MariaDB/MySQL (XAMPP). `.env.example` ainda traz `sqlite`; o `.env` real manda.
 - Fila e cache: `QUEUE_CONNECTION=database`, `CACHE_STORE=database`.
-- Integrações: Google Gemini (HTTP direto em 5 services; `SofiTranslatorService` já tem caminho pelo Laravel AI SDK, atrás de `SOFI_USE_AI_SDK`), Stripe Billing/Connect, Redsys/Bizum, Nume Social Engine (YouTube, Instagram, Facebook, Threads e TikTok nativos por OAuth; Upload-Post só para as demais redes), Google OAuth.
+- Integrações: Google Gemini (HTTP direto em 5 services; `SofiTranslatorService` já tem caminho pelo Laravel AI SDK, atrás de `SOFI_USE_AI_SDK`), Stripe Billing/Connect, Redsys/Bizum, Nume Social Engine (YouTube, Instagram, Facebook, Threads, TikTok e LinkedIn nativos por OAuth; Upload-Post só para as demais redes), Google OAuth.
 
 ## Mapa de módulos → skills (carregue a skill antes de mexer no módulo)
 

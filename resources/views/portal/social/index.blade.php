@@ -151,6 +151,9 @@
                     $isConnected = $connectedPlatforms->contains($platform->value);
                     $native = $connections->get($platform->value);
                     $canConnectNative = $nativeAvailable[$platform->value] ?? false;
+                    // Contas sem renovação automática (LinkedIn): avisar antes de vencer.
+                    $expiringSoon = $native?->isActive() && ! $native->refresh_token && $native->provider === 'linkedin'
+                        && $native->expires_at?->lte(now()->addDays((int) config('social.linkedin.reconnect_warning_days', 7)));
                 @endphp
                 <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs flex flex-col justify-between transition hover:border-zinc-300">
                     <div class="space-y-3">
@@ -168,6 +171,11 @@
                                 <p class="text-[11px] text-zinc-600 mt-0.5">
                                     {{ __('Conectado direto pela NUME') }}@if($native->handle || $native->display_name): <span class="font-semibold text-zinc-900">{{ $native->handle ?? $native->display_name }}</span>@endif
                                 </p>
+                                @if($expiringSoon)
+                                    <p class="text-[11px] text-amber-700 mt-1">
+                                        {{ __('O LinkedIn pede reconexão a cada 60 dias. Reconecte até :data para não interromper as publicações.', ['data' => $native->expires_at->format('d/m/Y')]) }}
+                                    </p>
+                                @endif
                             @elseif($native)
                                 <p class="text-[11px] text-amber-700 mt-0.5">
                                     {{ __('O acesso à conta expirou ou foi revogado. Reconecte para voltar a publicar direto.') }}
@@ -191,7 +199,7 @@
 
                     <div class="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between gap-2">
                         @if($native)
-                            @if(! $native->isActive() && $canConnectNative)
+                            @if((! $native->isActive() || $expiringSoon) && $canConnectNative)
                                 <a href="{{ route('portal.social.oauth.redirect', $canConnectNative) }}"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold text-white bg-orange-600 hover:bg-orange-500 shadow-xs transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                                     {{ __('Reconectar') }}
