@@ -79,7 +79,7 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
     public function test_api_sofi_chat_endpoint_works_for_authenticated_client(): void
     {
         $response = $this->actingAs($this->cliente, 'cliente')
-            ->postJson('/api/v1/sofi/chat', [
+            ->postJson(route('portal.sofi.chat'), [
                 'message' => 'Como posso melhorar a taxa de retenção nos primeiros 3 segundos?',
             ]);
 
@@ -148,7 +148,7 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->cliente, 'cliente')
-            ->getJson("/api/v1/sofi/conversations/{$otherConversation->id}/messages");
+            ->getJson(route('portal.sofi.messages', $otherConversation->id));
 
         // O escopo global BelongsToTenant oculta registros de outro tenant com 404
         $response->assertStatus(404);

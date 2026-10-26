@@ -11,7 +11,6 @@ use App\Http\Controllers\Admin\TenantFiscalSettingsController;
 use App\Http\Controllers\Admin\TenantRedsysSettingsController;
 use App\Http\Controllers\Admin\TenantSettingsController;
 use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\Api\SofiChatController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\BatchContentPlannerController;
@@ -280,9 +279,6 @@ Route::get('/pagamento/redsys/cancelado', [StorefrontController::class, 'redsysC
 // API Sofi Translator (Motor Próprio de Tradução)
 Route::post('/api/v1/translate', [TranslationController::class, 'translate'])->name('api.translate');
 
-// API Sofi Copilot Chat & Atendimento
-Route::post('/api/v1/sofi/chat', [SofiChatController::class, 'chat'])->name('api.sofi.chat');
-Route::get('/api/v1/sofi/conversations/{conversation}/messages', [SofiChatController::class, 'messages'])->name('api.sofi.messages');
 
 // Magic Links de Aprovação Sem Senha (Zero Friction) - Assinatura Criptográfica HMAC SHA-256
 Route::prefix('magic')->name('magic.')->middleware('signed')->group(function () {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\SofiChatController;
 use App\Http\Controllers\Auth\GooglePortalController;
 use App\Http\Controllers\Portal\AuthenticatedSessionController;
 use App\Http\Controllers\Portal\DashboardController;
@@ -35,6 +36,15 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Chat da Sofi: só o cliente logado, com CSRF e limite de uso (cada mensagem é paga)
+        Route::post('sofi/chat', [SofiChatController::class, 'chat'])
+            ->middleware('throttle:sofi-portal-chat')
+            ->name('sofi.chat');
+        Route::get('sofi/conversations/{conversation}/messages', [SofiChatController::class, 'messages'])
+            ->whereNumber('conversation')
+            ->middleware('throttle:sofi-portal-chat')
+            ->name('sofi.messages');
 
         // Perfil e Redes da Marca do Cliente
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');

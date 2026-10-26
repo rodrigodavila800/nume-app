@@ -90,6 +90,17 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Chat da Sofi no portal: por cliente logado (cada mensagem é uma chamada paga ao modelo).
+        RateLimiter::for('sofi-portal-chat', function (Request $request) {
+            $limits = config('sofi.portal_chat_rate_limits');
+            $key = 'sofi-portal-chat:'.(auth('cliente')->id() ?: 'ip-'.$request->ip());
+
+            return [
+                Limit::perMinute($limits['per_minute'])->by($key.':m'),
+                Limit::perHour($limits['per_hour'])->by($key.':h'),
+            ];
+        });
+
         RateLimiter::for('sofi-chat-reset', function (Request $request) {
             return Limit::perMinute(config('sofi.chat_rate_limits.reset_per_minute'))->by('sofi-chat-reset:'.$request->ip());
         });

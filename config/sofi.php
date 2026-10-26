@@ -38,4 +38,10 @@ return [
         'reset_per_minute' => (int) env('SOFI_CHAT_RESET_PER_MINUTE', 5),
     ],
 
+    // Limites do chat da Sofi no portal, por cliente logado.
+    'portal_chat_rate_limits' => [
+        'per_minute' => (int) env('SOFI_PORTAL_CHAT_PER_MINUTE', 10),
+        'per_hour' => (int) env('SOFI_PORTAL_CHAT_PER_HOUR', 60),
+    ],
+
 ];

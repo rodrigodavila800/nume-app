@@ -174,7 +174,7 @@
 
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const res = await fetch('{{ route("api.sofi.chat") }}', {
+            const res = await fetch('{{ route("portal.sofi.chat") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
