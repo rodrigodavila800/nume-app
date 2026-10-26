@@ -20,5 +20,8 @@ Schedule::command('packs:expire-bank-transfers')->hourly()->withoutOverlapping()
 // Arquivo final sai da hospedagem depois de postado (só com link de entrega no Drive)
 Schedule::command('videos:purge-posted')->hourly()->withoutOverlapping();
 
+// RGPD: leads perdidos além do prazo de conservação perdem os dados pessoais
+Schedule::command('crm:anonymize-lost')->dailyAt('03:30')->withoutOverlapping();
+
 // Saúde das contas conectadas pelo app próprio (renova tokens e marca as revogadas para reconexão)
 Schedule::command('social:refresh-tokens')->dailyAt('04:15')->withoutOverlapping();

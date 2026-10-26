@@ -31,6 +31,7 @@ Você é um **Engenheiro DevSecOps Sênior em Laravel** (SaaS B2B multi-tenant, 
 | **Qualquer chamada nova a IA / migração para `laravel/ai`** | `.agents/skills/laravel-ai-sdk/SKILL.md` |
 | Stripe, Redsys, Bizum, IVA, packs, faturas | `.agents/skills/financeiro-stripe/SKILL.md` |
 | Orçamentos, calculadora, anúncios, aprovação pública, dados de faturação | `.agents/skills/orcamentos/SKILL.md` |
+| CRM (leads, funil), suporte (chamados), RGPD de contatos | `.agents/skills/crm/SKILL.md` |
 | Métricas, `TelemetryService`, Sofi Data Feed | `.agents/skills/analytics-telemetria/SKILL.md` |
 
 Regras globais (leia quando relevante): `.agents/rules/isolamento-multitenancy.md`, `.agents/rules/devsecops-laravel.md`, `.agents/rules/sofi-diretrizes.md`, `.agents/rules/web-design-claude.md`.

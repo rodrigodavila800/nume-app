@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * CRM da produtora: funil, ficha do lead e histórico.
@@ -115,6 +116,31 @@ class LeadController extends Controller
         }
 
         return back()->with('success', __('Registro adicionado ao histórico.'));
+    }
+
+    /**
+     * Exporta os dados do lead em JSON (pedido do titular). Só admin.
+     */
+    public function export(Lead $lead): Response
+    {
+        $this->authorize('managePersonalData', $lead);
+
+        return response()->json($this->leads->export($lead), 200, [
+            'Content-Disposition' => 'attachment; filename="lead-'.$lead->id.'.json"',
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Anonimiza o lead (direito ao apagamento). Só admin e irreversível.
+     */
+    public function anonymize(Request $request, Lead $lead): RedirectResponse
+    {
+        $this->authorize('managePersonalData', $lead);
+
+        $request->validate(['confirm' => ['accepted']]);
+        $this->leads->anonymize($lead, $request->user());
+
+        return redirect()->route('crm.leads.show', $lead)->with('success', __('Dados pessoais anonimizados.'));
     }
 
     private function validated(Request $request): array

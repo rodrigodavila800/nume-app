@@ -240,6 +240,8 @@ Route::middleware('auth')->group(function () {
     // CRM: funil de leads, ficha e histórico
     Route::post('/crm/leads/{lead}/etapa', [LeadController::class, 'moveStage'])->whereNumber('lead')->name('crm.leads.stage');
     Route::post('/crm/leads/{lead}/historico', [LeadController::class, 'addActivity'])->whereNumber('lead')->name('crm.leads.activity');
+    Route::get('/crm/leads/{lead}/exportar', [LeadController::class, 'export'])->whereNumber('lead')->name('crm.leads.export');
+    Route::post('/crm/leads/{lead}/anonimizar', [LeadController::class, 'anonymize'])->whereNumber('lead')->name('crm.leads.anonymize');
     // Suporte (dentro do CRM)
     Route::get('/crm/suporte', [SupportTicketController::class, 'index'])->name('support.index');
     Route::get('/crm/suporte/{ticket}', [SupportTicketController::class, 'show'])->whereNumber('ticket')->name('support.show');

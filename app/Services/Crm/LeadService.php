@@ -84,6 +84,48 @@ class LeadService
             .($reason ? ' · '.$reason : ''), $user, ['from' => $from, 'to' => $stage, 'automatic' => $automatic]);
     }
 
+    /**
+     * Dados pessoais do lead para entregar ao titular (direito de acesso/portabilidade, RGPD).
+     */
+    public function export(Lead $lead): array
+    {
+        return [
+            'exported_at' => now()->toIso8601String(),
+            'lead' => $lead->only(['id', 'name', 'company', 'email', 'phone', 'source', 'stage', 'estimated_value', 'notes', 'legal_basis', 'created_at']) + [
+                'consent_at' => $lead->consent_at?->toIso8601String(),
+            ],
+            'history' => $lead->activities()->get(['type', 'body', 'created_at'])
+                ->map(fn ($a) => ['type' => $a->type, 'body' => $a->body, 'at' => $a->created_at?->toIso8601String()])
+                ->all(),
+        ];
+    }
+
+    /**
+     * Apaga os dados pessoais e mantém só o que serve à estatística do funil (etapa, origem, valor).
+     */
+    public function anonymize(Lead $lead, ?User $user = null): void
+    {
+        if ($lead->anonymized_at !== null) {
+            return;
+        }
+
+        $lead->forceFill([
+            'name' => __('Anonimizado'),
+            'company' => null,
+            'email' => null,
+            'phone' => null,
+            'notes' => null,
+            'lost_reason' => null,
+            'consent_at' => null,
+            'cliente_id' => null,
+            'anonymized_at' => now(),
+        ])->save();
+
+        LeadActivity::forTenant($lead->tenant_id)->where('lead_id', $lead->id)->update(['body' => '[anonimizado]', 'meta' => null]);
+
+        $this->log($lead, 'system', __('Dados pessoais anonimizados (RGPD).'), $user);
+    }
+
     public function log(Lead $lead, string $type, string $body, ?User $user = null, array $meta = []): LeadActivity
     {
         $activity = new LeadActivity([
