@@ -59,6 +59,32 @@
         </div>
     </div>
 
+    @if($quote->request_details)
+        @php $req = $quote->request_details; @endphp
+        <!-- Pedido do cliente: entrada da calculadora -->
+        <div class="p-4 rounded-2xl bg-sky-950/40 border border-sky-500/30 text-xs text-sky-100 space-y-2">
+            <p class="font-extrabold text-sky-300">
+                {{ $quote->isRequested() ? __('Pedido do cliente pelo portal: revise os valores e envie a proposta') : __('Pedido original do cliente') }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">🎥 {{ $req['videos'] ?? '?' }} {{ __('vídeos/mês') }}</span>
+                @if(! empty($req['video_type_name']))
+                    <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">🎬 {{ $req['video_type_name'] }}</span>
+                @endif
+                <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">📲 {{ $req['social_networks'] ?? '?' }} {{ __('redes') }}</span>
+                <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">
+                    📣 {{ ! empty($req['wants_ads']) ? __('Quer anúncios').(! empty($req['ads_budget']) ? ' · '.$req['ads_budget'] : '') : __('Sem anúncios') }}
+                </span>
+                @if($quote->marketingPlan)
+                    <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">🗓️ {{ __('Plano') }} {{ $quote->marketingPlan->month_year }}</span>
+                @endif
+            </div>
+            @if(! empty($req['message']))
+                <p class="text-sky-200"><span class="font-bold">{{ __('Mensagem:') }}</span> {{ $req['message'] }}</p>
+            @endif
+        </div>
+    @endif
+
     <!-- Layout Grid: 2 Colunas -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 

@@ -30,7 +30,7 @@
         @endif
 
         <div class="bg-white rounded-2xl border border-zinc-200 shadow-xs p-5 grid grid-cols-1 sm:grid-cols-6 gap-4">
-            <div class="sm:col-span-4">
+            <div class="sm:col-span-3">
                 <label for="name" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1">{{ __('Nome') }}</label>
                 <input id="name" name="name" type="text" maxlength="80" required value="{{ old('name', $type->name) }}"
                     placeholder="{{ __('Ex.: Vendas, Posicionamento, Institucional, Podcast') }}"
@@ -39,6 +39,12 @@
             <div>
                 <label for="duration_seconds" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1">{{ __('Duração (s)') }}</label>
                 <input id="duration_seconds" name="duration_seconds" type="number" min="5" max="3600" required value="{{ old('duration_seconds', $type->duration_seconds) }}"
+                    class="w-full text-sm px-3 py-2.5 rounded-xl border border-zinc-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-colors">
+            </div>
+            <div>
+                <label for="edit_hours_per_video" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1">{{ __('Edição (h/vídeo)') }}</label>
+                <input id="edit_hours_per_video" name="edit_hours_per_video" type="number" min="0" max="200" step="0.25" value="{{ old('edit_hours_per_video', $type->edit_hours_per_video) }}"
+                    placeholder="{{ __('Padrão') }}" title="{{ __('Usado na calculadora quando o cliente pede orçamento. Vazio = padrão da produtora.') }}"
                     class="w-full text-sm px-3 py-2.5 rounded-xl border border-zinc-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-colors">
             </div>
             <div>

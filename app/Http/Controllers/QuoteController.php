@@ -16,6 +16,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class QuoteController extends Controller
@@ -131,6 +132,7 @@ class QuoteController extends Controller
     {
         $this->authorize('update', $quote);
 
+        $quote->loadMissing('marketingPlan');
         $clientes = Cliente::orderBy('name')->get();
         $defaults = $this->calculator->getDefaults($quote->tenant);
 
@@ -236,6 +238,11 @@ class QuoteController extends Controller
             'message' => 'nullable|string|max:5000',
         ]);
 
+        // Pedido vindo do portal não tem validade: conta a partir do envio da proposta.
+        if (! $quote->valid_until) {
+            $quote->valid_until = now()->addDays(max(1, (int) $this->calculator->getDefaults($quote->tenant)['validade_dias']));
+        }
+
         if (empty($quote->approval_token)) {
             $quote->approval_token = Str::random(48);
             $quote->approval_token_expires_at = $quote->valid_until
@@ -308,7 +315,8 @@ class QuoteController extends Controller
     protected function validateQuoteInput(Request $request): array
     {
         return $request->validate([
-            'cliente_id' => 'nullable|exists:clientes,id',
+            // Só cliente da própria produtora (exists sem tenant aceitaria id de outra produtora).
+            'cliente_id' => ['nullable', Rule::exists('clientes', 'id')->where('tenant_id', $request->user()->tenant_id)],
             'client_name' => 'required|string|max:255',
             'client_contact' => 'nullable|string|max:255',
             'client_email' => 'nullable|email|max:255',

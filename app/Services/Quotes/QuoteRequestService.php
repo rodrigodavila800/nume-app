@@ -86,9 +86,14 @@ class QuoteRequestService
         ]);
     }
 
+    /**
+     * Horas de edição por vídeo: as do tipo escolhido, senão o padrão da produtora.
+     */
     protected function editHoursPerVideo(?VideoType $videoType, array $defaults): float
     {
-        return (float) $defaults['horas_edicao_por_video'];
+        return $videoType?->edit_hours_per_video !== null
+            ? (float) $videoType->edit_hours_per_video
+            : (float) $defaults['horas_edicao_por_video'];
     }
 
     /**

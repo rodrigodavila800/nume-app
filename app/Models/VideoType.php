@@ -22,6 +22,7 @@ class VideoType extends Model
         'slug',
         'description',
         'duration_seconds',
+        'edit_hours_per_video',
         'blocks',
         'sofi_guidance',
         'is_active',
@@ -39,6 +40,7 @@ class VideoType extends Model
             'blocks' => 'array',
             'is_active' => 'boolean',
             'duration_seconds' => 'integer',
+            'edit_hours_per_video' => 'float',
             'sort_order' => 'integer',
         ];
     }
