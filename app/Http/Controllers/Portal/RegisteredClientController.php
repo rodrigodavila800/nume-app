@@ -76,6 +76,8 @@ class RegisteredClientController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
+        app(\App\Services\Crm\LeadAutomation::class)->clienteRegistered($cliente, 'portal_register');
+
         // Autentica o novo cliente no guard cliente
         Auth::guard('cliente')->login($cliente);
 

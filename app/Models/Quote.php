@@ -93,6 +93,13 @@ class Quote extends Model
                 );
             }
         });
+
+        // Funil do CRM acompanha o orçamento (pedido → proposta → ganho/perdido).
+        static::saved(function (Quote $quote) {
+            if ($quote->wasRecentlyCreated || $quote->wasChanged('status')) {
+                app(\App\Services\Crm\LeadAutomation::class)->quoteChanged($quote);
+            }
+        });
     }
 
     public function getRouteKeyName(): string

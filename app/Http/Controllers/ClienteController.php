@@ -48,6 +48,8 @@ class ClienteController extends Controller
 
         Password::broker('clientes')->sendResetLink(['email' => $cliente->email, 'tenant_id' => $cliente->tenant_id]);
 
+        app(\App\Services\Crm\LeadAutomation::class)->clienteRegistered($cliente, 'manual');
+
         return redirect()->route('clientes.index')
             ->with('success', 'Cliente cadastrado! Um link de definição de senha foi enviado por e-mail.');
     }

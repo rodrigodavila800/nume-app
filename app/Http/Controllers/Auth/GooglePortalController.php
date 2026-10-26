@@ -60,6 +60,8 @@ class GooglePortalController extends Controller
                 'password' => bcrypt(Str::random(32)),
                 'status' => 'active',
             ]);
+
+            app(\App\Services\Crm\LeadAutomation::class)->clienteRegistered($cliente, 'portal_register');
         }
 
         Auth::guard('cliente')->login($cliente, true);

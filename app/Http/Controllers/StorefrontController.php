@@ -179,6 +179,8 @@ class StorefrontController extends Controller
                     'company_name' => $validated['company_name'] ?? null,
                     'password' => Hash::make($validated['password']),
                 ]);
+
+                app(\App\Services\Crm\LeadAutomation::class)->clienteRegistered($cliente, 'storefront');
             }
 
             // Autentica o cliente na sessão com segurança
