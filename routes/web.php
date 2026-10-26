@@ -14,6 +14,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\BatchContentPlannerController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CategoryController;
@@ -234,6 +235,14 @@ Route::middleware('auth')->group(function () {
         ->parameters(['tipos-de-video' => 'videoType'])
         ->names('video_types')
         ->except('show');
+
+    // CRM: funil de leads, ficha e histórico
+    Route::post('/crm/leads/{lead}/etapa', [LeadController::class, 'moveStage'])->whereNumber('lead')->name('crm.leads.stage');
+    Route::post('/crm/leads/{lead}/historico', [LeadController::class, 'addActivity'])->whereNumber('lead')->name('crm.leads.activity');
+    Route::resource('/crm/leads', LeadController::class)
+        ->parameters(['leads' => 'lead'])
+        ->names('crm.leads')
+        ->except('destroy');
 
     Route::get('/configuracoes/api-keys', [ApiKeyController::class, 'index'])
         ->name('api_keys.index');
