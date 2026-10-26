@@ -21,6 +21,7 @@ class Production extends Model
         'created_by',
         'title',
         'description',
+        'video_type_id',
         'status',
         'target_publication_date',
         'seo_keywords',
@@ -77,6 +78,11 @@ class Production extends Model
     public function roteiros(): HasMany
     {
         return $this->hasMany(Roteiro::class);
+    }
+
+    public function videoType(): BelongsTo
+    {
+        return $this->belongsTo(VideoType::class);
     }
 
     /**

@@ -19,7 +19,9 @@ class Roteiro extends Model
         'created_by',
         'approved_by',
         'approved_by_cliente_id',
+        'video_type_id',
         'content',
+        'structure',
         'status',
         'rejection_reason',
         'submitted_at',
@@ -31,6 +33,7 @@ class Roteiro extends Model
     protected function casts(): array
     {
         return [
+            'structure' => 'array',
             'submitted_at' => 'datetime',
             'last_reminded_at' => 'datetime',
             'approved_at' => 'datetime',
@@ -57,6 +60,11 @@ class Roteiro extends Model
     public function production(): BelongsTo
     {
         return $this->belongsTo(Production::class);
+    }
+
+    public function videoType(): BelongsTo
+    {
+        return $this->belongsTo(VideoType::class);
     }
 
     /**
