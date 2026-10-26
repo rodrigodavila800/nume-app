@@ -20,6 +20,10 @@
         <a href="{{ route('portal.marketing-plan.index') }}" class="text-xs font-bold text-zinc-500 hover:text-orange-600 transition">← {{ __('Plano de marketing') }}</a>
     </div>
 
+    @if (session('warning'))
+        <div class="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3.5 rounded-xl text-sm font-semibold">{{ session('warning') }}</div>
+    @endif
+
     @if ($errors->any())
         <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3.5 rounded-xl text-xs font-semibold">
             <ul class="list-disc pl-5 space-y-1">

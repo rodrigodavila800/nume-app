@@ -45,6 +45,13 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
             'website' => 'https://zaragozadental.com',
             'instagram_handle' => '@zaragozadental',
         ]);
+        $this->cliente->forceFill([
+            'anamnesis' => \App\Support\Anamnesis::normalize([
+                'objective' => 'sell_more', 'main_offer' => 'Implantes', 'ideal_customer' => 'Adultos', 'tone' => 'expert',
+                'priority_networks' => ['instagram'], 'posting_frequency' => '1_week', 'wants_ads' => false,
+            ]),
+            'anamnesis_completed_at' => now(),
+        ])->save();
     }
 
     public function test_sofi_copilot_service_replies_and_persists_messages(): void
@@ -159,6 +166,7 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
         $staff = User::create(['tenant_id' => $this->tenant->id, 'name' => 'Equipe Real', 'email' => 'equipe@nume-hub.test', 'password' => 'secret12345', 'role' => 'admin']);
         $planGenerator = app(MarketingPlanGeneratorService::class);
         $plan = $planGenerator->generate($this->cliente, 4);
+        $plan->approveBy($this->cliente);
         $item = $plan->items()->first();
 
         $this->assertNull($item->production_id);
@@ -188,7 +196,9 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
 
     public function test_converting_without_a_team_never_creates_a_user_with_a_known_password(): void
     {
-        $item = app(MarketingPlanGeneratorService::class)->generate($this->cliente, 4)->items()->first();
+        $plan = app(MarketingPlanGeneratorService::class)->generate($this->cliente, 4);
+        $plan->approveBy($this->cliente);
+        $item = $plan->items()->first();
 
         $this->actingAs($this->cliente, 'cliente')
             ->post(route('portal.marketing-plan.convert-item', $item))

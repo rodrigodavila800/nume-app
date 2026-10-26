@@ -73,6 +73,47 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-semibold">{{ session('error') }}</div>
+        @endif
+
+        <!-- Aprovação do plano pelo cliente -->
+        @if($plan->isApproved())
+            <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span class="font-bold">✓ {{ __('Plano aprovado em :date. Os vídeos já podem seguir para orçamento e produção.', ['date' => $plan->approved_at?->format('d/m/Y')]) }}</span>
+                <a href="{{ route('portal.anamnesis.edit') }}" class="text-xs font-bold text-emerald-800 hover:underline">{{ __('Ver anamnese') }}</a>
+            </div>
+        @else
+            <div class="mb-6 p-5 rounded-2xl bg-amber-50 border border-amber-200 space-y-4 print:hidden">
+                <div>
+                    <p class="text-sm font-extrabold text-amber-900">{{ __('Este plano é uma proposta da Sofi e precisa da sua aprovação') }}</p>
+                    <p class="text-xs text-amber-800 mt-1">{{ __('Depois de aprovado, os vídeos seguem para orçamento e roteiro. Se algo não estiver certo, peça um ajuste e a Sofi refaz o plano.') }}</p>
+                    @if($plan->adjustment_request)
+                        <p class="text-xs text-amber-900 mt-2"><span class="font-bold">{{ __('Último ajuste pedido:') }}</span> {{ $plan->adjustment_request }}</p>
+                    @endif
+                </div>
+                <div class="flex flex-col lg:flex-row gap-3">
+                    <form action="{{ route('portal.marketing-plan.approve', $plan->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full lg:w-auto inline-flex justify-center items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-extrabold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm transition">
+                            ✓ {{ __('Aprovar plano') }}
+                        </button>
+                    </form>
+                    <form action="{{ route('portal.marketing-plan.adjust', $plan->id) }}" method="POST" class="flex-1 flex flex-col sm:flex-row gap-2">
+                        @csrf
+                        <label for="adjustment_request" class="sr-only">{{ __('O que você quer mudar no plano?') }}</label>
+                        <input id="adjustment_request" name="adjustment_request" type="text" minlength="10" maxlength="1000" required
+                            placeholder="{{ __('O que você quer mudar? Ex.: mais vídeos de bastidores, menos oferta direta') }}"
+                            class="flex-1 text-sm px-3 py-2.5 rounded-xl border border-amber-300 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
+                        <button type="submit" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl text-sm font-bold text-amber-900 bg-white border border-amber-300 hover:bg-amber-100 transition">
+                            {{ __('Pedir ajuste') }}
+                        </button>
+                    </form>
+                </div>
+                @error('adjustment_request') <p class="text-xs text-rose-700">{{ $message }}</p> @enderror
+            </div>
+        @endif
+
         <!-- Card de Meta Estratégica do Mês -->
         <div class="mb-8 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 text-white shadow-xl border border-zinc-800 relative overflow-hidden">
             <div class="relative z-10">
@@ -154,6 +195,10 @@
                                         </span>
                                     @endif
 
+                                    @if($item->videoType)
+                                        <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-orange-50 text-orange-800 border border-orange-100">🎬 {{ $item->videoType->name }}</span>
+                                    @endif
+
                                     <!-- Formato Badge -->
                                     <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-zinc-100 text-zinc-700 font-mono">
                                         {{ $item->format === 'vertical' ? '📱 9:16' : '🎬 16:9' }}
@@ -207,6 +252,8 @@
                                     <span>{{ __('Em Produção na Esteira') }}</span>
                                     <span>→</span>
                                 </a>
+                            @elseif (! $plan->isApproved())
+                                <p class="text-xs text-zinc-500 text-center">{{ __('Aprove o plano para enviar este vídeo à produção.') }}</p>
                             @else
                                 <form action="{{ route('portal.marketing-plan.convert-item', $item) }}" method="POST" class="w-full">
                                     @csrf

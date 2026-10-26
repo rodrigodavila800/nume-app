@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
+use App\Ai\Agents\SofiMarketingPlanAgent;
+use App\Ai\SofiProvider;
 use App\Models\Cliente;
 use App\Models\MarketingPlan;
-use App\Models\MarketingPlanItem;
 use App\Models\PackPurchase;
-use App\Models\Setting;
-use Illuminate\Support\Facades\Http;
+use App\Services\SocialInsights\SocialInsightsReader;
+use App\Services\VideoTypes\VideoTypeCatalog;
+use App\Support\Anamnesis;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class MarketingPlanGeneratorService
 {
@@ -61,13 +63,16 @@ class MarketingPlanGeneratorService
     /**
      * Gera e persiste o Plano de Marketing & Grade Editorial do Cliente.
      */
+    /**
+     * Gera e persiste o plano do mês como RASCUNHO: só vale depois que o cliente aprova.
+     */
     public function generate(Cliente $cliente, int $videoQuantity = 4, ?PackPurchase $packPurchase = null, ?string $monthYear = null): MarketingPlan
     {
         $targetMonthYear = $monthYear ?: now()->format('Y-m');
         $isEs = self::isSpanishLocale($cliente);
 
         // 1. Cria ou reutiliza plano existente para o mês
-        $plan = MarketingPlan::firstOrCreate(
+        $plan = MarketingPlan::forTenant($cliente->tenant_id)->firstOrCreate(
             [
                 'tenant_id' => $cliente->tenant_id,
                 'cliente_id' => $cliente->id,
@@ -77,7 +82,8 @@ class MarketingPlanGeneratorService
                 'pack_purchase_id' => $packPurchase?->id,
                 'title' => $isEs ? 'Plan Editorial Estratégico de Vídeos' : 'Plano Editorial Estratégico de Vídeos',
                 'strategic_goal' => $this->buildStrategicGoal($cliente, $isEs),
-                'status' => 'active',
+                'status' => MarketingPlan::STATUS_DRAFT,
+                'anamnesis_snapshot' => $cliente->anamnesis,
                 'metrics_summary' => [
                     'target_videos' => $videoQuantity,
                     'estimated_retention' => '92-96%',
@@ -91,11 +97,14 @@ class MarketingPlanGeneratorService
             return $plan;
         }
 
-        // 2. Tenta gerar via Gemini ou usa Motor Heurístico Científico
-        $itemsData = $this->generateEditorialItems($cliente, $videoQuantity, $isEs);
+        // 2. Sofi (Laravel AI SDK) com DNA + anamnese + redes; sem IA, motor heurístico
+        $built = $this->buildItems($cliente, $this->weeksFor($videoQuantity), $isEs);
+        if ($built['strategic_goal']) {
+            $plan->update(['strategic_goal' => $built['strategic_goal']]);
+        }
 
         // 3. Persiste cada item da grade
-        foreach ($itemsData as $data) {
+        foreach ($built['items'] as $data) {
             $plan->items()->create($data);
         }
 
@@ -103,10 +112,20 @@ class MarketingPlanGeneratorService
     }
 
     /**
+     * Quantidade de vídeos do plano: frequência da anamnese, senão a cota da última compra, senão 4.
+     */
+    public static function videoQuantityFor(Cliente $cliente, ?PackPurchase $latestPurchase = null): int
+    {
+        $quantity = Anamnesis::monthlyVideos($cliente->anamnesis) ?? ($latestPurchase?->video_quantity ?: 4);
+
+        return max(1, min(30, (int) $quantity));
+    }
+
+    /**
      * Recalcula a grade editorial preservando itens já convertidos em produção.
      * Retorna a quantidade de novos itens gerados.
      */
-    public function regeneratePlan(MarketingPlan $plan, Cliente $cliente, int $targetVideoQty): int
+    public function regeneratePlan(MarketingPlan $plan, Cliente $cliente, int $targetVideoQty, ?string $adjustmentRequest = null): int
     {
         $isEs = self::isSpanishLocale($cliente);
 
@@ -142,20 +161,172 @@ class MarketingPlanGeneratorService
         }
         $availableWeeks = array_slice($availableWeeks, 0, $neededQty);
 
-        // 4. Atualiza o título e objetivo estratégico com o DNA atual do cliente
+        // 4. Gera os novos itens para as semanas vagas (com o pedido de ajuste do cliente, se houver)
+        $built = $this->buildItems($cliente, $availableWeeks, $isEs, $adjustmentRequest);
+
+        // 5. Atualiza o objetivo com o DNA atual; o plano mudou, então volta a precisar de aprovação
         $plan->update([
             'title' => $isEs ? 'Plan Editorial Estratégico de Vídeos' : 'Plano Editorial Estratégico de Vídeos',
-            'strategic_goal' => $this->buildStrategicGoal($cliente, $isEs),
+            'strategic_goal' => $built['strategic_goal'] ?: $this->buildStrategicGoal($cliente, $isEs),
+            'anamnesis_snapshot' => $cliente->anamnesis,
         ]);
+        $plan->backToDraft();
 
-        // 5. Gera os novos itens para as semanas vagas
-        $newItemsData = $this->generateEditorialItemsForWeeks($cliente, $availableWeeks, $isEs);
-
-        foreach ($newItemsData as $data) {
+        foreach ($built['items'] as $data) {
             $plan->items()->create($data);
         }
 
-        return count($newItemsData);
+        return count($built['items']);
+    }
+
+    /**
+     * Itens da grade para as semanas pedidas: IA quando há provedor; o que faltar ou vier inválido
+     * é completado pelo motor heurístico. Todo item recebe um tipo de vídeo ativo do tenant.
+     *
+     * @param  list<int>  $weeks
+     * @return array{strategic_goal: ?string, items: list<array<string, mixed>>}
+     */
+    protected function buildItems(Cliente $cliente, array $weeks, bool $isEs, ?string $adjustmentRequest = null): array
+    {
+        $types = app(VideoTypeCatalog::class)->active($cliente->tenant_id);
+        $defaultTypeId = $types->first()?->id;
+
+        $heuristic = $this->generateEditorialItemsForWeeks($cliente, $weeks, $isEs);
+        $ai = $this->aiPlan($cliente, $weeks, $isEs, $types, $adjustmentRequest);
+
+        $items = [];
+        foreach ($weeks as $index => $week) {
+            $item = $this->normalizeAiItem($ai['items'][$index] ?? null, $week, $types) ?? $heuristic[$index];
+            $item['video_type_id'] ??= $defaultTypeId;
+            $items[] = $item;
+        }
+
+        $goal = is_string($ai['strategic_goal'] ?? null) ? mb_substr(trim($ai['strategic_goal']), 0, 1000) : '';
+
+        return ['strategic_goal' => $goal !== '' ? $goal : null, 'items' => $items];
+    }
+
+    /**
+     * Chamada ao SofiMarketingPlanAgent. Null sem provedor ou em qualquer falha (cai no heurístico).
+     */
+    protected function aiPlan(Cliente $cliente, array $weeks, bool $isEs, Collection $types, ?string $adjustmentRequest): ?array
+    {
+        $sofiProvider = app(SofiProvider::class);
+
+        try {
+            $options = $sofiProvider->options($cliente->tenant);
+            if ($options === null) {
+                return null;
+            }
+
+            $response = (new SofiMarketingPlanAgent($cliente->tenant_id))
+                ->prompt($this->planPrompt($cliente, $weeks, $isEs, $types, $adjustmentRequest), ...$options);
+            $data = $response->structured ?? [];
+
+            return is_array($data['items'] ?? null) ? $data : null;
+        } catch (\Throwable $e) {
+            // Só o tipo da exceção: a mensagem pode conter URL ou credenciais.
+            Log::warning('MarketingPlanGeneratorService AI SDK falhou ('.$sofiProvider->driver().'): '.get_class($e));
+
+            return null;
+        }
+    }
+
+    /**
+     * Dados do cliente para o agente. Tudo entre <<< >>> é conteúdo do cliente ou de terceiros.
+     */
+    protected function planPrompt(Cliente $cliente, array $weeks, bool $isEs, Collection $types, ?string $adjustmentRequest): string
+    {
+        $study = is_array($cliente->brand_study) ? $cliente->brand_study : [];
+        $list = fn ($value) => is_array($value)
+            ? implode(' | ', array_map(fn ($v) => is_array($v) ? implode(': ', array_filter($v, 'is_string')) : (string) $v, $value))
+            : (string) $value;
+
+        $typeLines = $types->map(fn ($type) => "- {$type->name} ({$type->duration_seconds} s): "
+            .collect($type->blocks)->pluck('name')->implode(' → ')
+            .($type->description ? " — {$type->description}" : ''))->implode("\n");
+
+        return implode("\n", array_filter([
+            'IDIOMA DO PLANO: '.($isEs ? 'Español de España' : 'Português do Brasil'),
+            'QUANTIDADE DE VÍDEOS: '.count($weeks).' · SEMANAS DE CADA VÍDEO, NA ORDEM: '.implode(', ', $weeks),
+            "TIPOS DE VÍDEO DISPONÍVEIS:\n".($typeLines ?: '- nenhum'),
+            '',
+            'DNA DA MARCA:',
+            '<<<',
+            '- EMPRESA: '.($cliente->company_name ?: $cliente->name),
+            '- NICHO: '.$cliente->brand_niche,
+            '- PÚBLICO: '.$cliente->target_audience,
+            '- DIFERENCIAIS: '.$cliente->key_differentials,
+            '- PROPOSTA DE VALOR: '.$list($study['unique_value_proposition'] ?? ''),
+            '- OFERTAS: '.$list($study['flagship_offerings'] ?? []),
+            '- DORES: '.$list($study['target_audience_pains'] ?? []),
+            '- PILARES: '.$list($study['content_pillars'] ?? []),
+            '- EVITAR: '.$list($study['forbidden_words'] ?? []),
+            '>>>',
+            'ANAMNESE (respostas do cliente):',
+            '<<<',
+            Anamnesis::promptBlock($cliente->anamnesis),
+            '>>>',
+            'REDES SOCIAIS CONECTADAS:',
+            '<<<',
+            SocialInsightsReader::promptBlock($study['social_insights'] ?? null),
+            '>>>',
+            $adjustmentRequest ? "PEDIDO DE AJUSTE DO CLIENTE SOBRE O PLANO ANTERIOR:\n<<<\n".mb_substr($adjustmentRequest, 0, 1000)."\n>>>" : null,
+        ], fn ($line) => $line !== null));
+    }
+
+    /**
+     * Item da IA validado campo a campo; null quando falta o essencial (o slot fica com o heurístico).
+     */
+    protected function normalizeAiItem(mixed $raw, int $week, Collection $types): ?array
+    {
+        if (! is_array($raw)) {
+            return null;
+        }
+
+        $text = fn ($value, int $max) => is_string($value) ? mb_substr(trim($value), 0, $max) : '';
+
+        $topic = $text($raw['topic'] ?? null, 250);
+        $hook = $text($raw['hook_text'] ?? null, 500);
+        if ($topic === '' || $hook === '') {
+            return null;
+        }
+
+        $hashtags = collect(is_array($raw['hashtags'] ?? null) ? $raw['hashtags'] : [])
+            ->filter(fn ($tag) => is_string($tag))
+            ->map(fn ($tag) => mb_substr(trim(ltrim(trim($tag), '#')), 0, 40))
+            ->filter()->unique()->take(8)->values()->all();
+
+        $typeName = mb_strtolower($text($raw['video_type'] ?? null, 80));
+        $type = $typeName === '' ? null : $types->first(fn ($t) => mb_strtolower($t->name) === $typeName);
+
+        return [
+            'week_number' => $week,
+            'funnel_stage' => in_array($raw['funnel_stage'] ?? null, ['top', 'middle', 'bottom'], true) ? $raw['funnel_stage'] : 'top',
+            'scheduled_day_time' => $text($raw['scheduled_day_time'] ?? null, 100) ?: null,
+            'topic' => $topic,
+            'hook_text' => $hook,
+            'seo_caption' => $text($raw['seo_caption'] ?? null, 2000) ?: null,
+            'hashtags' => $hashtags,
+            'format' => in_array($raw['format'] ?? null, ['vertical', 'horizontal'], true) ? $raw['format'] : 'vertical',
+            'status' => 'pending',
+            'video_type_id' => $type?->id,
+        ];
+    }
+
+    /**
+     * Semanas do mês para N vídeos (1 a 4), distribuídas por igual.
+     *
+     * @return list<int>
+     */
+    protected function weeksFor(int $qty): array
+    {
+        $weeks = [];
+        for ($i = 1; $i <= $qty; $i++) {
+            $weeks[] = min(4, (int) ceil($i / max(1, ($qty / 4))));
+        }
+
+        return $weeks;
     }
 
     /**
@@ -178,21 +349,6 @@ class MarketingPlanGeneratorService
         }
 
         return "Consolidar a marca {$company} como autoridade máxima no segmento de {$niche}, atraindo audiência qualificada com ganchos de interrupção e direcionando espectadores para fechamento de vendas.";
-    }
-
-    /**
-     * Gera os dados de cada postagem do calendário para uma quantidade fixa.
-     */
-    protected function generateEditorialItems(Cliente $cliente, int $qty, bool $isEs): array
-    {
-        $weeks = [];
-        for ($i = 1; $i <= $qty; $i++) {
-            $week = (int) ceil($i / max(1, ($qty / 4)));
-            if ($week > 4) $week = 4;
-            $weeks[] = $week;
-        }
-
-        return $this->generateEditorialItemsForWeeks($cliente, $weeks, $isEs);
     }
 
     /**

@@ -66,7 +66,16 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
             // Grade Editorial & Plano de Marketing Sofi IA
             Route::get('marketing-plan', [MarketingPlanController::class, 'index'])->name('marketing-plan.index');
-            Route::post('marketing-plan/regenerate', [MarketingPlanController::class, 'regenerate'])->name('marketing-plan.regenerate');
+            Route::post('marketing-plan/regenerate', [MarketingPlanController::class, 'regenerate'])
+                ->middleware('throttle:10,60')
+                ->name('marketing-plan.regenerate');
+            Route::post('marketing-plan/{plan}/approve', [MarketingPlanController::class, 'approve'])
+                ->whereNumber('plan')
+                ->name('marketing-plan.approve');
+            Route::post('marketing-plan/{plan}/adjust', [MarketingPlanController::class, 'requestAdjustment'])
+                ->whereNumber('plan')
+                ->middleware('throttle:10,60')
+                ->name('marketing-plan.adjust');
             Route::post('marketing-plan/items/{item}/convert', [MarketingPlanController::class, 'convertToProduction'])->name('marketing-plan.convert-item');
         });
 

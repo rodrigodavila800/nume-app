@@ -103,7 +103,7 @@ class SofiBrandAnalystService
                 . "CONTEÚDO EXTRAÍDO DO WEBSITE OFICIAL:\n"
                 . "<<<\n{$websiteText}\n>>>\n\n"
                 . "REDES SOCIAIS CONECTADAS (seguidores, bio e posts recentes com desempenho):\n"
-                . "<<<\n" . $this->socialPromptBlock($social) . "\n>>>\n"
+                . "<<<\n" . SocialInsightsReader::promptBlock($social) . "\n>>>\n"
                 . "Use o desempenho dos posts (visualizações, curtidas, comentários) para indicar quais temas e formatos já funcionam para esta marca.\n\n"
                 . "Retorne ESTRITAMENTE um objeto JSON válido (sem blocos de código markdown ou texto explicativo extra) com o seguinte formato:\n"
                 . "{\n"
@@ -169,34 +169,6 @@ class SofiBrandAnalystService
         }
 
         return null;
-    }
-
-    /**
-     * Resumo compacto das redes lidas para o prompt (sem tokens, ids nem URLs de mídia).
-     */
-    protected function socialPromptBlock(array $social): string
-    {
-        $lines = [];
-        foreach ($social['accounts'] ?? [] as $account) {
-            if (($account['status'] ?? '') !== 'ok') {
-                continue;
-            }
-
-            $lines[] = '- '.strtoupper($account['platform']).' '.($account['handle'] ?? '')
-                .(isset($account['followers']) ? " · {$account['followers']} seguidores" : '')
-                .(! empty($account['bio']) ? " · bio: {$account['bio']}" : '');
-
-            foreach ($account['posts'] ?? [] as $post) {
-                $metrics = array_filter([
-                    isset($post['views']) ? "{$post['views']} views" : null,
-                    isset($post['likes']) ? "{$post['likes']} curtidas" : null,
-                    isset($post['comments']) ? "{$post['comments']} comentários" : null,
-                ]);
-                $lines[] = '  · '.($post['text'] ?? '').($metrics ? ' ('.implode(', ', $metrics).')' : '');
-            }
-        }
-
-        return $lines === [] ? 'Nenhuma rede conectada com leitura disponível.' : implode("\n", $lines);
     }
 
     /**

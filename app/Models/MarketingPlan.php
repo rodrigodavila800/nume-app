@@ -12,6 +12,12 @@ class MarketingPlan extends Model
 {
     use HasFactory, BelongsToTenant;
 
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_ADJUSTMENT = 'adjustment_requested';
+
+    public const STATUS_APPROVED = 'approved';
+
     protected $fillable = [
         'tenant_id',
         'cliente_id',
@@ -21,13 +27,40 @@ class MarketingPlan extends Model
         'strategic_goal',
         'status',
         'metrics_summary',
+        'anamnesis_snapshot',
+        'adjustment_request',
     ];
 
     protected function casts(): array
     {
         return [
             'metrics_summary' => 'array',
+            'anamnesis_snapshot' => 'array',
+            'approved_at' => 'datetime',
         ];
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === self::STATUS_APPROVED;
+    }
+
+    /**
+     * Aprovação do cliente: só pelo próprio dono do plano (o controller confere).
+     */
+    public function approveBy(Cliente $cliente): void
+    {
+        $this->forceFill([
+            'status' => self::STATUS_APPROVED,
+            'approved_at' => now(),
+            'approved_by_cliente_id' => $cliente->id,
+            'adjustment_request' => null,
+        ])->save();
+    }
+
+    public function backToDraft(): void
+    {
+        $this->forceFill(['status' => self::STATUS_DRAFT, 'approved_at' => null, 'approved_by_cliente_id' => null])->save();
     }
 
     public function cliente(): BelongsTo

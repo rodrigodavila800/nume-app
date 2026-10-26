@@ -13,6 +13,7 @@ class MarketingPlanItem extends Model
     protected $fillable = [
         'marketing_plan_id',
         'production_id',
+        'video_type_id',
         'week_number',
         'funnel_stage',
         'scheduled_day_time',
@@ -40,5 +41,10 @@ class MarketingPlanItem extends Model
     public function production(): BelongsTo
     {
         return $this->belongsTo(Production::class);
+    }
+
+    public function videoType(): BelongsTo
+    {
+        return $this->belongsTo(VideoType::class);
     }
 }

@@ -74,6 +74,34 @@ class SocialInsightsReader
         return ['read_at' => now()->toDateTimeString(), 'accounts' => $accounts];
     }
 
+    /**
+     * Resumo compacto das redes lidas para o prompt (sem tokens, ids nem URLs de mídia).
+     */
+    public static function promptBlock(?array $social): string
+    {
+        $lines = [];
+        foreach ($social['accounts'] ?? [] as $account) {
+            if (($account['status'] ?? '') !== 'ok') {
+                continue;
+            }
+
+            $lines[] = '- '.strtoupper($account['platform']).' '.($account['handle'] ?? '')
+                .(isset($account['followers']) ? " · {$account['followers']} seguidores" : '')
+                .(! empty($account['bio']) ? " · bio: {$account['bio']}" : '');
+
+            foreach ($account['posts'] ?? [] as $post) {
+                $metrics = array_filter([
+                    isset($post['views']) ? "{$post['views']} views" : null,
+                    isset($post['likes']) ? "{$post['likes']} curtidas" : null,
+                    isset($post['comments']) ? "{$post['comments']} comentários" : null,
+                ]);
+                $lines[] = '  · '.($post['text'] ?? '').($metrics ? ' ('.implode(', ', $metrics).')' : '');
+            }
+        }
+
+        return $lines === [] ? 'Nenhuma rede conectada com leitura disponível.' : implode("\n", $lines);
+    }
+
     private function youtube(SocialConnection $connection): array
     {
         $http = $this->client($connection);

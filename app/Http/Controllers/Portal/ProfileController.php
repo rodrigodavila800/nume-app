@@ -72,7 +72,8 @@ class ProfileController extends Controller
             ->where('month_year', $currentMonth)
             ->first();
 
-        if ($plan && $plan->items()->whereNotNull('production_id')->count() === 0) {
+        // Plano já aprovado pelo cliente não muda sozinho.
+        if ($plan && ! $plan->isApproved() && $plan->items()->whereNotNull('production_id')->count() === 0) {
             app(\App\Services\MarketingPlanGeneratorService::class)->regeneratePlan($plan, $cliente, $plan->items()->count() ?: 4);
         }
 
