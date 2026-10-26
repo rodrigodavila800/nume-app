@@ -40,7 +40,7 @@
             "value": "application/json"
           }
         ],
-        "body": "{\n  \"email\": \"{{1.client_email}}\",\n  \"video_url\": \"{{1.video_url}}\",\n  \"title\": \"{{1.title}}\",\n  \"platforms\": [\"instagram\", \"tiktok\", \"youtube\"]\n}",
+        "body": "{\n  \"email\": \"{{1.client_email}}\",\n  \"video_id\": {{1.video_id}},\n  \"title\": \"{{1.title}}\",\n  \"platforms\": [\"instagram\", \"tiktok\", \"youtube\"]\n}",
         "responseType": "json"
       },
       "metadata": {

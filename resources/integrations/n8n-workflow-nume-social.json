@@ -40,7 +40,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={\n  \"email\": \"{{ $json.body.email }}\",\n  \"video_url\": \"{{ $json.body.video_url }}\",\n  \"title\": \"{{ $json.body.title }}\",\n  \"platforms\": {{ JSON.stringify($json.body.platforms || [\"instagram\", \"tiktok\", \"youtube\"]) }}\n}",
+        "body": "={\n  \"email\": \"{{ $json.body.email }}\",\n  \"video_id\": {{ $json.body.video_id }},\n  \"title\": \"{{ $json.body.title }}\",\n  \"platforms\": {{ JSON.stringify($json.body.platforms || [\"instagram\", \"tiktok\", \"youtube\"]) }}\n}",
         "options": {}
       },
       "id": "22222222-2222-2222-2222-222222222222",

@@ -228,7 +228,7 @@ Accept: application/json</code></pre>
                     </div>
                     <pre class="p-4 text-xs font-mono text-emerald-400 overflow-x-auto leading-relaxed"><code>{
   "email": "cliente@empresa.com",
-  "video_url": "https://storage.nume.app/producoes/campanha-01.mp4",
+  "video_id": 345,
   "title": "3 Passos para Vender Mais no Digital com a NUME #viral #estrategia",
   "platforms": ["instagram", "tiktok", "youtube"]
 }</code></pre>

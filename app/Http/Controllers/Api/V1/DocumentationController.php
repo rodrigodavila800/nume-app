@@ -116,18 +116,20 @@ class DocumentationController extends Controller
                 '/social/publish' => [
                     'post' => [
                         'summary' => 'Publicar Vídeo Multi-rede',
-                        'description' => 'Dispara a publicação de um vídeo vertical em uma ou mais redes sociais conectadas do cliente.',
+                        'description' => 'Publica um vídeo de produção do cliente nas redes conectadas. Redes conectadas pelo app da NUME recebem o arquivo hospedado (fila própria); video_url só é usado quando o vídeo não tem arquivo hospedado. TikTok e Pinterest exigem a tela do portal e voltam em requires_portal.',
                         'requestBody' => [
                             'required' => true,
                             'content' => [
                                 'application/json' => [
                                     'schema' => [
                                         'type' => 'object',
-                                        'required' => ['video_url', 'title', 'platforms'],
+                                        'required' => ['video_id', 'title', 'platforms'],
                                         'properties' => [
                                             'email' => ['type' => 'string', 'format' => 'email', 'example' => 'cliente@empresa.com'],
                                             'client_id' => ['type' => 'integer', 'example' => 12],
-                                            'video_url' => ['type' => 'string', 'format' => 'uri', 'example' => 'https://storage.nume.app/video.mp4'],
+                                            'video_id' => ['type' => 'integer', 'example' => 345, 'description' => 'Vídeo de uma produção do cliente'],
+                                            'video_url' => ['type' => 'string', 'format' => 'uri', 'example' => 'https://storage.exemplo.com/video.mp4', 'description' => 'Só para vídeo sem arquivo hospedado na NUME (https)'],
+                                            'scheduled_at' => ['type' => 'string', 'format' => 'date-time'],
                                             'title' => ['type' => 'string', 'example' => '3 Segredos para Escalar seu Negócio #viral'],
                                             'platforms' => [
                                                 'type' => 'array',
@@ -140,8 +142,11 @@ class DocumentationController extends Controller
                             ],
                         ],
                         'responses' => [
-                            '201' => ['description' => 'Publicação enfileirada e disparada'],
+                            '201' => ['description' => 'Publicações criadas (uma por rede nativa); data.publications e data.requires_portal'],
+                            '402' => ['description' => 'Saldo do pacote em aberto: arquivo hospedado bloqueado'],
                             '403' => ['description' => 'Limite de quota excedido'],
+                            '404' => ['description' => 'Cliente ou vídeo não encontrado'],
+                            '422' => ['description' => 'Vídeo sem arquivo hospedado e sem video_url'],
                         ],
                     ],
                 ],

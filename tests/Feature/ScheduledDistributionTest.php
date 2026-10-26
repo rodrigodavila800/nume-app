@@ -136,6 +136,7 @@ class ScheduledDistributionTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->plainToken)
             ->postJson('/api/v1/social/publish', [
                 'email' => $this->cliente->email,
+                'video_id' => $this->video->id,
                 'video_url' => $this->video->video_url,
                 'title' => 'Post via API Agendado',
                 'platforms' => ['youtube', 'instagram'],
@@ -143,8 +144,8 @@ class ScheduledDistributionTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        $response->assertJsonPath('data.status', 'agendado');
-        $this->assertNotNull($response->json('data.scheduled_at'));
+        $response->assertJsonPath('data.publications.0.status', 'agendado');
+        $this->assertNotNull($response->json('data.publications.0.scheduled_at'));
 
         $this->assertDatabaseHas('video_publications', [
             'tenant_id' => $this->tenant->id,
