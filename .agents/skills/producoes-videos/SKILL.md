@@ -12,12 +12,18 @@ description: Conhecimento do módulo Produções, Roteiros e Vídeos — Pipelin
 ## 1. Dicionário de Dados
 
 ### `productions`
-- `id`, `tenant_id`, `uuid`, `cliente_id`, `pack_purchase_id`, `created_by`, `title`, `description`, `status` (`planning`, `scripting`, `approved`, `in_production`, `review`, `completed`), `target_publication_date`, `seo_keywords`.
+- `id`, `tenant_id`, `uuid`, `cliente_id`, `pack_purchase_id`, `created_by`, `title`, `description`, `video_type_id` (nullable), `status` (`planning`, `scripting`, `approved`, `in_production`, `review`, `completed`), `target_publication_date`, `seo_keywords`.
 - Route Key: `uuid`.
 
 ### `roteiros`
-- `id`, `tenant_id`, `uuid`, `production_id`, `created_by`, `approved_by` (staff), `approved_by_cliente_id` (cliente), `content`, `status` (`draft`, `submitted`, `approved`, `rejected`, `in_production`), `rejection_reason`, `submitted_at`, `approved_at`.
+- `id`, `tenant_id`, `uuid`, `production_id`, `video_type_id` (nullable), `created_by`, `approved_by` (staff), `approved_by_cliente_id` (cliente), `content`, `structure` (json: cópia do tipo de vídeo usado), `status` (`draft`, `submitted`, `approved`, `rejected`, `in_production`), `rejection_reason`, `submitted_at`, `approved_at`.
 - Route Key: `uuid`.
+- `structure` só muda quando o `video_type_id` do roteiro muda. Excluir o tipo zera o `video_type_id` (nullOnDelete), mas a estrutura gravada fica.
+
+### `video_types` (catálogo por produtora, `BelongsToTenant`)
+- `id`, `tenant_id`, `name`, `slug` (único por tenant), `description`, `duration_seconds`, `blocks` (json: `key`, `name`, `start`, `end`, `purpose`; de 1 a `VideoType::MAX_BLOCKS`), `sofi_guidance`, `is_active`, `sort_order`.
+- Cadastro em Configurações > Tipos de vídeo (`VideoTypeController`, `VideoTypePolicy`: editor vê, admin altera). Os blocos são validados e normalizados por `VideoTypeCatalog::normalizeBlocks()`.
+- `VideoTypeCatalog::active($tenantId)` cria o tipo padrão "Vendas (30 s)" quando o tenant não tem nenhum. Em fila ou comando, passe o tenant explicitamente.
 
 ### `videos`
 - `id`, `tenant_id`, `production_id`, `title`, `description`, `video_url`, `thumbnail_url`, `duration_seconds`, `status` (`pending`, `ready`, `published`), `platform` (`youtube`, `instagram`, `tiktok`, `other`), `platform_video_id`, `published_at`, `sofi_seo_title`, `sofi_seo_description`, `sofi_hashtags` (array), `sofi_seo_keywords`, `sofi_seo_generated_at`.

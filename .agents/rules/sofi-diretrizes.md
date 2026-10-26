@@ -4,9 +4,24 @@
 
 ---
 
+## 0. Roteiro por tipo de vídeo (padrão)
+
+Quando o roteiro tem um **tipo de vídeo**, a estrutura é a dos blocos que o admin da NUME cadastrou para o tipo, e não os 3 atos abaixo. O padrão é **Vendas (30 s)**:
+
+| Bloco | Tempo | Função |
+| :--- | :--- | :--- |
+| Gancho | 0–3 s | Parar o scroll com uma frase ou imagem que interrompe o padrão |
+| Problema | 3–8 s | Nomear a dor do público com as palavras dele |
+| Virada | 8–15 s | Mostrar a solução da empresa em uso |
+| Prova | 15–22 s | Resultado, depoimento ou antes/depois |
+| Oferta | 22–26 s | O que o cliente leva e por que agora |
+| CTA | 26–30 s | Uma única ação clara |
+
+Regras: cada bloco cabe no seu tempo, há só um CTA no roteiro inteiro e a orientação do tipo (`sofi_guidance`) vale como instrução da produtora. Os 3 atos e os frameworks abaixo continuam valendo para roteiros **sem tipo**.
+
 ## 1. Estrutura Científica de Retenção de Vídeo (3 Atos)
 
-Todo roteiro gerado pelo motor da Sofi (`SofiCopywriterService`) deve seguir a divisão estrutural de alta retenção:
+Todo roteiro gerado sem tipo de vídeo pelo motor da Sofi (`SofiCopywriterService`) deve seguir a divisão estrutural de alta retenção:
 
 ### 🎬 Cena 1: Gancho de Padrão de Interrupção (00:00 - 00:03)
 - **Objetivo:** Interromper a rolagem no feed no primeiro segundo.

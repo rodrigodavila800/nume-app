@@ -22,6 +22,7 @@ Registro das decisões do dono do produto. Atualizar quando mudar.
 | 26/10/2026 | CRM | **Da NUME e das produtoras** (módulo por tenant); inclui o **suporte** (gestão de demandas) | Funil + origem do lead + histórico; demandas ligadas ao cliente |
 | 26/10/2026 | Tipos de vídeo | **Cadastrados pelo admin da NUME**; cada tipo define seus blocos e duração | Catálogo por tenant; roteiro guarda o tipo; Sofi monta pelo tipo |
 | 26/10/2026 | Anúncios | **Serviço**: a NUME cria a mídia; o cliente paga a verba direto à plataforma de anúncios; orçamento do anúncio → aprovação → fatura | Sem API de anúncios por ora; item de anúncio no orçamento |
+| 26/10/2026 | Calculadora de orçamento | **A calculadora recebe a solicitação do cliente** (quantidade de vídeos, tipo de vídeo, plano) para calcular o orçamento e seguir o fluxo | Fase D: a solicitação do portal vira a entrada da `QuoteCalculatorService`; o tipo de vídeo já existe como entrada |
 | 26/10/2026 | Chat do portal | Vira **suporte** (porta de entrada das demandas do CRM), sem sugerir roteiros | Chat de vendas da vitrine continua como está |
 
 ## Pendente com o analista
