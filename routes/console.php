@@ -17,5 +17,8 @@ Schedule::command('approvals:check-pending --hours=48')->hourly()->withoutOverla
 // Expiração automática de transferências bancárias vencidas (executa a cada hora)
 Schedule::command('packs:expire-bank-transfers')->hourly()->withoutOverlapping();
 
+// Arquivo final sai da hospedagem depois de postado (só com link de entrega no Drive)
+Schedule::command('videos:purge-posted')->hourly()->withoutOverlapping();
+
 // Saúde das contas conectadas pelo app próprio (renova tokens e marca as revogadas para reconexão)
 Schedule::command('social:refresh-tokens')->dailyAt('04:15')->withoutOverlapping();

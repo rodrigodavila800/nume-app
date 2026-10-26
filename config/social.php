@@ -80,6 +80,9 @@ return [
     // Pinterest também: o pin precisa de uma pasta escolhida pelo cliente.
     'composer_platforms' => ['tiktok', 'pinterest'],
 
+    // Horas depois da última publicação para apagar o arquivo da hospedagem (videos:purge-posted).
+    'purge_after_hours' => (int) env('SOCIAL_PURGE_AFTER_HOURS', 24),
+
     // Leitura de perfil e posts recentes das contas conectadas, para o DNA da marca.
     // Só redes cuja conexão já dá leitura: TikTok e LinkedIn não têm escopo de leitura,
     // e no X a leitura é cobrada por chamada (fica de fora).
