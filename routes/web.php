@@ -80,6 +80,11 @@ Route::get('/vitrine/{tenant:slug}/transferencia-bancaria/{purchase}', [Storefro
 // Rotas autenticadas - apenas para usuários logados
 Route::middleware('auth')->group(function () {
 
+    // Sofi Translator: só para a equipe logada (cada texto fora do dicionário é uma chamada paga ao modelo)
+    Route::post('/sofi/translate', [TranslationController::class, 'translate'])
+        ->middleware('throttle:30,1')
+        ->name('sofi.translate');
+
     Route::get('/dashboard', function () {
         return redirect()->route('productions.index');
     })->name('dashboard');
@@ -276,8 +281,6 @@ Route::post('/webhooks/upload-post', [UploadPostWebhookController::class, 'handl
 Route::get('/pagamento/redsys/sucesso', [StorefrontController::class, 'redsysSuccess'])->name('redsys.success');
 Route::get('/pagamento/redsys/cancelado', [StorefrontController::class, 'redsysCancel'])->name('redsys.cancel');
 
-// API Sofi Translator (Motor Próprio de Tradução)
-Route::post('/api/v1/translate', [TranslationController::class, 'translate'])->name('api.translate');
 
 
 // Magic Links de Aprovação Sem Senha (Zero Friction) - Assinatura Criptográfica HMAC SHA-256

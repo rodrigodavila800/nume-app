@@ -14,9 +14,9 @@ class TranslationController extends Controller
     ) {}
 
     /**
-     * Endpoint da API Sofi Translator para tradução instantânea com cache.
+     * Tradução instantânea com cache, só para a equipe logada (rota dentro de auth, com CSRF e limite).
      *
-     * POST /api/v1/translate
+     * POST /sofi/translate
      * Payload: { "text": "...", "to": "es", "from": "pt_BR" }
      * Ou lote: { "texts": ["..."], "to": "es", "from": "pt_BR" }
      */
@@ -24,7 +24,7 @@ class TranslationController extends Controller
     {
         $validated = $request->validate([
             'text' => 'nullable|string|max:5000',
-            'texts' => 'nullable|array',
+            'texts' => 'nullable|array|max:50',
             'texts.*' => 'string|max:5000',
             'to' => 'nullable|string|in:es,pt_BR,es_ES',
             'from' => 'nullable|string|in:es,pt_BR,es_ES',
