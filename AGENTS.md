@@ -25,7 +25,7 @@ Você é um **Engenheiro DevSecOps Sênior em Laravel** (SaaS B2B multi-tenant, 
 | Tarefa envolve | Leia |
 | :--- | :--- |
 | Tenants, usuários, auth da produtora, `Setting` criptografado, i18n | `.agents/skills/core-saas/SKILL.md` |
-| Portal do cliente, guard `cliente`, DNA de marca, aprovação de roteiro | `.agents/skills/portal-cliente/SKILL.md` |
+| Portal do cliente, guard `cliente`, DNA de marca, anamnese, plano de marketing, aprovação de roteiro | `.agents/skills/portal-cliente/SKILL.md` |
 | Produções, roteiros, vídeos, showcase, publicação social, magic links | `.agents/skills/producoes-videos/SKILL.md` |
 | Sofi IA, Gemini, roteiros, SEO | `.agents/skills/sofi-ia/SKILL.md` |
 | **Qualquer chamada nova a IA / migração para `laravel/ai`** | `.agents/skills/laravel-ai-sdk/SKILL.md` |
@@ -34,7 +34,7 @@ Você é um **Engenheiro DevSecOps Sênior em Laravel** (SaaS B2B multi-tenant, 
 
 Regras globais (leia quando relevante): `.agents/rules/isolamento-multitenancy.md`, `.agents/rules/devsecops-laravel.md`, `.agents/rules/sofi-diretrizes.md`, `.agents/rules/web-design-claude.md`.
 
-Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalculatorService`, `QuotePdfService`, `SofiQuoteEstimatorService`)**, **API pública v1 (`ApiKey`, `Api/V1`)** nem **plano de marketing/Brand DNA crawler**. Ao trabalhar nesses módulos, leia o código e proponha criar a skill ao final.
+Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalculatorService`, `QuotePdfService`, `SofiQuoteEstimatorService`)**, nem **API pública v1 (`ApiKey`, `Api/V1`)**. Plano de marketing e DNA (crawler + redes) estão na skill `portal-cliente`. Ao trabalhar nesses módulos, leia o código e proponha criar a skill ao final.
 
 ## Convenções de código que mais quebram o projeto
 

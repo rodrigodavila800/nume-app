@@ -57,6 +57,12 @@ Quando recebe um `VideoType`, a Sofi **ignora o `$framework`** e escreve um text
 
 ---
 
+### Plano de marketing (`SofiMarketingPlanAgent`)
+
+`MarketingPlanGeneratorService` chama o `App\Ai\Agents\SofiMarketingPlanAgent` (SDK, saída estruturada, `RecordAiUsage` por tenant) quando `SofiProvider::options()` devolve provedor. Isso não depende de `SOFI_USE_AI_SDK`, porque não há caminho antigo.
+- As regras ficam em `instructions()`. O prompt (`planPrompt()`) traz DNA, anamnese, redes e o pedido de ajuste, cada um entre `<<< >>>`, como dado não confiável.
+- Item inválido ou faltando é completado pelo heurístico (`generateEditorialItemsForWeeks`). Testes usam `SofiMarketingPlanAgent::fake([...])->preventStrayPrompts()`.
+
 ## 2. Injeção Dinâmica do DNA da Marca
 
 Quando um objeto `Cliente` é passado, o serviço extrai automaticamente os atributos e os incorpora no roteiro:

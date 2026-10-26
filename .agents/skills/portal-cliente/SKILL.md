@@ -63,7 +63,23 @@ Se `hasCompletedBrandProfile()` retornar `false`, o middleware redireciona para 
 
 ---
 
-## 5. Regras Específicas
+## 5. Fluxo DNA → anamnese → plano aprovado → roteiro
+
+Ordem definida pelo analista (26/10/2026): o cliente só chega a roteiro depois de aprovar o plano.
+
+1. **DNA da marca** (`portal.profile.*`): `SofiBrandAnalystService::analyze()` lê o site (`BrandDnaCrawlerService`) e as redes conectadas (`App\Services\SocialInsights\SocialInsightsReader`).
+   - O leitor usa só os escopos que a conexão já tem: YouTube, Instagram, Facebook, Threads e Pinterest (`config('social.insights')`). TikTok e LinkedIn não têm escopo de leitura; o X fica de fora porque a leitura é cobrada.
+   - Leitura nunca marca a conexão como expirada (isso derrubaria a publicação). Rede que falha vira `status: unavailable`.
+   - O resultado fica em `brand_study['social_insights']`; no prompt entra por `SocialInsightsReader::promptBlock()`, entre `<<< >>>`, como dado não confiável.
+2. **Anamnese** (`portal.anamnesis.edit/update`): perguntas, validação e texto para o prompt em `App\Support\Anamnesis`. Grava `clientes.anamnesis` (json, com `version`) e `anamnesis_completed_at` via `forceFill`. A frequência define os vídeos do mês (`Anamnesis::monthlyVideos()`).
+3. **Plano** (`portal.marketing-plan.*`): sem anamnese, redireciona para ela.
+   - O plano nasce como `draft` (`MarketingPlan::STATUS_DRAFT`), gerado pelo `SofiMarketingPlanAgent` (SDK, saída estruturada) com DNA + anamnese + redes. Sem provedor ou em falha, entra o motor heurístico.
+   - A saída da IA é validada item a item em `MarketingPlanGeneratorService::normalizeAiItem()`: as semanas vêm do servidor, e funil, formato, hashtags e tipo de vídeo são conferidos. Cada item recebe um `video_type_id` ativo do tenant.
+   - O cliente aprova (`approveBy`) ou pede ajuste (`adjustment_request`, até 1000 caracteres, que vai ao prompt como dado e refaz o plano em rascunho).
+   - Plano aprovado não é refeito pela reanálise do DNA, e o ajuste é recusado.
+4. **Produção:** só item de plano aprovado vira produção (`convertToProduction`). A produção e o roteiro levam o tipo de vídeo do item e a cópia da estrutura.
+
+## 6. Regras Específicas
 
 - Clientes nunca acessam painéis internos da produtora (`/productions`, `/billing`, `/admin`).
 - Toda ação no portal valida automaticamente se o recurso pertence ao `tenant_id` e ao `cliente_id` autenticado.

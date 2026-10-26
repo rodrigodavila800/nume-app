@@ -20,6 +20,12 @@ description: Conhecimento do módulo Produções, Roteiros e Vídeos — Pipelin
 - Route Key: `uuid`.
 - `structure` só muda quando o `video_type_id` do roteiro muda. Excluir o tipo zera o `video_type_id` (nullOnDelete), mas a estrutura gravada fica.
 
+### Trava do roteiro (plano aprovado)
+- `App\Services\Roteiros\RoteiroPlanGate`: um roteiro só nasce se o cliente da produção tiver um `MarketingPlan` com status `approved`. Vale para `RoteiroController@store`, `generateSofiScript` e `BatchContentPlannerController@commit`.
+- O admin (`RoteiroPolicy::createWithoutPlan`) pode criar sem plano, com justificativa de pelo menos 10 caracteres. Ela fica em `roteiros.plan_override_reason` e `plan_override_by` (gravados por `forceFill`, fora do `$fillable`).
+- Regenerar pela Sofi um roteiro que já existe continua liberado, porque a criação já passou pela trava.
+- Tenant explícito em `clienteHasApprovedPlan($tenantId, $clienteId)`: funciona fora de request autenticado.
+
 ### `video_types` (catálogo por produtora, `BelongsToTenant`)
 - `id`, `tenant_id`, `name`, `slug` (único por tenant), `description`, `duration_seconds`, `blocks` (json: `key`, `name`, `start`, `end`, `purpose`; de 1 a `VideoType::MAX_BLOCKS`), `sofi_guidance`, `is_active`, `sort_order`.
 - Cadastro em Configurações > Tipos de vídeo (`VideoTypeController`, `VideoTypePolicy`: editor vê, admin altera). Os blocos são validados e normalizados por `VideoTypeCatalog::normalizeBlocks()`.
