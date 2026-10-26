@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
@@ -27,5 +28,9 @@ abstract class TestCase extends BaseTestCase
                 'Rode `php artisan optimize:clear` (cache de config ativo) e tente de novo. Nenhum dado foi alterado.'
             );
         }
+
+        // Testes nunca saem para a rede: toda chamada HTTP precisa de Http::fake(). Uma chamada real
+        // gasta cota de API paga, depende da internet e deixa a suíte lenta e instável.
+        Http::preventStrayRequests();
     }
 }
