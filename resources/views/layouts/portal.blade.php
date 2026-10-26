@@ -67,7 +67,7 @@
                         {{ __('DNA da Marca') }}
                     </a>
                     <a href="{{ route('portal.marketing-plan.index') }}" 
-                       class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition {{ request()->routeIs('portal.marketing-plan*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                       class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition {{ request()->routeIs('portal.marketing-plan*', 'portal.anamnesis*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         {{ __('Grade Editorial') }}
                     </a>
@@ -165,7 +165,7 @@
                     {{ __('DNA da Marca & Redes') }}
                 </a>
                 <a href="{{ route('portal.marketing-plan.index') }}" 
-                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('portal.marketing-plan*') ? 'bg-orange-50 text-orange-700' : 'text-zinc-700 hover:bg-zinc-100' }}">
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('portal.marketing-plan*', 'portal.anamnesis*') ? 'bg-orange-50 text-orange-700' : 'text-zinc-700 hover:bg-zinc-100' }}">
                     <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     {{ __('Grade Editorial & Plano') }}
                 </a>

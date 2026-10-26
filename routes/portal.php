@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\SofiChatController;
 use App\Http\Controllers\Auth\GooglePortalController;
+use App\Http\Controllers\Portal\AnamnesisController;
 use App\Http\Controllers\Portal\AuthenticatedSessionController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\MarketingPlanController;
@@ -58,6 +59,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
             Route::get('roteiros/{roteiro}', [RoteiroController::class, 'show'])->name('roteiros.show');
             Route::post('roteiros/{roteiro}/approve', [RoteiroController::class, 'approve'])->name('roteiros.approve');
             Route::post('roteiros/{roteiro}/reject', [RoteiroController::class, 'reject'])->name('roteiros.reject');
+
+            // Anamnese: base do plano de marketing
+            Route::get('anamnese', [AnamnesisController::class, 'edit'])->name('anamnesis.edit');
+            Route::put('anamnese', [AnamnesisController::class, 'update'])->name('anamnesis.update');
 
             // Grade Editorial & Plano de Marketing Sofi IA
             Route::get('marketing-plan', [MarketingPlanController::class, 'index'])->name('marketing-plan.index');

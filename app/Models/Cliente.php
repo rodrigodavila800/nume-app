@@ -51,7 +51,17 @@ class Cliente extends Authenticatable
             'password' => 'hashed',
             'brand_study' => 'array',
             'brand_study_generated_at' => 'datetime',
+            'anamnesis' => 'array',
+            'anamnesis_completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Anamnese respondida (gravada só pelo AnamnesisController, via forceFill).
+     */
+    public function hasCompletedAnamnesis(): bool
+    {
+        return $this->anamnesis_completed_at !== null && ! empty($this->anamnesis);
     }
 
     /**
