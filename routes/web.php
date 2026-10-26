@@ -32,6 +32,7 @@ use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\StripeConnectController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\VideoTypeController;
 use App\Http\Controllers\Webhooks\RedsysWebhookController;
 use App\Http\Controllers\Webhooks\UploadPostWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -226,6 +227,14 @@ Route::middleware('auth')->group(function () {
         ->name('batch_planner.commit');
 
     // Gestão de Chaves de API para Desenvolvedores (B2B API)
+    // Tipos de vídeo (estrutura dos roteiros da Sofi), cadastrados pelo admin
+    Route::patch('/configuracoes/tipos-de-video/{videoType}/ativo', [VideoTypeController::class, 'toggle'])
+        ->name('video_types.toggle');
+    Route::resource('/configuracoes/tipos-de-video', VideoTypeController::class)
+        ->parameters(['tipos-de-video' => 'videoType'])
+        ->names('video_types')
+        ->except('show');
+
     Route::get('/configuracoes/api-keys', [ApiKeyController::class, 'index'])
         ->name('api_keys.index');
     Route::post('/configuracoes/api-keys', [ApiKeyController::class, 'store'])
