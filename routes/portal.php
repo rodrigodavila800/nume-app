@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\SofiChatController;
 use App\Http\Controllers\Auth\GooglePortalController;
 use App\Http\Controllers\Portal\AnamnesisController;
 use App\Http\Controllers\Portal\BillingProfileController;
+use App\Http\Controllers\Portal\SupportController;
 use App\Http\Controllers\Portal\AuthenticatedSessionController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\MarketingPlanController;
@@ -52,6 +53,13 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::post('profile/analyze-dna', [ProfileController::class, 'analyzeDna'])->name('profile.analyze-dna');
+
+        // Suporte (chamados do cliente; a equipe responde pelo CRM)
+        Route::get('suporte', [SupportController::class, 'index'])->name('support.index');
+        Route::get('suporte/novo', [SupportController::class, 'create'])->name('support.create');
+        Route::post('suporte', [SupportController::class, 'store'])->middleware('throttle:10,60')->name('support.store');
+        Route::get('suporte/{ticket}', [SupportController::class, 'show'])->whereNumber('ticket')->name('support.show');
+        Route::post('suporte/{ticket}/responder', [SupportController::class, 'reply'])->whereNumber('ticket')->middleware('throttle:30,60')->name('support.reply');
 
         // Dados de faturação (criptografados)
         Route::get('faturacao', [BillingProfileController::class, 'edit'])->name('billing.edit');

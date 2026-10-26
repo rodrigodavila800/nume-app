@@ -91,6 +91,10 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         {{ __('Orçamentos') }}
                     </a>
+                    <a href="{{ route('portal.support.index') }}"
+                       class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition {{ request()->routeIs('portal.support*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        🛟 {{ __('Suporte') }}
+                    </a>
                 </nav>
 
                 <!-- Área Direita: Idioma + Perfil + Logout -->
@@ -188,6 +192,10 @@
                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('portal.quotes*') ? 'bg-orange-50 text-orange-700' : 'text-zinc-700 hover:bg-zinc-100' }}">
                     <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     {{ __('Orçamentos & Propostas') }}
+                </a>
+                <a href="{{ route('portal.support.index') }}"
+                   class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('portal.support*') ? 'bg-orange-50 text-orange-700' : 'text-zinc-700 hover:bg-zinc-100' }}">
+                    🛟 {{ __('Suporte') }}
                 </a>
                 
                 <div class="pt-3 mt-2 border-t border-zinc-100 flex items-center justify-between px-3.5">

@@ -89,7 +89,7 @@
                 </div>
 
                 @php
-                    $isCatalogoActive = request()->routeIs(['clientes*', 'crm*', 'packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*']);
+                    $isCatalogoActive = request()->routeIs(['clientes*', 'crm*', 'support*', 'packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*']);
                     $isFinanceiroActive = request()->routeIs(['billing*', 'admin.invoices*', 'admin.subscriptions*', 'stripe-connect*', 'quotes*']);
                     $isSettingsActive = request()->routeIs(['admin.settings*', 'api_keys*', 'video_types*']);
                 @endphp
@@ -144,6 +144,11 @@
                            class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('crm*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
                             <span>📈</span>
                             <span class="sidebar-text">{{ __('CRM · Funil') }}</span>
+                        </a>
+                        <a href="{{ route('support.index') }}"
+                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('support*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <span>🛟</span>
+                            <span class="sidebar-text">{{ __('Suporte') }}</span>
                         </a>
                     </div>
                 </div>

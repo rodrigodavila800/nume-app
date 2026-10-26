@@ -33,7 +33,7 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                     </div>
                     <p class="text-[11px] text-zinc-400 font-medium">
-                        {{ __('Consultora Audiovisual & Roteirista') }}
+                        {{ __('Suporte NUME') }}
                     </p>
                 </div>
             </div>
@@ -56,22 +56,22 @@
                         {{ __('Olá') }} <strong>{{ auth('cliente')->user()?->name ?? 'Cliente' }}</strong>! 👋
                     </p>
                     <p class="mt-1">
-                        {{ __('Sou a Sofi, sua consultora audiovisual na NUME. Posso sugerir ganchos visuais para seus vídeos, ajustar roteiros ou tirar dúvidas de produção. Em que posso te ajudar hoje?') }}
+                        {{ __('Sou a Sofi, do suporte da NUME. Tiro dúvidas sobre o portal, suas produções, faturas e redes. Se precisar da equipe, abro um chamado para você.') }}
                     </p>
                 </div>
             </div>
 
             <!-- Sugestões de Atalhos Rápidos -->
             <div id="sofi-quick-chips" class="pt-2 flex flex-wrap gap-1.5">
-                <button type="button" onclick="sendQuickPrompt('{{ __('Como criar um gancho de 3 segundos para reter clientes?') }}')" class="text-[11px] font-semibold bg-white border border-orange-200 text-orange-800 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg transition">
-                    ⚡ {{ __('Gancho 0-3s') }}
-                </button>
                 <button type="button" onclick="sendQuickPrompt('{{ __('Qual o status da minha produção e prazos de entrega?') }}')" class="text-[11px] font-semibold bg-white border border-orange-200 text-orange-800 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg transition">
                     🎥 {{ __('Status e Prazos') }}
                 </button>
-                <button type="button" onclick="sendQuickPrompt('{{ __('Quero refinar o público-alvo dos meus roteiros.') }}')" class="text-[11px] font-semibold bg-white border border-orange-200 text-orange-800 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg transition">
-                    🎯 {{ __('Público-Alvo') }}
+                <button type="button" onclick="sendQuickPrompt('{{ __('Tenho uma dúvida sobre fatura ou pagamento.') }}')" class="text-[11px] font-semibold bg-white border border-orange-200 text-orange-800 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg transition">
+                    🧾 {{ __('Faturas') }}
                 </button>
+                <a href="{{ route('portal.support.create', ['origem' => 'chat']) }}" class="text-[11px] font-semibold bg-orange-600 text-white hover:bg-orange-500 px-2.5 py-1.5 rounded-lg transition">
+                    🛟 {{ __('Abrir chamado') }}
+                </a>
             </div>
 
         </div>

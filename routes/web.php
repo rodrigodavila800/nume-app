@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\BatchContentPlannerController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CategoryController;
@@ -239,6 +240,12 @@ Route::middleware('auth')->group(function () {
     // CRM: funil de leads, ficha e histórico
     Route::post('/crm/leads/{lead}/etapa', [LeadController::class, 'moveStage'])->whereNumber('lead')->name('crm.leads.stage');
     Route::post('/crm/leads/{lead}/historico', [LeadController::class, 'addActivity'])->whereNumber('lead')->name('crm.leads.activity');
+    // Suporte (dentro do CRM)
+    Route::get('/crm/suporte', [SupportTicketController::class, 'index'])->name('support.index');
+    Route::get('/crm/suporte/{ticket}', [SupportTicketController::class, 'show'])->whereNumber('ticket')->name('support.show');
+    Route::post('/crm/suporte/{ticket}/responder', [SupportTicketController::class, 'reply'])->whereNumber('ticket')->name('support.reply');
+    Route::patch('/crm/suporte/{ticket}', [SupportTicketController::class, 'update'])->whereNumber('ticket')->name('support.update');
+
     Route::resource('/crm/leads', LeadController::class)
         ->parameters(['leads' => 'lead'])
         ->names('crm.leads')
