@@ -80,6 +80,15 @@ return [
     // Pinterest também: o pin precisa de uma pasta escolhida pelo cliente.
     'composer_platforms' => ['tiktok', 'pinterest'],
 
+    // Leitura de perfil e posts recentes das contas conectadas, para o DNA da marca.
+    // Só redes cuja conexão já dá leitura: TikTok e LinkedIn não têm escopo de leitura,
+    // e no X a leitura é cobrada por chamada (fica de fora).
+    'insights' => [
+        'platforms' => ['youtube', 'instagram', 'facebook', 'threads', 'pinterest'],
+        'posts_per_account' => 8,
+        'timeout' => 10,
+    ],
+
     // Conectores OAuth do portal (chave usada na rota /portal/redes-sociais/conectar/{chave}).
     'connectors' => [
         'youtube' => YouTubeConnector::class,

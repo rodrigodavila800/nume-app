@@ -87,7 +87,7 @@
                         @endif
                     </div>
                     <p class="text-xs text-zinc-500 mt-0.5">
-                        {{ __('A Sofi faz o rastreamento do seu site oficial e extrai serviços reais, diferenciais e dores para gerar roteiros e sua grade editorial com precisão cirúrgica.') }}
+                        {{ __('A Sofi lê o seu site e as redes que você conectou (perfil e posts recentes) e extrai serviços, diferenciais, dores e o que já funciona no seu conteúdo.') }}
                     </p>
                 </div>
             </div>
@@ -178,6 +178,28 @@
                                         <p class="text-[11px] text-zinc-500 mt-0.5 line-clamp-2">{{ $pFocus }}</p>
                                     @endif
                                 </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if (! empty($study['social_insights']['accounts']))
+                    <!-- Redes lidas pela Sofi -->
+                    <div class="space-y-2">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">{{ __('Redes analisadas') }}</span>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($study['social_insights']['accounts'] as $account)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border {{ ($account['status'] ?? '') === 'ok' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-zinc-50 text-zinc-500 border-zinc-200' }}">
+                                    <span class="font-bold">{{ ucfirst($account['platform']) }}</span>
+                                    @if (($account['status'] ?? '') === 'ok')
+                                        @isset($account['followers'])
+                                            <span>{{ number_format($account['followers'], 0, ',', '.') }} {{ __('seguidores') }}</span>
+                                        @endisset
+                                        <span>· {{ trans_choice(':count post lido|:count posts lidos', count($account['posts'] ?? []), ['count' => count($account['posts'] ?? [])]) }}</span>
+                                    @else
+                                        <span>{{ __('leitura indisponível agora') }}</span>
+                                    @endif
+                                </span>
                             @endforeach
                         </div>
                     </div>

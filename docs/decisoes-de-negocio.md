@@ -18,7 +18,8 @@ Registro das decisões do dono do produto. Atualizar quando mudar.
 | 26/10/2026 | Modelo de clientes | Hoje a NUME é a única produtora e usa a própria plataforma; os clientes são **empresas** que compram vídeo | Tenant `nume`; recursos de produtora valem para a NUME |
 | 26/10/2026 | Proteção de dados | **Só Espanha por enquanto: RGPD + LOPDGDD** (sem LGPD, não vende para o Brasil) | Textos legais citam RGPD/LOPDGDD e AEPD; e-mail comercial segue a LSSI-CE (validar com jurídico) |
 | 26/10/2026 | Vídeo após postar | O arquivo final **é apagado da hospedagem depois de postado** | Apagar só quando não houver publicação pendente/agendada/em andamento; cópia de entrega fica no link (Drive) |
-| 26/10/2026 | Limite de postagens | **Mensal, por plano**; valores a definir | Mecanismo configurável por plano; unidade de contagem a confirmar |
+| 26/10/2026 | Limite de postagens | **Mensal, por plano**; valores a definir. Conta **envios** (várias redes no mesmo envio = 1) | Campo no plano/pacote/orçamento; sem valor = sem limite |
+| 26/10/2026 | Redes liberadas | O admin da NUME libera **quantas redes** cada cliente pode usar (o cliente escolhe quais conectar), conforme o plano, pacote ou orçamento contratado | Campo "redes liberadas" no plano/pacote/orçamento, copiado para o cliente na compra; ajuste manual na ficha do cliente prevalece; o portal bloqueia a conexão além do limite |
 | 26/10/2026 | CRM | **Da NUME e das produtoras** (módulo por tenant); inclui o **suporte** (gestão de demandas) | Funil + origem do lead + histórico; demandas ligadas ao cliente |
 | 26/10/2026 | Tipos de vídeo | **Cadastrados pelo admin da NUME**; cada tipo define seus blocos e duração | Catálogo por tenant; roteiro guarda o tipo; Sofi monta pelo tipo |
 | 26/10/2026 | Anúncios | **Serviço**: a NUME cria a mídia; o cliente paga a verba direto à plataforma de anúncios; orçamento do anúncio → aprovação → fatura | Sem API de anúncios por ora; item de anúncio no orçamento |
@@ -28,9 +29,7 @@ Registro das decisões do dono do produto. Atualizar quando mudar.
 ## Pendente com o analista
 - Quem sobe o arquivo aprovado no Drive para a plataforma? (equipe manualmente ou integração com o Drive)
 - O cliente recebe o arquivo final antes ou depois de quitar o saldo? (hoje: download e publicação só após quitação)
-- O limite mensal conta **envios** (várias redes = 1) ou **posts por rede**?
-- A fatura do anúncio inclui a verba ou só o serviço da NUME? (recomendado: só o serviço)
-- O cliente poderá criar e editar roteiro manualmente? (hoje só a equipe)
+- Padrões adotados em 26/10 até o analista dizer o contrário: fatura do anúncio só com o serviço da NUME (verba paga direto à plataforma); a equipe sobe o arquivo final (o Drive é só link); arquivo final liberado depois de quitar o saldo; o cliente não cria nem edita roteiro (aprova ou pede ajuste); o arquivo só é apagado se houver link de entrega; Notion fora por agora.
 
 ## Pendente com a gestoria
 - A retenção de IRPF se aplica a clientes particulares? (hoje: nunca retém para particular)
