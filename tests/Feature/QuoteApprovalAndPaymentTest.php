@@ -192,11 +192,21 @@ class QuoteApprovalAndPaymentTest extends TestCase
         $this->assertEquals('pending_billing', $purchase->platform_fee_status);
         $this->assertEquals(200.00, (float) $purchase->application_fee_amount); // 10% do subtotal 2000
         $this->assertNotNull($purchase->bank_transfer_reference);
+        $this->assertSame(2, $purchase->video_quantity, 'a cota vem dos vídeos do orçamento, não 1 fixo');
 
         // Cliente foi automaticamente provisionado para o tenant
         $cliente = Cliente::where('tenant_id', $this->tenant->id)->where('email', 'financeiro@techcorp.es')->first();
         $this->assertNotNull($cliente);
         $this->assertEquals($cliente->id, $purchase->cliente_id);
+    }
+
+    public function test_quote_without_a_valid_video_count_falls_back_to_one_video(): void
+    {
+        $this->quote->update(['inputs' => ['videos' => 0, 'prazo' => 15]]);
+
+        $this->post("/orcamento/{$this->quote->approval_token}/aprovar", ['payment_method' => 'bank_transfer'])->assertRedirect();
+
+        $this->assertSame(1, PackPurchase::where('quote_id', $this->quote->id)->sole()->video_quantity);
     }
 
     public function test_approval_via_redsys_card_creates_purchase_and_renders_signed_form(): void

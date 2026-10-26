@@ -138,7 +138,8 @@ class QuoteApprovalController extends Controller
             'payment_gateway' => $method,
             'application_fee_amount' => $applicationFee,
             'platform_fee_status' => $platformFeeStatus,
-            'video_quantity' => 1,
+            // Quantidade de vídeos do próprio orçamento: vira a cota do cliente e aparece na fatura.
+            'video_quantity' => max(1, (int) ($quote->inputs['videos'] ?? 1)),
         ]);
 
         return match ($method) {
