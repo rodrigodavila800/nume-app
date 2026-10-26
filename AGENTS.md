@@ -30,11 +30,12 @@ Você é um **Engenheiro DevSecOps Sênior em Laravel** (SaaS B2B multi-tenant, 
 | Sofi IA, Gemini, roteiros, SEO | `.agents/skills/sofi-ia/SKILL.md` |
 | **Qualquer chamada nova a IA / migração para `laravel/ai`** | `.agents/skills/laravel-ai-sdk/SKILL.md` |
 | Stripe, Redsys, Bizum, IVA, packs, faturas | `.agents/skills/financeiro-stripe/SKILL.md` |
+| Orçamentos, calculadora, anúncios, aprovação pública, dados de faturação | `.agents/skills/orcamentos/SKILL.md` |
 | Métricas, `TelemetryService`, Sofi Data Feed | `.agents/skills/analytics-telemetria/SKILL.md` |
 
 Regras globais (leia quando relevante): `.agents/rules/isolamento-multitenancy.md`, `.agents/rules/devsecops-laravel.md`, `.agents/rules/sofi-diretrizes.md`, `.agents/rules/web-design-claude.md`.
 
-Lacuna conhecida: ainda não há skill para **orçamentos (`Quote`, `QuoteCalculatorService`, `QuotePdfService`, `SofiQuoteEstimatorService`)**, nem **API pública v1 (`ApiKey`, `Api/V1`)**. Plano de marketing e DNA (crawler + redes) estão na skill `portal-cliente`. Ao trabalhar nesses módulos, leia o código e proponha criar a skill ao final.
+Lacuna conhecida: ainda não há skill para a **API pública v1 (`ApiKey`, `Api/V1`)**. Plano de marketing e DNA (crawler + redes) estão na skill `portal-cliente`. Ao trabalhar nesses módulos, leia o código e proponha criar a skill ao final.
 
 ## Convenções de código que mais quebram o projeto
 
