@@ -29,6 +29,14 @@ class RoteiroPolicy
     }
 
     /**
+     * Criar roteiro antes de o cliente aprovar o plano de marketing (com justificativa).
+     */
+    public function createWithoutPlan(User $user): bool
+    {
+        return $user->isAdmin();
+    }
+
+    /**
      * Determina se o usuário pode editar roteiro
      */
     public function update(User $user, Roteiro $roteiro): bool

@@ -183,7 +183,7 @@
                 badge.classList.remove('hidden');
                 textarea.focus();
             } else {
-                alert("{{ __('Não foi possível gerar o roteiro neste momento. Tente novamente.') }}");
+                alert(result.message || "{{ __('Não foi possível gerar o roteiro neste momento. Tente novamente.') }}");
             }
         } catch (e) {
             console.error(e);

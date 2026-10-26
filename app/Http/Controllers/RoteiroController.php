@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Production;
 use App\Models\Roteiro;
 use App\Models\VideoType;
+use App\Services\Roteiros\RoteiroPlanGate;
 use App\Services\VideoTypes\VideoTypeCatalog;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -17,7 +18,8 @@ class RoteiroController extends Controller
 {
     public function __construct(
         protected SofiCopywriterService $copywriterService,
-        protected VideoTypeCatalog $videoTypes
+        protected VideoTypeCatalog $videoTypes,
+        protected RoteiroPlanGate $planGate
     ) {}
 
     /**
@@ -53,6 +55,17 @@ class RoteiroController extends Controller
         $this->authorize('view', $production);
 
         $request->validate(['video_type_id' => 'nullable|integer']);
+
+        // Roteiro só depois do plano aprovado (admin pode gerar para liberar com justificativa ao salvar).
+        // Produção que já tem roteiro passou pela trava: regenerar na edição continua liberado.
+        if (! $this->planGate->clienteHasApprovedPlan($production->tenant_id, $production->cliente_id)
+            && ! $request->user()->can('createWithoutPlan', Roteiro::class)
+            && ! $production->roteiros()->exists()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => __('O cliente ainda não aprovou o plano de marketing. Só um admin pode criar roteiro antes disso.'),
+            ], 422);
+        }
 
         $framework = $request->input('framework', 'pattern_interrupt');
         $tone = $request->input('tone', 'persuasive');
@@ -100,8 +113,9 @@ class RoteiroController extends Controller
         $this->authorize('view', $production);
 
         $videoTypes = $this->videoTypes->active($production->tenant_id);
+        $planApproved = $this->planGate->clienteHasApprovedPlan($production->tenant_id, $production->cliente_id);
 
-        return view('roteiros.create', compact('production', 'videoTypes'));
+        return view('roteiros.create', compact('production', 'videoTypes', 'planApproved'));
     }
 
     /**
@@ -115,16 +129,19 @@ class RoteiroController extends Controller
         $validated = $request->validate([
             'content' => 'required|string|min:50',
             'video_type_id' => 'nullable|integer',
+            'plan_override_reason' => 'nullable|string|max:1000',
         ]);
 
+        $override = $this->planGate->authorizeCreation($production->tenant_id, $production->cliente_id, $request->user(), $validated['plan_override_reason'] ?? null);
         $videoType = $this->resolveVideoType($validated['video_type_id'] ?? null, $production);
 
-        $roteiro = $production->roteiros()->create([
+        $roteiro = $production->roteiros()->make([
             'content' => $validated['content'],
             'video_type_id' => $videoType?->id,
             'structure' => $videoType?->snapshot(),
             'created_by' => auth()->id(),
         ]);
+        $roteiro->forceFill($override)->save();
 
         $this->adoptTypeOnProduction($production, $videoType);
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\Production;
 use App\Models\Roteiro;
+use App\Services\Roteiros\RoteiroPlanGate;
 use App\Services\SofiCopywriterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,8 +17,10 @@ class BatchContentPlannerController extends Controller
     /**
      * Exibe a interface do Sofi Batch Content Planner.
      */
-    public function index(Request $request): View
+    public function index(Request $request, RoteiroPlanGate $planGate): View
     {
+        $this->authorize('viewAny', Roteiro::class);
+
         $tenantId = auth()->user()->tenant_id;
 
         $clientes = Cliente::withoutGlobalScopes()
@@ -32,13 +35,15 @@ class BatchContentPlannerController extends Controller
 
         $generatedPlan = session('generated_plan', []);
         $planMeta = session('plan_meta', []);
+        $planApproved = empty($planMeta['cliente_id']) || $planGate->clienteHasApprovedPlan($tenantId, (int) $planMeta['cliente_id']);
 
         return view('batch_planner.index', compact(
             'clientes',
             'selectedCliente',
             'selectedClienteId',
             'generatedPlan',
-            'planMeta'
+            'planMeta',
+            'planApproved'
         ));
     }
 
@@ -47,6 +52,8 @@ class BatchContentPlannerController extends Controller
      */
     public function generate(Request $request, SofiCopywriterService $sofiService): RedirectResponse
     {
+        $this->authorize('create', Roteiro::class);
+
         $tenantId = auth()->user()->tenant_id;
 
         $validated = $request->validate([
@@ -84,27 +91,33 @@ class BatchContentPlannerController extends Controller
     /**
      * Grava em lote as Produções e Roteiros gerados no banco de dados.
      */
-    public function commit(Request $request): RedirectResponse
+    public function commit(Request $request, RoteiroPlanGate $planGate): RedirectResponse
     {
+        $this->authorize('create', Roteiro::class);
+
         $tenantId = auth()->user()->tenant_id;
         $userId = auth()->id();
 
         $validated = $request->validate([
             'cliente_id' => 'required|exists:clientes,id',
-            'items' => 'required|array|min:1',
+            'items' => 'required|array|min:1|max:12',
             'items.*.title' => 'required|string|max:255',
             'items.*.description' => 'nullable|string|max:1000',
-            'items.*.script_content' => 'required|string',
+            'items.*.script_content' => 'required|string|max:20000',
             'items.*.suggested_date' => 'required|date',
+            'plan_override_reason' => 'nullable|string|max:1000',
         ]);
 
         $cliente = Cliente::withoutGlobalScopes()
             ->where('tenant_id', $tenantId)
             ->findOrFail($validated['cliente_id']);
 
+        // Roteiro só depois do plano aprovado; admin libera com justificativa (gravada em cada roteiro).
+        $override = $planGate->authorizeCreation($tenantId, $cliente->id, $request->user(), $validated['plan_override_reason'] ?? null);
+
         $createdCount = 0;
 
-        DB::transaction(function () use ($validated, $tenantId, $userId, $cliente, &$createdCount) {
+        DB::transaction(function () use ($validated, $tenantId, $userId, $cliente, $override, &$createdCount) {
             foreach ($validated['items'] as $itemData) {
                 // 1. Cria a Production
                 $production = Production::create([
@@ -118,14 +131,14 @@ class BatchContentPlannerController extends Controller
                 ]);
 
                 // 2. Cria o Roteiro associado pronto para aprovação
-                Roteiro::create([
+                (new Roteiro([
                     'tenant_id' => $tenantId,
                     'production_id' => $production->id,
                     'created_by' => $userId,
                     'content' => $itemData['script_content'],
                     'status' => 'submitted',
                     'submitted_at' => now(),
-                ]);
+                ]))->forceFill($override)->save();
 
                 $createdCount++;
             }

@@ -44,6 +44,7 @@ class BatchContentPlannerTest extends TestCase
             'name' => 'Staff Alpha',
             'email' => 'alpha@nume.test',
             'password' => bcrypt('secret123'),
+            'role' => 'editor',
         ]);
 
         $this->userB = User::create([
@@ -139,6 +140,10 @@ class BatchContentPlannerTest extends TestCase
                 ],
             ],
         ];
+
+        // Roteiro só depois do plano de marketing aprovado pelo cliente
+        \App\Models\MarketingPlan::create(['tenant_id' => $this->tenantA->id, 'cliente_id' => $this->clienteA->id, 'month_year' => now()->format('Y-m')])
+            ->approveBy($this->clienteA);
 
         $response = $this->actingAs($this->userA)->post(route('batch_planner.commit'), $payload);
 

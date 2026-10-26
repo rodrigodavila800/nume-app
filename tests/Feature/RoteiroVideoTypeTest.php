@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Cliente;
+use App\Models\MarketingPlan;
 use App\Models\Production;
 use App\Models\Roteiro;
 use App\Models\Tenant;
@@ -41,6 +42,8 @@ class RoteiroVideoTypeTest extends TestCase
             'title' => 'Pão de fermentação natural', 'description' => 'Mostrar o pão saindo do forno', 'status' => 'draft',
         ]);
         $this->sales = app(VideoTypeCatalog::class)->active($this->tenant->id)->first();
+        MarketingPlan::create(['tenant_id' => $this->tenant->id, 'cliente_id' => $cliente->id, 'month_year' => now()->format('Y-m')])
+            ->approveBy($cliente);
 
         config(['services.gemini.key' => 'chave-ficticia', 'services.gemini.model' => 'modelo-ficticio', 'services.gemini.fallback_models' => []]);
     }

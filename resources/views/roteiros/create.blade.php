@@ -88,6 +88,21 @@
         @csrf
         <input type="hidden" name="video_type_id" id="videoTypeId" value="{{ old('video_type_id', $production->video_type_id ?? $videoTypes->first()?->id) }}">
 
+        @unless($planApproved)
+            <div class="p-4 rounded-xl bg-amber-950/60 border border-amber-500/40 text-amber-200 text-xs space-y-3">
+                <p class="font-bold text-amber-300">{{ __('O cliente ainda não aprovou o plano de marketing') }}</p>
+                @can('createWithoutPlan', \App\Models\Roteiro::class)
+                    <p class="text-zinc-300">{{ __('Como admin, você pode criar o roteiro mesmo assim. A justificativa fica registrada no roteiro.') }}</p>
+                    <label for="plan_override_reason" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">{{ __('Justificativa') }} *</label>
+                    <textarea id="plan_override_reason" name="plan_override_reason" rows="2" maxlength="1000" required
+                              class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">{{ old('plan_override_reason') }}</textarea>
+                @else
+                    <p class="text-zinc-300">{{ __('Peça ao cliente para aprovar o plano no portal, ou fale com um admin da produtora.') }}</p>
+                @endcan
+                @error('plan_override_reason') <p class="text-rose-400">{{ $message }}</p> @enderror
+            </div>
+        @endunless
+
         <div class="space-y-1.5">
             <div class="flex items-center justify-between">
                 <label for="content" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
@@ -153,7 +168,7 @@
                 badge.classList.remove('hidden');
                 textarea.focus();
             } else {
-                alert("{{ __('Não foi possível gerar o roteiro neste momento. Tente novamente.') }}");
+                alert(result.message || "{{ __('Não foi possível gerar o roteiro neste momento. Tente novamente.') }}");
             }
         } catch (e) {
             console.error(e);

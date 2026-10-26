@@ -172,6 +172,20 @@
                         <input type="hidden" name="items[{{ $idx }}][suggested_date]" value="{{ $item['suggested_date'] }}">
                     @endforeach
 
+                    @unless($planApproved)
+                        <div class="mb-3 p-3 rounded-xl bg-amber-950/60 border border-amber-500/40 text-amber-200 text-xs space-y-2">
+                            <p class="font-bold text-amber-300">{{ __('O cliente ainda não aprovou o plano de marketing') }}</p>
+                            @can('createWithoutPlan', \App\Models\Roteiro::class)
+                                <label for="plan_override_reason" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">{{ __('Justificativa') }} *</label>
+                                <textarea id="plan_override_reason" name="plan_override_reason" rows="2" maxlength="1000" required
+                                          class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500"></textarea>
+                            @else
+                                <p class="text-zinc-300">{{ __('Peça ao cliente para aprovar o plano no portal, ou fale com um admin da produtora.') }}</p>
+                            @endcan
+                        </div>
+                    @endunless
+                    @error('plan_override_reason') <p class="mb-2 text-xs text-rose-400">{{ $message }}</p> @enderror
+
                     <button type="submit"
                             class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition">
                         <span>🚀</span>
