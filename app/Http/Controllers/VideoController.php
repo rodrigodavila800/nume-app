@@ -205,6 +205,28 @@ class VideoController extends Controller
     }
 
     /**
+     * Links do Drive (revisão e entrega). Vale também para vídeo já publicado: o link de entrega
+     * é o que permite apagar o arquivo da hospedagem depois de postado.
+     */
+    public function updateLinks(Request $request, Production $production, Video $video): RedirectResponse
+    {
+        $this->authorize('update', $video);
+
+        $validated = $request->validate([
+            'review_url' => ['nullable', 'url:https', 'max:2048'],
+            'delivery_url' => ['nullable', 'url:https', 'max:2048'],
+        ]);
+
+        $video->update([
+            'review_url' => $validated['review_url'] ?? null,
+            'delivery_url' => $validated['delivery_url'] ?? null,
+        ]);
+
+        return redirect()->route('videos.show', [$production, $video])
+            ->with('success', __('Links do Drive atualizados.'));
+    }
+
+    /**
      * Marcar vídeo como pronto
      */
     public function markAsReady(Production $production, Video $video): RedirectResponse

@@ -299,6 +299,41 @@
         </div>
     </div>
 
+    <!-- Revisão e entrega pelo Drive -->
+    @can('update', $video)
+        <form action="{{ route('videos.links', [$production, $video]) }}" method="POST" class="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3">
+            @csrf
+            @method('PATCH')
+            <div>
+                <h3 class="text-sm font-extrabold text-white">{{ __('Revisão e entrega (Google Drive)') }}</h3>
+                <p class="text-xs text-zinc-400">
+                    {{ __('O cliente assiste pelo link de revisão e aprova aqui na plataforma. O link de entrega fica com o cliente depois de quitar o saldo e permite apagar o arquivo da hospedagem após postar.') }}
+                </p>
+                @if($video->source_purged_at)
+                    <p class="text-xs text-amber-300 mt-1">{{ __('Arquivo apagado da hospedagem em :date (após postado). A cópia fica no link de entrega.', ['date' => $video->source_purged_at->format('d/m/Y H:i')]) }}</p>
+                @endif
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label for="review_url" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Link de revisão') }}</label>
+                    <input id="review_url" name="review_url" type="url" maxlength="2048" value="{{ old('review_url', $video->review_url) }}" placeholder="https://drive.google.com/..."
+                           class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label for="delivery_url" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Link de entrega') }}</label>
+                    <input id="delivery_url" name="delivery_url" type="url" maxlength="2048" value="{{ old('delivery_url', $video->delivery_url) }}" placeholder="https://drive.google.com/..."
+                           class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            @if($errors->has('review_url') || $errors->has('delivery_url'))
+                <p class="text-xs text-rose-400">{{ $errors->first('review_url') ?: $errors->first('delivery_url') }}</p>
+            @endif
+            <div class="flex justify-end">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold border border-zinc-700 transition">{{ __('Salvar links') }}</button>
+            </div>
+        </form>
+    @endcan
+
     <!-- Sofi SEO Pack -->
     @if ($video->sofi_seo_title || $video->sofi_seo_description || !empty($video->sofi_hashtags))
         <div class="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-orange-950/20 border border-orange-500/20 space-y-4">

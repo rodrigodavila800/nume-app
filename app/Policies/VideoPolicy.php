@@ -33,8 +33,8 @@ class VideoPolicy
      */
     public function update(User $user, Video $video): bool
     {
-        return $user->tenant_id === $video->tenant_id && 
-               ($user->isAdmin() || $user->tenant_id === $video->tenant_id);
+        // Antes: "isAdmin() || mesmo tenant" liberava qualquer usuário do tenant, até viewer.
+        return $user->tenant_id === $video->tenant_id && $user->isEditor();
     }
 
     /**

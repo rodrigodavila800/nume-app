@@ -270,6 +270,8 @@ Route::middleware('auth')->group(function () {
             ->name('videos.distribute');
         Route::post('videos/{video}/notify-cliente', [VideoController::class, 'notifyCliente'])
             ->name('videos.notify-cliente');
+        Route::patch('videos/{video}/links', [VideoController::class, 'updateLinks'])
+            ->name('videos.links');
     });
 });
 

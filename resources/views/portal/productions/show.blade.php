@@ -175,6 +175,19 @@
                                 </span>
                             @endif
 
+                            @if($video->review_url && $video->status !== 'published')
+                                <a href="{{ $video->review_url }}" target="_blank" rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 transition">
+                                    ▶ {{ __('Assistir para revisar (Drive)') }} ↗
+                                </a>
+                            @endif
+                            @if($video->delivery_url && ! $isLocked)
+                                <a href="{{ $video->delivery_url }}" target="_blank" rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition">
+                                    📁 {{ __('Arquivo final (Drive)') }} ↗
+                                </a>
+                            @endif
+
                             @if($isLocked)
                                 <button type="button" onclick="openApproveModal({{ $video->id }})"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm transition active:scale-95">

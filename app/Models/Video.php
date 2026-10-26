@@ -22,6 +22,8 @@ class Video extends Model
         'title',
         'description',
         'video_url',
+        'review_url',
+        'delivery_url',
         'thumbnail_url',
         'source_disk',
         'source_path',
@@ -49,6 +51,7 @@ class Video extends Model
             'published_at'          => 'datetime',
             'sofi_hashtags'         => 'array',
             'sofi_seo_generated_at' => 'datetime',
+            'source_purged_at'      => 'datetime',
         ];
     }
 
