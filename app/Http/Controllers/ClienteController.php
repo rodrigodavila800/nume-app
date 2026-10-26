@@ -72,6 +72,18 @@ class ClienteController extends Controller
 
         $cliente->update($validated);
 
+        // Limites de publicação: só o admin da produtora ajusta (vazio = segue o contratado).
+        if ($request->user()->isAdmin()) {
+            $limits = $request->validate([
+                'social_networks_limit_override' => 'nullable|integer|min:1|max:8',
+                'monthly_post_limit_override' => 'nullable|integer|min:1|max:1000',
+            ]);
+            $cliente->forceFill([
+                'social_networks_limit_override' => $limits['social_networks_limit_override'] ?? null,
+                'monthly_post_limit_override' => $limits['monthly_post_limit_override'] ?? null,
+            ])->save();
+        }
+
         return redirect()->route('clientes.index')->with('success', 'Cliente atualizado com sucesso!');
     }
 

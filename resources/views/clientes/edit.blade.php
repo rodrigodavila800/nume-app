@@ -56,6 +56,38 @@
             </div>
         </div>
 
+        @if(auth()->user()->isAdmin())
+            @php $limits = app(\App\Services\SocialPublishing\PublishingLimits::class)->summary($cliente); @endphp
+            <div class="space-y-3 pt-4 border-t border-zinc-800">
+                <div>
+                    <h2 class="text-sm font-bold text-white">{{ __('Publicação nas redes (gestão da NUME)') }}</h2>
+                    <p class="text-xs text-zinc-500">
+                        {{ __('Hoje: :connected redes conectadas de :networks liberadas · :sends envios no mês de :monthly.', [
+                            'connected' => $limits['networks_connected'],
+                            'networks' => $limits['networks_limit'] ?? __('ilimitadas'),
+                            'sends' => $limits['sends_this_month'],
+                            'monthly' => $limits['monthly_limit'] ?? __('ilimitados'),
+                        ]) }}
+                        {{ __('Vazio = segue o plano, pacote ou orçamento contratado.') }}
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label for="social_networks_limit_override" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">{{ __('Redes liberadas (ajuste)') }}</label>
+                        <input type="number" id="social_networks_limit_override" name="social_networks_limit_override" min="1" max="8" placeholder="{{ __('Do contratado') }}"
+                               value="{{ old('social_networks_limit_override', $cliente->social_networks_limit_override) }}"
+                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label for="monthly_post_limit_override" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">{{ __('Envios por mês (ajuste)') }}</label>
+                        <input type="number" id="monthly_post_limit_override" name="monthly_post_limit_override" min="1" max="1000" placeholder="{{ __('Do contratado') }}"
+                               value="{{ old('monthly_post_limit_override', $cliente->monthly_post_limit_override) }}"
+                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500">
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="flex items-center gap-3 pt-4 border-t border-zinc-800">
             <button type="submit"
                     class="flex-1 sm:flex-initial bg-orange-600 hover:bg-orange-500 active:scale-[0.98] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg shadow-orange-900/20 transition-all">

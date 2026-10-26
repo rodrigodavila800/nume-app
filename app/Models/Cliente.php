@@ -65,6 +65,9 @@ class Cliente extends Authenticatable
             'billing_postal_code' => 'encrypted',
             'billing_city' => 'encrypted',
             'billing_updated_at' => 'datetime',
+            // Ajuste do admin da NUME (prevalece sobre plano/pacote/orçamento); null = segue o contratado
+            'social_networks_limit_override' => 'integer',
+            'monthly_post_limit_override' => 'integer',
         ];
     }
 

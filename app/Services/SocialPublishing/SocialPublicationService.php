@@ -23,6 +23,7 @@ class SocialPublicationService
     public function __construct(
         private readonly SocialPublisherRouter $router,
         private readonly SocialDistributionService $uploadPost,
+        private readonly PublishingLimits $limits,
     ) {}
 
     /**
@@ -30,6 +31,7 @@ class SocialPublicationService
      * @return array{publications: list<VideoPublication>, native: list<string>, upload_post: list<string>, composer: list<string>}
      *
      * @throws DomainException missing_video_url quando o Upload-Post precisaria de uma URL e não há
+     * @throws PublishingLimitException redes por envio ou envios do mês acima do plano
      */
     public function distribute(
         Cliente $cliente,
@@ -51,6 +53,12 @@ class SocialPublicationService
         // não saem daqui nem caem no Upload-Post; quem chamou manda o cliente para a tela da rede.
         $composer = array_values(array_intersect(array_keys($plan['native']), config('social.composer_platforms', [])));
         $plan['native'] = array_diff_key($plan['native'], array_flip($composer));
+
+        // Limites do plano (redes por envio e envios do mês) valem para portal, painel e API.
+        $sending = array_merge(array_keys($plan['native']), $plan['upload_post']);
+        if ($sending !== []) {
+            $this->limits->assertCanSend($cliente, $sending);
+        }
 
         $videoUrl = null;
         if ($plan['upload_post'] !== []) {
@@ -114,6 +122,8 @@ class SocialPublicationService
      */
     public function publishComposed(Cliente $cliente, Video $video, SocialConnection $connection, string $title, array $options): VideoPublication
     {
+        $this->limits->assertCanSend($cliente, [$connection->platform]);
+
         $publication = VideoPublication::create([
             'tenant_id' => $cliente->tenant_id,
             'cliente_id' => $cliente->id,

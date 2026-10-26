@@ -46,6 +46,7 @@ class QuoteRequestService
         $defaults = $this->calculator->getDefaults($tenant);
         $inputs = array_merge($defaults, array_intersect_key($reading['pedido'] ?? [], array_flip(['pre', 'gravacao', 'motion', 'filmmakers', 'drone'])));
         $inputs['videos'] = $data['videos'];
+        $inputs['redes'] = $data['social_networks'];
         $inputs['edicao'] = round($data['videos'] * $this->editHoursPerVideo($videoType, $defaults), 2);
 
         $calc = $this->calculator->calculate($inputs);

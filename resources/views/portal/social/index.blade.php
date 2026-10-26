@@ -47,6 +47,14 @@
             <p class="text-xs sm:text-sm text-zinc-600 mt-1 max-w-2xl">
                 {{ __('Conecte suas contas corporativas uma única vez de forma 100% segura. Os vídeos aprovados na esteira da NUME são publicados instantaneamente nos seus perfis com o Sofi SEO Pack.') }}
             </p>
+            <p class="text-xs font-semibold text-zinc-700 mt-2 flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 rounded-lg bg-zinc-100 border border-zinc-200">
+                    📲 {{ __('Redes: :connected de :limit', ['connected' => $limits['networks_connected'], 'limit' => $limits['networks_limit'] ?? __('ilimitadas')]) }}
+                </span>
+                <span class="px-2.5 py-1 rounded-lg bg-zinc-100 border border-zinc-200">
+                    🚀 {{ __('Envios no mês: :used de :limit', ['used' => $limits['sends_this_month'], 'limit' => $limits['monthly_limit'] ?? __('ilimitados')]) }}
+                </span>
+            </p>
         </div>
 
         <!-- Ações do Cabeçalho -->

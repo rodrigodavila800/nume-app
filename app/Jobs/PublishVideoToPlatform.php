@@ -24,6 +24,9 @@ class PublishVideoToPlatform implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
+    /** Definido no construtor: tempo do upload + folga (o worker usa este valor). */
+    public int $timeout;
+
     public function __construct(public readonly int $publicationId, public readonly int $tenantId)
     {
         // Conexão própria (config/queue.php): retry_after maior que o envio, para não duplicar vídeo.

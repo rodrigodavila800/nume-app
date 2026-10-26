@@ -420,6 +420,8 @@ class QuoteController extends Controller
             'inputs.extras' => 'nullable|array',
             'inputs.extras.*.nome' => 'nullable|string|max:255',
             'inputs.extras.*.valor' => 'nullable|numeric|min:0',
+            'inputs.redes' => 'nullable|integer|min:1|max:8',
+            'inputs.envios_mes' => 'nullable|integer|min:1|max:1000',
         ]);
     }
 }

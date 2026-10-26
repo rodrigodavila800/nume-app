@@ -175,6 +175,8 @@
                        class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-orange-500">
             </div>
 
+            @include('packs._publishing_limits', ['limitsModel' => null])
+
             <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
                     {{ __('Preço Base') }} <span class="text-orange-500">*</span>

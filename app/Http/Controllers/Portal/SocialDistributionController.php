@@ -56,7 +56,9 @@ class SocialDistributionController extends Controller
             }
         }
 
-        return view('portal.social.index', compact('cliente', 'profile', 'publications', 'platforms', 'connections', 'connectedPlatforms', 'nativeAvailable'));
+        $limits = app(\App\Services\SocialPublishing\PublishingLimits::class)->summary($cliente);
+
+        return view('portal.social.index', compact('cliente', 'profile', 'publications', 'platforms', 'connections', 'connectedPlatforms', 'nativeAvailable', 'limits'));
     }
 
     /**

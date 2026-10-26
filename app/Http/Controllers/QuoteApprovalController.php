@@ -172,6 +172,9 @@ class QuoteApprovalController extends Controller
             // Quantidade de vídeos do próprio orçamento: vira a cota do cliente e aparece na fatura.
             // Orçamento de anúncios é serviço (criativos e gestão): não gera cota de vídeos.
             'video_quantity' => $quote->isAds() ? 0 : max(1, (int) ($quote->inputs['videos'] ?? 1)),
+            // Redes e envios/mês liberados pelo orçamento (null = segue outro contrato ou sem limite)
+            'social_networks_limit' => $quote->isAds() ? null : ($quote->inputs['redes'] ?? null),
+            'monthly_post_limit' => $quote->isAds() ? null : ($quote->inputs['envios_mes'] ?? null),
             ...BillingProfile::purchaseAttributes($cliente),
         ]);
 

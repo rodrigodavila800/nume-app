@@ -72,4 +72,14 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->with('warning', __('Sua sessão expirou por inatividade. O formulário foi atualizado, por favor tente novamente.'));
             }
         });
+
+        // Limites do plano (redes liberadas / envios do mês): mensagem pronta para a tela ou API.
+        $exceptions->render(function (\App\Services\SocialPublishing\PublishingLimitException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Limit Reached', 'reason' => $e->reason, 'message' => $e->getMessage()], 403);
+            }
+
+            return redirect()->back(fallback: $request->is('portal/*') ? route('portal.social.index') : route('dashboard'))
+                ->with('error', $e->getMessage());
+        });
     })->create();

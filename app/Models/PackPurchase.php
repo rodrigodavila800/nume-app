@@ -53,6 +53,8 @@ class PackPurchase extends Model
         'subscription_renews_at',
         'subscription_ends_at',
         'video_quantity',
+        'social_networks_limit',
+        'monthly_post_limit',
         'videos_used',
         'addons_purchased',
         'addons_snapshot',

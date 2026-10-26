@@ -23,6 +23,8 @@ class Pack extends Model
         'features',
         'addons',
         'video_quantity',
+        'social_networks_limit',
+        'monthly_post_limit',
         'price',
         'vat_rate',
         'currency',

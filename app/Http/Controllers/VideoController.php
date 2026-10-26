@@ -327,6 +327,8 @@ class VideoController extends Controller
                 ]);
 
             return redirect()->back()->with('success', $msg.$tiktokNote);
+        } catch (\App\Services\SocialPublishing\PublishingLimitException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         } catch (\DomainException $e) {
             return redirect()->back()->with('error', __('O vídeo não possui uma URL válida para envio às redes sociais.'));
         } catch (\Throwable $e) {

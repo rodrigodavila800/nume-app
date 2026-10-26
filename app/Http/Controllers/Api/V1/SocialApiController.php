@@ -9,6 +9,8 @@ use App\Models\Cliente;
 use App\Models\Tenant;
 use App\Models\Video;
 use App\Models\VideoPublication;
+use App\Services\SocialPublishing\PublishingLimitException;
+use App\Services\SocialPublishing\PublishingLimits;
 use App\Services\SocialPublishing\SocialPublicationService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
@@ -109,6 +111,8 @@ class SocialApiController extends Controller
                     'remaining_quota' => $cliente->getRemainingDistributionQuota(),
                     'used_count' => $cliente->getDistributionsUsedCount(),
                 ],
+                // Liberados pelo admin da NUME (null = sem limite)
+                'limits' => app(PublishingLimits::class)->summary($cliente),
             ],
         ]);
     }
@@ -189,6 +193,8 @@ class SocialApiController extends Controller
                 scheduledAt: $scheduledAt,
                 linkUrl: $video->hasSourceFile() ? null : ($validated['video_url'] ?? null),
             );
+        } catch (PublishingLimitException $e) {
+            return response()->json(['error' => 'Limit Reached', 'reason' => $e->reason, 'message' => $e->getMessage()], 403);
         } catch (DomainException $e) {
             return response()->json(['error' => 'Unprocessable', 'message' => 'Vídeo sem arquivo hospedado: envie video_url (https) para este vídeo.', 'reason' => $e->getMessage()], 422);
         }

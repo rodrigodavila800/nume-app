@@ -7,6 +7,7 @@ use App\Models\SocialConnection;
 use App\Services\SocialPublishing\Connectors\ConnectorRegistry;
 use App\Services\SocialPublishing\Connectors\SocialConnector;
 use App\Services\SocialPublishing\OAuth\OAuthException;
+use App\Services\SocialPublishing\PublishingLimits;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,13 +20,22 @@ class SocialConnectionController extends Controller
 {
     public function __construct(private readonly ConnectorRegistry $connectors) {}
 
-    public function redirect(Request $request, string $platform): RedirectResponse
+    public function redirect(Request $request, string $platform, PublishingLimits $limits): RedirectResponse
     {
         $connector = $this->connector($platform);
 
         if (! $connector->isConfigured()) {
             return redirect()->route('portal.social.index')
                 ->with('error', __('A conexão direta com esta rede ainda não está disponível. Fale com a sua produtora.'));
+        }
+
+        // Quantidade de redes liberada pelo admin da NUME conforme o plano (a Meta conecta Página + Instagram).
+        $platforms = $platform === 'meta' ? ['facebook', 'instagram'] : [$platform];
+        if (! $limits->canConnect(auth('cliente')->user(), $platforms)) {
+            return redirect()->route('portal.social.index')
+                ->with('error', __('Seu plano libera :count redes conectadas. Desconecte uma ou fale com a NUME para liberar mais.', [
+                    'count' => $limits->networksLimit(auth('cliente')->user()),
+                ]));
         }
 
         return redirect()->away($connector->start(auth('cliente')->user(), $request->session()));

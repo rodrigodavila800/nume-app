@@ -220,6 +220,18 @@
                         </div>
 
                         <div>
+                            <label for="quote-redes" class="block text-[11px] text-zinc-400 mb-1">{{ __('Redes liberadas') }}</label>
+                            <input id="quote-redes" name="inputs[redes]" type="number" min="1" max="8" step="1" placeholder="{{ __('Sem limite') }}"
+                                   class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500 font-mono">
+                        </div>
+
+                        <div>
+                            <label for="quote-envios" class="block text-[11px] text-zinc-400 mb-1">{{ __('Envios por mês') }}</label>
+                            <input id="quote-envios" name="inputs[envios_mes]" type="number" min="1" max="1000" step="1" placeholder="{{ __('Sem limite') }}"
+                                   class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500 font-mono">
+                        </div>
+
+                        <div>
                             <label class="block text-[11px] text-zinc-400 mb-1">{{ __('Valor unitário por vídeo (€ opcional)') }}</label>
                             <input id="valor_unit" name="inputs[valor_unit]" type="number" min="0" step="10" placeholder="0" value="0"
                                    class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500 font-mono">

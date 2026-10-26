@@ -123,6 +123,8 @@
                 @error('video_quantity') <p class="text-rose-400 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
+            @include('packs._publishing_limits', ['limitsModel' => null])
+
             <div class="space-y-1.5">
                 <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
                     {{ __('Valor Recorrente (€)') }} <span class="text-orange-500">*</span>

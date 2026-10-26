@@ -132,6 +132,9 @@ class QuoteCalculatorService
                 'cambios' => $cambios,
                 'prazo' => $prazo,
                 'extras' => $extras,
+                // Publicação liberada pelo orçamento (vai para a compra); null = sem limite
+                'redes' => isset($inputs['redes']) && $inputs['redes'] !== '' ? max(1, min(8, (int) $inputs['redes'])) : null,
+                'envios_mes' => isset($inputs['envios_mes']) && $inputs['envios_mes'] !== '' ? max(1, min(1000, (int) $inputs['envios_mes'])) : null,
             ],
             'horas' => $horas,
             'h_grav' => $hGrav,
