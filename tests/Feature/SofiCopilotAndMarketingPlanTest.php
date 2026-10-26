@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\MarketingPlan;
 use App\Models\SofiConversation;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\BrandDnaCrawlerService;
 use App\Services\MarketingPlanGeneratorService;
 use App\Services\SofiCopilotChatService;
@@ -155,6 +156,7 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
 
     public function test_client_can_convert_marketing_plan_item_to_production(): void
     {
+        $staff = User::create(['tenant_id' => $this->tenant->id, 'name' => 'Equipe Real', 'email' => 'equipe@nume-hub.test', 'password' => 'secret12345', 'role' => 'admin']);
         $planGenerator = app(MarketingPlanGeneratorService::class);
         $plan = $planGenerator->generate($this->cliente, 4);
         $item = $plan->items()->first();
@@ -179,8 +181,22 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
         $roteiro = $production->roteiros()->first();
         $this->assertNotNull($roteiro);
         $this->assertStringContainsString('CENA 1', $roteiro->content);
+        $this->assertSame($staff->id, $production->created_by);
 
         $response->assertRedirect(route('portal.productions.show', $production));
+    }
+
+    public function test_converting_without_a_team_never_creates_a_user_with_a_known_password(): void
+    {
+        $item = app(MarketingPlanGeneratorService::class)->generate($this->cliente, 4)->items()->first();
+
+        $this->actingAs($this->cliente, 'cliente')
+            ->post(route('portal.marketing-plan.convert-item', $item))
+            ->assertRedirect(route('portal.marketing-plan.index'))
+            ->assertSessionHas('error');
+
+        $this->assertSame(0, User::withoutGlobalScopes()->count());
+        $this->assertNull($item->fresh()->production_id);
     }
 
     public function test_idor_protection_prevents_converting_other_clients_plan_item(): void

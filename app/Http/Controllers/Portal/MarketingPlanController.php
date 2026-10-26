@@ -127,16 +127,12 @@ class MarketingPlanController extends Controller
                 ->with('status', __('Este vídeo já está em produção na esteira!'));
         }
 
-        // Localiza ou provisiona o usuário gestor do tenant para figurar como criador da esteira
-        $tenantUser = $cliente->tenant->users()->first();
+        // Responsável da produtora que figura como criador da produção (de preferência um admin).
+        // Nunca criamos usuário aqui: uma conta da equipe só nasce no cadastro da produtora.
+        $tenantUser = $cliente->tenant->users()->orderByRaw("role = 'admin' desc")->orderBy('id')->first();
         if (! $tenantUser) {
-            $tenantUser = \App\Models\User::create([
-                'tenant_id' => $cliente->tenant_id,
-                'name' => 'Equipe ' . $cliente->tenant->name,
-                'email' => 'staff.' . ($cliente->tenant->slug ?: 'prod') . '@numecreative.com',
-                'password' => bcrypt('StaffSecurePass2026!'),
-                'role' => 'admin',
-            ]);
+            return redirect()->route('portal.marketing-plan.index')
+                ->with('error', __('A produtora ainda não tem equipe cadastrada para receber este vídeo. Fale com a sua produtora.'));
         }
 
         // 1. Cria a Production no banco
