@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Production;
 use App\Models\Roteiro;
+use App\Models\VideoType;
+use App\Services\VideoTypes\VideoTypeCatalog;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -13,8 +16,34 @@ use Illuminate\Http\JsonResponse;
 class RoteiroController extends Controller
 {
     public function __construct(
-        protected SofiCopywriterService $copywriterService
+        protected SofiCopywriterService $copywriterService,
+        protected VideoTypeCatalog $videoTypes
     ) {}
+
+    /**
+     * Tipo de vídeo ativo da produtora da produção. Vazio = sem tipo (frameworks clássicos da Sofi).
+     */
+    protected function resolveVideoType(mixed $id, Production $production): ?VideoType
+    {
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        $type = VideoType::forTenant($production->tenant_id)->active()->find((int) $id);
+
+        if (! $type) {
+            throw ValidationException::withMessages(['video_type_id' => __('Tipo de vídeo inválido ou inativo.')]);
+        }
+
+        return $type;
+    }
+
+    protected function adoptTypeOnProduction(Production $production, ?VideoType $videoType): void
+    {
+        if ($videoType && ! $production->video_type_id) {
+            $production->forceFill(['video_type_id' => $videoType->id])->save();
+        }
+    }
 
     /**
      * Gera roteiro estruturado com Sofi AI Copilot (/copywriter)
@@ -23,9 +52,12 @@ class RoteiroController extends Controller
     {
         $this->authorize('view', $production);
 
+        $request->validate(['video_type_id' => 'nullable|integer']);
+
         $framework = $request->input('framework', 'pattern_interrupt');
         $tone = $request->input('tone', 'persuasive');
         $language = $request->input('language', session('locale', 'pt_BR'));
+        $videoType = $this->resolveVideoType($request->input('video_type_id'), $production);
 
         $generated = $this->copywriterService->generate(
             title: $production->title,
@@ -34,7 +66,8 @@ class RoteiroController extends Controller
             framework: $framework,
             tone: $tone,
             language: $language,
-            cliente: $production->cliente
+            cliente: $production->cliente,
+            videoType: $videoType
         );
 
         return response()->json([
@@ -66,7 +99,9 @@ class RoteiroController extends Controller
         $this->authorize('create', Roteiro::class);
         $this->authorize('view', $production);
 
-        return view('roteiros.create', compact('production'));
+        $videoTypes = $this->videoTypes->active($production->tenant_id);
+
+        return view('roteiros.create', compact('production', 'videoTypes'));
     }
 
     /**
@@ -79,12 +114,19 @@ class RoteiroController extends Controller
 
         $validated = $request->validate([
             'content' => 'required|string|min:50',
+            'video_type_id' => 'nullable|integer',
         ]);
 
+        $videoType = $this->resolveVideoType($validated['video_type_id'] ?? null, $production);
+
         $roteiro = $production->roteiros()->create([
-            ...$validated,
+            'content' => $validated['content'],
+            'video_type_id' => $videoType?->id,
+            'structure' => $videoType?->snapshot(),
             'created_by' => auth()->id(),
         ]);
+
+        $this->adoptTypeOnProduction($production, $videoType);
 
         return redirect()->route('roteiros.show', [$production, $roteiro])
             ->with('success', 'Roteiro criado com sucesso!');
@@ -113,7 +155,12 @@ class RoteiroController extends Controller
                 ->with('error', __('Roteiros já aprovados ou em produção não podem ser editados diretamente.'));
         }
 
-        return view('roteiros.edit', compact('production', 'roteiro'));
+        $videoTypes = $this->videoTypes->active($production->tenant_id);
+        if ($roteiro->videoType && ! $videoTypes->contains('id', $roteiro->video_type_id)) {
+            $videoTypes->push($roteiro->videoType);
+        }
+
+        return view('roteiros.edit', compact('production', 'roteiro', 'videoTypes'));
     }
 
     /**
@@ -130,6 +177,7 @@ class RoteiroController extends Controller
 
         $validated = $request->validate([
             'content' => 'required|string|min:50',
+            'video_type_id' => 'nullable|integer',
         ]);
 
         if ($roteiro->status === 'rejected') {
@@ -138,6 +186,16 @@ class RoteiroController extends Controller
         }
 
         $roteiro->content = $validated['content'];
+
+        // Só troca a estrutura quando o tipo muda: manter o mesmo tipo preserva a cópia original,
+        // mesmo que o admin tenha editado ou desativado o tipo depois.
+        if (array_key_exists('video_type_id', $validated) && (int) $validated['video_type_id'] !== (int) $roteiro->video_type_id) {
+            $videoType = $this->resolveVideoType($validated['video_type_id'], $production);
+            $roteiro->video_type_id = $videoType?->id;
+            $roteiro->structure = $videoType?->snapshot();
+            $this->adoptTypeOnProduction($production, $videoType);
+        }
+
         $roteiro->save();
 
         return redirect()->route('roteiros.show', [$production, $roteiro])

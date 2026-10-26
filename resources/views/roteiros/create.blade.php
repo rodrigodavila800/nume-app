@@ -40,6 +40,8 @@
             <span class="text-[10px] font-mono text-zinc-500">Frameworks Meta / YouTube</span>
         </div>
 
+        @include('roteiros._video_type_select', ['selectedVideoType' => old('video_type_id', $production->video_type_id ?? $videoTypes->first()?->id)])
+
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="space-y-1">
                 <label for="sofiFramework" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">{{ __('Estrutura / Framework') }}</label>
@@ -84,6 +86,7 @@
     <!-- Form de Criação de Roteiro -->
     <form action="{{ route('roteiros.store', $production) }}" method="POST" class="p-6 sm:p-8 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-5">
         @csrf
+        <input type="hidden" name="video_type_id" id="videoTypeId" value="{{ old('video_type_id', $production->video_type_id ?? $videoTypes->first()?->id) }}">
 
         <div class="space-y-1.5">
             <div class="flex items-center justify-between">
@@ -125,6 +128,7 @@
         const framework = document.getElementById('sofiFramework').value;
         const tone = document.getElementById('sofiTone').value;
         const language = document.getElementById('sofiLanguage').value;
+        const video_type_id = document.getElementById('sofiVideoType').value || null;
 
         // UI Loading state
         btn.disabled = true;
@@ -139,7 +143,7 @@
                     "X-CSRF-TOKEN": "{{ csrf_token() }}",
                     "Accept": "application/json"
                 },
-                body: JSON.stringify({ framework, tone, language })
+                body: JSON.stringify({ framework, tone, language, video_type_id })
             });
 
             const result = await response.json();

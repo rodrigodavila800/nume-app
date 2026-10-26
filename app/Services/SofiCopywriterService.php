@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Cliente;
 use App\Models\Setting;
+use App\Models\VideoType;
 use App\Services\SofiMarketIntelligence;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +22,8 @@ class SofiCopywriterService
         string $framework = 'pattern_interrupt',
         string $tone = 'persuasive',
         string $language = 'pt_BR',
-        ?Cliente $cliente = null
+        ?Cliente $cliente = null,
+        ?VideoType $videoType = null
     ): array {
         $cleanTitle = trim($title);
         $cleanDesc = trim($description ?? 'Apresentação de solução e posicionamento de marca.');
@@ -46,6 +48,11 @@ class SofiCopywriterService
             'website' => $website,
             'brand_study' => $cliente?->brand_study,
         ];
+
+        // Tipo de vídeo cadastrado pelo admin: a estrutura vem dos blocos dele, não dos frameworks fixos.
+        if ($videoType) {
+            return $this->generateFromVideoType($videoType, $cleanTitle, $cleanDesc, $keywords, $tone, $isSpanish, $clientContext);
+        }
 
         // 1. Tenta geração profunda com Inteligência Artificial Sofi (Gemini 3.5 / 3.8)
         $aiResult = $this->generateViaAi($cleanTitle, $cleanDesc, $keywords, $framework, $tone, $isSpanish, $clientContext);
@@ -74,19 +81,9 @@ class SofiCopywriterService
         bool $isEs,
         array $ctx
     ): ?array {
-        $apiKey = config('services.gemini.key') 
-            ?: Setting::get('gemini_api_key') 
-            ?: env('GEMINI_API_KEY');
-
-        if (! $apiKey) {
+        if (! $this->geminiApiKey()) {
             return null;
         }
-
-        $primaryModel = config('services.gemini.model') 
-            ?: Setting::get('gemini_model') 
-            ?: env('GEMINI_MODEL', 'gemini-3.5-flash-lite');
-        $fallbackModels = config('services.gemini.fallback_models', ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash']);
-        $candidateModels = array_unique(array_filter([$primaryModel, ...$fallbackModels]));
 
         $langPrompt = $isEs 
             ? "El guión y todos los textos DEBEN estar en Español de España / Zaragoza (ej. 'vídeo', 'móvil', trato cercano y profesional)."
@@ -106,33 +103,7 @@ class SofiCopywriterService
         $marketTrends = SofiMarketIntelligence::getMarketTrends($isEs);
         $antiPatterns = SofiMarketIntelligence::getAntiPatterns($isEs);
 
-        $studyPrompt = '';
-        if (! empty($ctx['brand_study']) && is_array($ctx['brand_study'])) {
-            $study = $ctx['brand_study'];
-            $studyPrompt .= "DOSSIÊ ESTRATÉGICO DA MARCA & ANÁLISE DO SITE (SOFI IA):\n";
-            if (! empty($study['unique_value_proposition'])) {
-                $studyPrompt .= "- PROPOSTA ÚNICA DE VALOR (UVP): {$study['unique_value_proposition']}\n";
-            }
-            if (! empty($study['flagship_offerings'])) {
-                $offerings = is_array($study['flagship_offerings']) ? implode(', ', $study['flagship_offerings']) : $study['flagship_offerings'];
-                $studyPrompt .= "- PRODUTOS/SERVIÇOS EM DESTAQUE (SITE): {$offerings}\n";
-            }
-            if (! empty($study['target_audience_pains'])) {
-                $pains = is_array($study['target_audience_pains']) ? implode(' | ', $study['target_audience_pains']) : $study['target_audience_pains'];
-                $studyPrompt .= "- DORES MAPEADAS DO PÚBLICO: {$pains}\n";
-            }
-            if (! empty($study['content_pillars'])) {
-                $pillars = is_array($study['content_pillars']) 
-                    ? implode(', ', array_map(fn($p) => is_array($p) ? ($p['pillar'] ?? '') : $p, $study['content_pillars'])) 
-                    : $study['content_pillars'];
-                $studyPrompt .= "- PILARES DE CONTEÚDO: {$pillars}\n";
-            }
-            if (! empty($study['forbidden_words'])) {
-                $forbidden = is_array($study['forbidden_words']) ? implode(', ', $study['forbidden_words']) : $study['forbidden_words'];
-                $studyPrompt .= "- PALAVRAS/TERMOS PROIBIDOS OU A EVITAR: {$forbidden}\n";
-            }
-            $studyPrompt .= "\n";
-        }
+        $studyPrompt = $this->brandStudyPrompt($ctx);
 
         $prompt = "Você é a Sofi, Agente de IA especialista em roteiros cinematográficos de alta retenção (0-3s), SEO e algoritmos de vídeo para TikTok, Reels e YouTube Shorts da NUME Creative.\n"
                 . "Você NUNCA usa clichês amadores, nunca sugere técnicas mortas de marketing e sempre foca em métricas reais e retenção visual.\n\n"
@@ -168,6 +139,49 @@ class SofiCopywriterService
                 . '  "b_roll_suggestions": ["sugestão visual 1", "sugestão visual 2", "sugestão visual 3"]' . "\n"
                 . "}";
 
+        $data = $this->requestGeminiJson($prompt, fn (array $data) => ! empty($data['hook']) && ! empty($data['body']));
+        if ($data === null) {
+            return null;
+        }
+
+        $data['framework'] = $data['framework'] ?? $frameworkDesc;
+        $data['estimated_time'] = $data['estimated_time'] ?? '50-55s';
+        $data['client_niche'] = $data['client_niche'] ?? $ctx['niche'];
+        $data['full_script'] = $data['full_script'] ?? ($data['hook'] . "\n\n" . $data['body'] . "\n\n" . ($data['cta'] ?? ''));
+        $data['seo_title'] = $data['seo_title'] ?? $title;
+        $data['seo_description'] = $data['seo_description'] ?? $description;
+        $data['seo_hashtags'] = is_array($data['seo_hashtags'] ?? null) ? $data['seo_hashtags'] : ['#VideoMarketing', '#SaaS'];
+        $data['b_roll_suggestions'] = is_array($data['b_roll_suggestions'] ?? null) ? $data['b_roll_suggestions'] : [];
+
+        return $data;
+    }
+
+    protected function geminiApiKey(): ?string
+    {
+        return config('services.gemini.key')
+            ?: Setting::get('gemini_api_key')
+            ?: env('GEMINI_API_KEY');
+    }
+
+    /**
+     * Única chamada HTTP ao Gemini deste serviço: tenta os modelos em ordem e devolve o primeiro
+     * JSON que passar em $isValid. Falha de rede ou JSON inválido cai no próximo modelo; sem nenhum, null.
+     *
+     * @param  callable(array): bool  $isValid
+     */
+    protected function requestGeminiJson(string $prompt, callable $isValid): ?array
+    {
+        $apiKey = $this->geminiApiKey();
+        if (! $apiKey) {
+            return null;
+        }
+
+        $primaryModel = config('services.gemini.model')
+            ?: Setting::get('gemini_model')
+            ?: env('GEMINI_MODEL', 'gemini-3.5-flash-lite');
+        $fallbackModels = config('services.gemini.fallback_models', ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash']);
+        $candidateModels = array_unique(array_filter([$primaryModel, ...$fallbackModels]));
+
         foreach ($candidateModels as $model) {
             try {
                 $response = Http::timeout(25)->withHeaders(['x-goog-api-key' => $apiKey])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
@@ -190,20 +204,11 @@ class SofiCopywriterService
                     $jsonText = preg_replace('/\s*```$/', '', $jsonText);
 
                     $data = json_decode(trim($jsonText), true);
-                    if (is_array($data) && !empty($data['hook']) && !empty($data['body'])) {
-                        $data['framework'] = $data['framework'] ?? $frameworkDesc;
-                        $data['estimated_time'] = $data['estimated_time'] ?? '50-55s';
-                        $data['client_niche'] = $data['client_niche'] ?? $ctx['niche'];
-                        $data['full_script'] = $data['full_script'] ?? ($data['hook'] . "\n\n" . $data['body'] . "\n\n" . ($data['cta'] ?? ''));
-                        $data['seo_title'] = $data['seo_title'] ?? $title;
-                        $data['seo_description'] = $data['seo_description'] ?? $description;
-                        $data['seo_hashtags'] = is_array($data['seo_hashtags'] ?? null) ? $data['seo_hashtags'] : ['#VideoMarketing', '#SaaS'];
-                        $data['b_roll_suggestions'] = is_array($data['b_roll_suggestions'] ?? null) ? $data['b_roll_suggestions'] : [];
-
+                    if (is_array($data) && $isValid($data)) {
                         return $data;
                     }
                 } else {
-                    Log::warning("SofiCopywriterService AI response error with model {$model}: " . $response->body());
+                    Log::warning("SofiCopywriterService AI response error with model {$model}: HTTP " . $response->status());
                 }
             } catch (Exception $e) {
                 Log::warning("SofiCopywriterService AI error with model {$model}: " . get_class($e));
@@ -211,6 +216,180 @@ class SofiCopywriterService
         }
 
         return null;
+    }
+
+    /**
+     * Dossiê da marca (análise do site) para o prompt. É conteúdo de terceiros: vai como dado, não como ordem.
+     */
+    protected function brandStudyPrompt(array $ctx): string
+    {
+        if (empty($ctx['brand_study']) || ! is_array($ctx['brand_study'])) {
+            return '';
+        }
+
+        $study = $ctx['brand_study'];
+        $studyPrompt = "DOSSIÊ ESTRATÉGICO DA MARCA & ANÁLISE DO SITE (SOFI IA):\n";
+        if (! empty($study['unique_value_proposition'])) {
+            $studyPrompt .= "- PROPOSTA ÚNICA DE VALOR (UVP): {$study['unique_value_proposition']}\n";
+        }
+        if (! empty($study['flagship_offerings'])) {
+            $offerings = is_array($study['flagship_offerings']) ? implode(', ', $study['flagship_offerings']) : $study['flagship_offerings'];
+            $studyPrompt .= "- PRODUTOS/SERVIÇOS EM DESTAQUE (SITE): {$offerings}\n";
+        }
+        if (! empty($study['target_audience_pains'])) {
+            $pains = is_array($study['target_audience_pains']) ? implode(' | ', $study['target_audience_pains']) : $study['target_audience_pains'];
+            $studyPrompt .= "- DORES MAPEADAS DO PÚBLICO: {$pains}\n";
+        }
+        if (! empty($study['content_pillars'])) {
+            $pillars = is_array($study['content_pillars'])
+                ? implode(', ', array_map(fn ($p) => is_array($p) ? ($p['pillar'] ?? '') : $p, $study['content_pillars']))
+                : $study['content_pillars'];
+            $studyPrompt .= "- PILARES DE CONTEÚDO: {$pillars}\n";
+        }
+        if (! empty($study['forbidden_words'])) {
+            $forbidden = is_array($study['forbidden_words']) ? implode(', ', $study['forbidden_words']) : $study['forbidden_words'];
+            $studyPrompt .= "- PALAVRAS/TERMOS PROIBIDOS OU A EVITAR: {$forbidden}\n";
+        }
+
+        return $studyPrompt."\n";
+    }
+
+    /**
+     * Roteiro seguindo os blocos do tipo de vídeo cadastrado pelo admin: IA bloco a bloco e, se ela
+     * falhar, o motor heurístico escreve cada bloco. A resposta leva a cópia da estrutura usada.
+     */
+    protected function generateFromVideoType(VideoType $type, string $title, string $desc, ?string $keywords, string $tone, bool $isEs, array $ctx): array
+    {
+        $blocks = array_values(array_filter($type->blocks ?? [], fn ($b) => is_array($b) && ! empty($b['key'])));
+        $keys = array_column($blocks, 'key');
+
+        $ai = null;
+        if ($blocks !== [] && $this->geminiApiKey()) {
+            $ai = $this->requestGeminiJson(
+                $this->blocksPrompt($type, $blocks, $title, $desc, $keywords, $tone, $isEs, $ctx),
+                function (array $data) use ($keys) {
+                    foreach ($keys as $key) {
+                        if (! is_string($data['blocks'][$key] ?? null) || trim($data['blocks'][$key]) === '') {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+            );
+        }
+
+        $written = [];
+        foreach ($blocks as $index => $block) {
+            $text = $ai ? trim($ai['blocks'][$block['key']]) : $this->heuristicBlock($block, $title, $desc, $isEs, $ctx);
+            $written[] = [
+                'key' => $block['key'],
+                'name' => $block['name'],
+                'start' => (int) $block['start'],
+                'end' => (int) $block['end'],
+                'script' => $this->blockHeader($index + 1, $block, $isEs)."\n".$text,
+            ];
+        }
+
+        $scripts = array_column($written, 'script');
+
+        return [
+            'framework' => $type->name,
+            'estimated_time' => $type->duration_seconds.'s',
+            'client_niche' => $ctx['niche'],
+            'video_type_id' => $type->id,
+            'structure' => $type->snapshot(),
+            'blocks' => $written,
+            'hook' => $scripts[0] ?? '',
+            'body' => implode("\n\n", array_slice($scripts, 1, -1)),
+            'cta' => count($scripts) > 1 ? end($scripts) : '',
+            'full_script' => implode("\n\n", $scripts),
+            'seo_title' => is_string($ai['seo_title'] ?? null) ? $ai['seo_title'] : $title,
+            'seo_description' => is_string($ai['seo_description'] ?? null) ? $ai['seo_description'] : $desc,
+            'seo_hashtags' => is_array($ai['seo_hashtags'] ?? null) ? $ai['seo_hashtags'] : ['#VideoMarketing'],
+            'b_roll_suggestions' => is_array($ai['b_roll_suggestions'] ?? null) ? $ai['b_roll_suggestions'] : [],
+            'source' => $ai ? 'ai' : 'heuristic',
+        ];
+    }
+
+    protected function blocksPrompt(VideoType $type, array $blocks, string $title, string $desc, ?string $keywords, string $tone, bool $isEs, array $ctx): string
+    {
+        $lines = [];
+        foreach ($blocks as $i => $block) {
+            $lines[] = ($i + 1).". [{$block['key']}] {$block['name']} (".$this->clock((int) $block['start']).' - '.$this->clock((int) $block['end'])."): {$block['purpose']}";
+        }
+
+        $jsonKeys = implode(', ', array_map(fn ($b) => '"'.$b['key'].'": "texto do bloco"', $blocks));
+        $langPrompt = $isEs
+            ? "El guión y todos los textos DEBEN estar en Español de España (ej. 'vídeo', 'móvil'), trato cercano y profesional."
+            : 'O roteiro e todos os textos DEVEM estar em Português do Brasil de alto padrão corporativo.';
+
+        return "Você é a Sofi, roteirista de vídeos curtos de alta retenção da NUME Creative.\n"
+            .'Escreva um roteiro do tipo "'.$type->name.'" com duração total de '.$type->duration_seconds." segundos, seguindo EXATAMENTE estes blocos, nesta ordem:\n"
+            .implode("\n", $lines)."\n\n"
+            .($type->sofi_guidance ? "ORIENTAÇÃO DA PRODUTORA PARA ESTE TIPO: {$type->sofi_guidance}\n\n" : '')
+            .$this->brandStudyPrompt($ctx)
+            ."DADOS DO PROJETO:\n"
+            ."- TÍTULO: {$title}\n- OBJETIVO: {$desc}\n- PALAVRAS-CHAVE: {$keywords}\n- TOM DE VOZ: {$tone}\n"
+            ."- EMPRESA: {$ctx['company']}\n- NICHO: {$ctx['niche']}\n- PÚBLICO: {$ctx['audience']}\n- DIFERENCIAIS: {$ctx['differentials']}\n"
+            ."- INSTAGRAM: {$ctx['instagram']}\n- SITE: {$ctx['website']}\n"
+            ."{$langPrompt}\n\n"
+            ."Para cada bloco escreva ENQUADRAMENTO, TEXTO NA TELA e ÁUDIO/FALA, cabendo no tempo do bloco. Só um CTA no roteiro inteiro.\n"
+            ."Retorne ESTRITAMENTE um JSON válido, sem markdown, com esta estrutura:\n"
+            .'{"blocks": {'.$jsonKeys.'}, "seo_title": "max 65 caracteres", "seo_description": "descrição com palavras-chave", "seo_hashtags": ["#tag"], "b_roll_suggestions": ["sugestão"]}';
+    }
+
+    /**
+     * Texto heurístico de um bloco. Reconhece a função pelo key (inclusive em tipos criados pelo admin:
+     * "gancho", "dor", "prova", "convite"...); bloco desconhecido usa a função descrita pelo admin.
+     */
+    protected function heuristicBlock(array $block, string $title, string $desc, bool $isEs, array $ctx): string
+    {
+        $key = mb_strtolower($block['key'].' '.$block['name']);
+        $role = match (true) {
+            (bool) preg_match('/hook|gancho/', $key) => 'hook',
+            (bool) preg_match('/problem|dor|dolor|pain/', $key) => 'problem',
+            (bool) preg_match('/turn|virada|solu|giro/', $key) => 'turn',
+            (bool) preg_match('/proof|prova|prueba|depoimento|testimon|resultado/', $key) => 'proof',
+            (bool) preg_match('/offer|oferta/', $key) => 'offer',
+            (bool) preg_match('/cta|chamada|llamada|convite|acao|ação|acción/', $key) => 'cta',
+            default => 'generic',
+        };
+
+        $link = $ctx['website'] ?: $ctx['instagram'];
+
+        if ($isEs) {
+            return match ($role) {
+                'hook' => "ENCUADRE: Primer plano con zoom rápido y mirada a cámara.\nTEXTO EN PANTALLA: ¿Te pasa esto en {$ctx['niche']}?\nAUDIO / VOZ: '{$title}: lo que nadie te cuenta en los primeros 3 segundos.'",
+                'problem' => "ENCUADRE: Plano medio, gesto de frustración reconocible.\nTEXTO EN PANTALLA: El problema de {$ctx['audience']}\nAUDIO / VOZ: 'Si eres de {$ctx['audience']}, seguro que esto te suena.'",
+                'turn' => "ENCUADRE: Producto/servicio de {$ctx['company']} en uso, mostrando, no explicando.\nTEXTO EN PANTALLA: La salida\nAUDIO / VOZ: '{$desc}'",
+                'proof' => "ENCUADRE: Resultado real, antes/después o testimonio.\nTEXTO EN PANTALLA: Prueba real\nAUDIO / VOZ: 'Por eso confían en {$ctx['company']}: {$ctx['differentials']}.'",
+                'offer' => "ENCUADRE: Plano limpio del producto con la oferta en pantalla.\nTEXTO EN PANTALLA: Lo que te llevas hoy\nAUDIO / VOZ: 'Y lo mejor: puedes empezar ahora.'",
+                'cta' => "ENCUADRE: Primer plano señalando el enlace.\nTEXTO EN PANTALLA: 📲 {$link}\nAUDIO / VOZ: 'Toca el enlace y da el primer paso hoy.'",
+                default => "OBJETIVO DEL BLOQUE: {$block['purpose']}\nENCUADRE: B-roll de {$ctx['company']} relacionado con {$ctx['niche']}.\nAUDIO / VOZ: '{$title}'",
+            };
+        }
+
+        return match ($role) {
+            'hook' => "ENQUADRAMENTO: Plano fechado com zoom rápido e olhar na lente.\nTEXTO NA TELA: Isso acontece com você em {$ctx['niche']}?\nÁUDIO / FALA: '{$title}: o que ninguém te conta nos primeiros 3 segundos.'",
+            'problem' => "ENQUADRAMENTO: Plano médio, gesto de frustração fácil de reconhecer.\nTEXTO NA TELA: O problema de {$ctx['audience']}\nÁUDIO / FALA: 'Se você faz parte de {$ctx['audience']}, com certeza já passou por isso.'",
+            'turn' => "ENQUADRAMENTO: Produto/serviço da {$ctx['company']} em uso, mostrando em vez de explicar.\nTEXTO NA TELA: A saída\nÁUDIO / FALA: '{$desc}'",
+            'proof' => "ENQUADRAMENTO: Resultado real, antes/depois ou depoimento.\nTEXTO NA TELA: Prova real\nÁUDIO / FALA: 'É por isso que confiam na {$ctx['company']}: {$ctx['differentials']}.'",
+            'offer' => "ENQUADRAMENTO: Plano limpo do produto com a oferta na tela.\nTEXTO NA TELA: O que você leva hoje\nÁUDIO / FALA: 'E o melhor: dá para começar agora.'",
+            'cta' => "ENQUADRAMENTO: Plano fechado apontando para o link.\nTEXTO NA TELA: 📲 {$link}\nÁUDIO / FALA: 'Toque no link e dê o primeiro passo hoje.'",
+            default => "OBJETIVO DO BLOCO: {$block['purpose']}\nENQUADRAMENTO: B-roll da {$ctx['company']} ligado a {$ctx['niche']}.\nÁUDIO / FALA: '{$title}'",
+        };
+    }
+
+    protected function blockHeader(int $number, array $block, bool $isEs): string
+    {
+        return '🎬 ['.($isEs ? 'BLOQUE' : 'BLOCO')." {$number} - ".mb_strtoupper($block['name'])
+            .' ('.$this->clock((int) $block['start']).' - '.$this->clock((int) $block['end']).')]';
+    }
+
+    protected function clock(int $seconds): string
+    {
+        return sprintf('%02d:%02d', intdiv($seconds, 60), $seconds % 60);
     }
 
     /**

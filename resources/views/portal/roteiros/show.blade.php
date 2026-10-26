@@ -62,6 +62,8 @@
             </span>
         </div>
 
+        @include('roteiros._structure')
+
         <!-- Box do Conteúdo do Roteiro -->
         <div class="space-y-2">
             <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-zinc-600">

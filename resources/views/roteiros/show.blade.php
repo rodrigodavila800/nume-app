@@ -106,6 +106,8 @@
             </button>
         </div>
 
+        @include('roteiros._structure')
+
         <!-- Bloco de Texto Formatado com Alto Contraste -->
         <div class="p-5 sm:p-6 bg-zinc-950 border border-zinc-800/80 rounded-xl font-sans text-sm sm:text-base text-zinc-100 whitespace-pre-wrap leading-relaxed selection:bg-orange-500 selection:text-white">
 {{ $roteiro->content }}
