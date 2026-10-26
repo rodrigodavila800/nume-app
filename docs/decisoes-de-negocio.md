@@ -31,6 +31,9 @@ Registro das decisões do dono do produto. Atualizar quando mudar.
 - O cliente recebe o arquivo final antes ou depois de quitar o saldo? (hoje: download e publicação só após quitação)
 - Padrões adotados em 26/10 até o analista dizer o contrário: fatura do anúncio só com o serviço da NUME (verba paga direto à plataforma); a equipe sobe o arquivo final (o Drive é só link); arquivo final liberado depois de quitar o saldo; o cliente não cria nem edita roteiro (aprova ou pede ajuste); o arquivo só é apagado se houver link de entrega; Notion fora por agora.
 
+## Pendências técnicas conhecidas
+- Telas internas da equipe (calculadora de orçamento, pacotes, planos, vídeo, Batch Planner) ainda estão só em português; o portal do cliente e as mensagens já têm espanhol.
+
 ## Pendente com a gestoria
 - A retenção de IRPF se aplica a clientes particulares? (hoje: nunca retém para particular)
 - IRPF em todos os ciclos de assinatura (quando as assinaturas voltarem).

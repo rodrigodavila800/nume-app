@@ -113,6 +113,13 @@ Nume Social Engine: app próprio da NUME nas APIs oficiais de cada rede, com o U
 - **Upload-Post:** `SocialDistributionService` + `UploadPostClient` (white-label). `processScheduled()` só pega linhas com `driver = upload_post`; as nativas agendadas vão para a fila em `SocialPublicationService::dispatchDueNative()`.
 - **Webhooks seguros:** `POST /webhooks/upload-post` com validação HMAC-SHA256 (`X-Upload-Post-Signature`).
 - **Cota:** um envio com várias redes conta como uma distribuição (`Cliente::getDistributionsUsedCount()` agrupa linhas do mesmo vídeo criadas no mesmo envio).
+- **Limites do plano (decisão 26/10/2026):** `SocialPublishing\PublishingLimits`. O admin da NUME libera **quantas redes** o cliente conecta e **quantos envios por mês** ele faz.
+  - Origem: `clientes.*_override` (ajuste na ficha, só admin) → maior valor entre as compras ativas (`pack_purchases.*`, vindo do orçamento: inputs `redes`/`envios_mes`) ou do `pack`. Vazio = sem limite.
+  - `distribute()` e `publishComposed()` chamam `assertCanSend()`, que lança `PublishingLimitException` (mensagem pronta; `bootstrap/app.php` responde 403 em JSON ou volta com `error`). O portal bloqueia conectar rede além do liberado (`canConnect()`; a Meta conta Página + Instagram; reconectar a mesma rede pode).
+  - Envio do mês: falhas não contam; várias redes do mesmo vídeo em até 60 s = 1.
+- **API pública (`api/v1/social/publish`):** passa pelo `distribute()`. Exige `video_id` de produção do próprio cliente (404 se não for); arquivo hospedado com saldo em aberto = 402; `video_url` (https) só para vídeo que é só link. Resposta: `data.publications[]` e `data.requires_portal` (redes com tela própria).
+- **Drive:** `videos.review_url` (o cliente assiste antes de aprovar) e `videos.delivery_url` (cópia final, mostrada depois de quitar). A equipe salva em `videos.links` (PATCH), inclusive com vídeo publicado.
+- **Arquivo após postar:** `videos:purge-posted` (de hora em hora) apaga o arquivo quando há `delivery_url`, ao menos uma rede publicou, nada está pendente/agendado/em andamento e passaram `social.purge_after_hours` (24 h). Marca `source_purged_at`. Sem link de entrega o arquivo fica e o comando avisa.
 - **Isolamento total:** `social_profiles`, `social_connections` e `video_publications` usam `BelongsToTenant`; portal confere `cliente_id`; job e comandos usam `forTenant()` / `tenant_id` explícito.
 
 ---
