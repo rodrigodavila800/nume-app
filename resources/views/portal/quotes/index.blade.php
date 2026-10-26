@@ -20,13 +20,23 @@
                 {{ __('Revise orçamentos enviados pela produtora, aprove propostas online e acompanhe a evolução para ordens de gravação.') }}
             </p>
         </div>
-        <div>
+        <div class="flex items-center gap-2">
+            @if ($canRequest)
+                <a href="{{ route('portal.quotes.request') }}"
+                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-500 text-white shadow-xs transition">
+                    {{ __('Pedir orçamento') }}
+                </a>
+            @endif
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
                 <span>Total:</span>
                 <strong class="text-zinc-900">{{ $quotes->total() }}</strong>
             </span>
         </div>
     </div>
+
+    @if (session('status'))
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3.5 rounded-xl text-sm font-semibold">{{ session('status') }}</div>
+    @endif
 
     {{-- Listagem de Quotes --}}
     @if ($quotes->isEmpty())
@@ -70,7 +80,11 @@
                         </div>
 
                         <div>
-                            @if ($isAccepted)
+                            @if ($quote->isRequested())
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                    {{ __('Em análise pela produtora') }}
+                                </span>
+                            @elseif ($isAccepted)
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                     {{ __('Aprovado') }}
@@ -95,12 +109,16 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                         <div class="space-y-1">
                             <span class="text-zinc-500 block">{{ __('Investimento Total:') }}</span>
-                            <span class="text-base font-extrabold text-zinc-900 font-mono block">
-                                € {{ number_format($quote->total_amount, 2, ',', '.') }}
-                            </span>
-                            <span class="text-[11px] text-zinc-500 block">
-                                (€ {{ number_format($quote->subtotal, 2, ',', '.') }} + {{ number_format($quote->tax_rate, 0) }}% IVA)
-                            </span>
+                            @if ($quote->isRequested())
+                                <span class="text-sm font-bold text-zinc-700 block">{{ __('A produtora está calculando') }}</span>
+                            @else
+                                <span class="text-base font-extrabold text-zinc-900 font-mono block">
+                                    € {{ number_format($quote->total_amount, 2, ',', '.') }}
+                                </span>
+                                <span class="text-[11px] text-zinc-500 block">
+                                    (€ {{ number_format($quote->subtotal, 2, ',', '.') }} + {{ number_format($quote->tax_rate, 0) }}% IVA)
+                                </span>
+                            @endif
                         </div>
 
                         <div class="space-y-1">

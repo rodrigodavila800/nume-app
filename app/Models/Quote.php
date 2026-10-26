@@ -14,20 +14,30 @@ class Quote extends Model
 {
     use BelongsToTenant, HasFactory, SoftDeletes;
 
+    /** Pedido feito pelo cliente no portal, ainda sem proposta da produtora. */
+    public const STATUS_REQUESTED = 'requested';
+
+    public const KIND_PRODUCTION = 'production';
+
+    public const KIND_ADS = 'ads';
+
     protected $fillable = [
         'uuid',
         'tenant_id',
         'cliente_id',
         'user_id',
         'production_id',
+        'marketing_plan_id',
         'number',
         'status',
+        'kind',
         'client_name',
         'client_contact',
         'client_email',
         'project_title',
         'language',
         'request_text',
+        'request_details',
         'inputs',
         'calculation',
         'ai_reading',
@@ -50,6 +60,7 @@ class Quote extends Model
     {
         return [
             'inputs' => 'array',
+            'request_details' => 'array',
             'calculation' => 'array',
             'ai_reading' => 'array',
             'subtotal' => 'float',
@@ -107,6 +118,21 @@ class Quote extends Model
     public function packPurchases(): HasMany
     {
         return $this->hasMany(PackPurchase::class);
+    }
+
+    public function marketingPlan(): BelongsTo
+    {
+        return $this->belongsTo(MarketingPlan::class);
+    }
+
+    public function isRequested(): bool
+    {
+        return $this->status === self::STATUS_REQUESTED;
+    }
+
+    public function isAds(): bool
+    {
+        return $this->kind === self::KIND_ADS;
     }
 
     public function isDraft(): bool

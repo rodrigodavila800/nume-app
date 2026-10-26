@@ -81,7 +81,10 @@
         @if($plan->isApproved())
             <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <span class="font-bold">✓ {{ __('Plano aprovado em :date. Os vídeos já podem seguir para orçamento e produção.', ['date' => $plan->approved_at?->format('d/m/Y')]) }}</span>
-                <a href="{{ route('portal.anamnesis.edit') }}" class="text-xs font-bold text-emerald-800 hover:underline">{{ __('Ver anamnese') }}</a>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('portal.anamnesis.edit') }}" class="text-xs font-bold text-emerald-800 hover:underline">{{ __('Ver anamnese') }}</a>
+                    <a href="{{ route('portal.quotes.request') }}" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 transition">{{ __('Pedir orçamento') }}</a>
+                </div>
             </div>
         @else
             <div class="mb-6 p-5 rounded-2xl bg-amber-50 border border-amber-200 space-y-4 print:hidden">

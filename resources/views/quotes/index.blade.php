@@ -67,6 +67,7 @@
             @php
                 $statusTabs = [
                     'all' => __('Todos'),
+                    'requested' => __('Pedidos de clientes').($metrics['requested_count'] ? ' ('.$metrics['requested_count'].')' : ''),
                     'draft' => __('Rascunho'),
                     'sent' => __('Enviados'),
                     'accepted' => __('Aprovados'),
@@ -123,12 +124,14 @@
                                 'accepted' => 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
                                 'sent' => 'bg-amber-500/10 text-amber-400 border-amber-500/20',
                                 'rejected' => 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+                                'requested' => 'bg-sky-500/10 text-sky-300 border-sky-500/20',
                                 default => 'bg-zinc-800 text-zinc-400 border-zinc-700',
                             };
                             $statusLabel = match($quote->status) {
                                 'accepted' => __('Aprovado'),
                                 'sent' => __('Enviado'),
                                 'rejected' => __('Recusado'),
+                                'requested' => __('Pedido do cliente'),
                                 default => __('Rascunho'),
                             };
                         @endphp

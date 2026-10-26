@@ -81,6 +81,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
         // Propostas & Orçamentos vinculados ao cliente
         Route::get('orcamentos', [QuoteController::class, 'index'])->name('quotes.index');
+        Route::get('orcamentos/solicitar', [QuoteController::class, 'requestForm'])->name('quotes.request');
+        Route::post('orcamentos/solicitar', [QuoteController::class, 'storeRequest'])
+            ->middleware('throttle:5,60')
+            ->name('quotes.request.store');
 
         // Planos Recorrentes (Retainers / Assinaturas)
         Route::get('planos', [PackController::class, 'plans'])->name('plans.index');

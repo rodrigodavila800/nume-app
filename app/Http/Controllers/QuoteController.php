@@ -54,6 +54,7 @@ class QuoteController extends Controller
         $allQuotes = Quote::query();
         $metrics = [
             'total_count' => (int) (clone $allQuotes)->count(),
+            'requested_count' => (int) (clone $allQuotes)->where('status', Quote::STATUS_REQUESTED)->count(),
             'draft_count' => (int) (clone $allQuotes)->where('status', 'draft')->count(),
             'sent_count' => (int) (clone $allQuotes)->where('status', 'sent')->count(),
             'accepted_count' => (int) (clone $allQuotes)->where('status', 'accepted')->count(),
