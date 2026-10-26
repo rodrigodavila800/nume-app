@@ -19,15 +19,20 @@ class QuotePdfService
     {
         $tenant = $quote->tenant;
         $inputs = $quote->inputs ?? [];
-        $calc = $quote->calculation ?? $this->calculator->calculate($inputs);
         $language = $quote->language ?? 'es';
 
-        $deliverables = $this->calculator->getDeliverables(
-            $inputs,
-            $calc,
-            $language,
-            $quote->project_title
-        );
+        if ($quote->isAds()) {
+            $calc = $quote->calculation ?? $this->calculator->calculateAds($inputs);
+            $deliverables = $this->calculator->getAdsDeliverables($inputs, $language);
+        } else {
+            $calc = $quote->calculation ?? $this->calculator->calculate($inputs);
+            $deliverables = $this->calculator->getDeliverables(
+                $inputs,
+                $calc,
+                $language,
+                $quote->project_title
+            );
+        }
 
         $issuedAt = $quote->created_at ?: now();
         $validUntil = $quote->valid_until ?: $issuedAt->copy()->addDays($inputs['prazo'] ?? 10);

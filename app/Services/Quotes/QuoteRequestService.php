@@ -87,6 +87,74 @@ class QuoteRequestService
     }
 
     /**
+     * Pedido de anúncios (serviço da NUME: criativos + gestão). A verba que o cliente informou
+     * entra só como informação; ele paga direto à plataforma.
+     */
+    public function createAdsFromPortal(Cliente $cliente, MarketingPlan $plan, array $data, bool $isEs): Quote
+    {
+        $inputs = $this->calculator->getAdsDefaults($cliente->tenant);
+        $inputs['verba_mensal'] = $this->parseAmount($data['ads_budget'] ?? null);
+        $inputs['plataformas'] = $this->adPlatforms($cliente->anamnesis['priority_networks'] ?? []) ?: $inputs['plataformas'];
+
+        $calc = $this->calculator->calculateAds($inputs);
+
+        return Quote::create([
+            'tenant_id' => $cliente->tenant_id,
+            'cliente_id' => $cliente->id,
+            'marketing_plan_id' => $plan->id,
+            'status' => Quote::STATUS_REQUESTED,
+            'kind' => Quote::KIND_ADS,
+            'client_name' => $cliente->company_name ?: $cliente->name,
+            'client_email' => $cliente->email,
+            'client_contact' => $cliente->name,
+            'project_title' => ($isEs ? 'Campaña de anuncios ' : 'Campanha de anúncios ').$plan->month_year,
+            'language' => $isEs ? 'es' : 'pt_BR',
+            'request_text' => 'Anúncios: verba pensada '.($data['ads_budget'] ?: 'não informada').($data['message'] ? "\nMensagem do cliente: ".$data['message'] : ''),
+            'request_details' => ['ads_budget' => $data['ads_budget'] ?? null, 'message' => $data['message'] ?? null],
+            'inputs' => $calc['inputs_sanitized'],
+            'calculation' => $calc,
+            'subtotal' => $calc['preco'],
+            'margin_amount' => 0,
+            'adjustment_amount' => $calc['adicional'],
+            'tax_rate' => $calc['inputs_sanitized']['iva'],
+            'tax_amount' => $calc['iva'],
+            'total_amount' => $calc['total_com_iva'],
+            'deposit_amount' => $calc['sinal'],
+            'balance_amount' => $calc['na_entrega'],
+        ]);
+    }
+
+    /**
+     * "300 €", "1.500,50" → 300.0 / 1500.5. Texto do cliente: sem número vira 0.
+     */
+    protected function parseAmount(?string $text): float
+    {
+        $clean = preg_replace('/[^\d,.]/', '', (string) $text);
+        if ($clean === '') {
+            return 0.0;
+        }
+
+        if (str_contains($clean, ',')) {
+            $clean = str_replace(',', '.', str_replace('.', '', $clean));
+        } elseif (preg_match('/^\d{1,3}(\.\d{3})+$/', $clean)) {
+            // "1.500" no padrão espanhol é milhar, não decimal
+            $clean = str_replace('.', '', $clean);
+        }
+
+        return min(10000000, max(0, (float) $clean));
+    }
+
+    /**
+     * Redes da anamnese → plataformas de anúncio (Instagram, Facebook e Threads anunciam pela Meta).
+     */
+    protected function adPlatforms(array $networks): array
+    {
+        $map = ['instagram' => 'meta', 'facebook' => 'meta', 'threads' => 'meta', 'youtube' => 'youtube', 'tiktok' => 'tiktok', 'linkedin' => 'linkedin', 'pinterest' => 'pinterest', 'x' => 'x'];
+
+        return array_values(array_unique(array_filter(array_map(fn ($n) => $map[$n] ?? null, $networks))));
+    }
+
+    /**
      * Horas de edição por vídeo: as do tipo escolhido, senão o padrão da produtora.
      */
     protected function editHoursPerVideo(?VideoType $videoType, array $defaults): float

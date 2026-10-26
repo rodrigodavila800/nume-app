@@ -184,16 +184,35 @@
         </tr>
     </table>
 
-    <div class="section-title">Plazo de entrega</div>
-    <div class="info-card">
-        Hasta {{ $inputs['prazo'] ?? 15 }} días tras la aprobación.
-    </div>
+    @if($quote->isAds())
+        @if(($calc['verba_total_info'] ?? 0) > 0)
+            <div class="info-card">
+                Inversión publicitaria prevista: € {{ number_format($calc['verba_total_info'], 2, ',', '.') }}.
+                La pagas directamente a la plataforma de anuncios; no está incluida en el importe de este presupuesto.
+            </div>
+        @endif
 
-    <div class="section-title">Forma de pago</div>
-    <div class="info-card">
-        50% a la aprobación, para reservar la fecha.<br>
-        50% a la entrega.
-    </div>
+        <div class="section-title">Plazo</div>
+        <div class="info-card">
+            Creatividades listas en hasta {{ $inputs['prazo'] ?? 10 }} días tras la aprobación.
+        </div>
+
+        <div class="section-title">Forma de pago</div>
+        <div class="info-card">
+            100% a la aprobación.
+        </div>
+    @else
+        <div class="section-title">Plazo de entrega</div>
+        <div class="info-card">
+            Hasta {{ $inputs['prazo'] ?? 15 }} días tras la aprobación.
+        </div>
+
+        <div class="section-title">Forma de pago</div>
+        <div class="info-card">
+            50% a la aprobación, para reservar la fecha.<br>
+            50% a la entrega.
+        </div>
+    @endif
 
     <div class="validity-note">
         Presupuesto válido durante {{ $inputs['prazo'] ?? 10 }} días, hasta el {{ $validUntilDate }}.

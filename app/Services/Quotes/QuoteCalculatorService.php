@@ -155,6 +155,111 @@ class QuoteCalculatorService
         ];
     }
 
+    /** Plataformas de anúncio aceitas no orçamento de anúncios. */
+    public const AD_PLATFORMS = ['meta', 'google', 'youtube', 'tiktok', 'linkedin', 'pinterest', 'x'];
+
+    /**
+     * Padrões do orçamento de anúncios: a NUME cobra criação dos criativos e gestão da campanha.
+     * A verba é paga pelo cliente direto à plataforma e só aparece como informação.
+     */
+    public function getAdsDefaults(?Tenant $tenant = null): array
+    {
+        return [
+            'criativos' => 4,
+            'valor_criativo' => (float) Setting::get('quote_ads_creative_price', 120.00),
+            'gestao_mensal' => (float) Setting::get('quote_ads_management_fee', 250.00),
+            'meses' => 1,
+            'verba_mensal' => 0.0,
+            'plataformas' => ['meta'],
+            'iva' => (float) Setting::get('quote_vat_rate', 21.00),
+            'adicional' => 0.0,
+            'prazo' => 10,
+            'validade_dias' => (int) Setting::get('quote_validity_days', 10),
+        ];
+    }
+
+    /**
+     * Cálculo do orçamento de anúncios com as mesmas chaves do calculate(), para gravar e
+     * cobrar pelo mesmo fluxo. Pagamento integral na aprovação (sem sinal/saldo).
+     */
+    public function calculateAds(array $inputs): array
+    {
+        $criativos = max(0, min(100, (int) ($inputs['criativos'] ?? 0)));
+        $valorCriativo = max(0, (float) ($inputs['valor_criativo'] ?? 0));
+        $gestaoMensal = max(0, (float) ($inputs['gestao_mensal'] ?? 0));
+        $meses = max(1, min(24, (int) ($inputs['meses'] ?? 1)));
+        $verbaMensal = max(0, (float) ($inputs['verba_mensal'] ?? 0));
+        $ivaPct = max(0, (float) ($inputs['iva'] ?? 21)) / 100;
+        $adicional = (float) ($inputs['adicional'] ?? 0);
+        $prazo = max(1, (int) ($inputs['prazo'] ?? 10));
+        $plataformas = array_values(array_intersect(self::AD_PLATFORMS, (array) ($inputs['plataformas'] ?? [])));
+
+        $criacao = round($criativos * $valorCriativo, 2);
+        $gestao = round($gestaoMensal * $meses, 2);
+        $preco = round($criacao + $gestao + $adicional, 2);
+        $iva = round($preco * $ivaPct, 2);
+        $total = round($preco + $iva, 2);
+
+        return [
+            'inputs_sanitized' => [
+                'criativos' => $criativos,
+                'valor_criativo' => $valorCriativo,
+                'gestao_mensal' => $gestaoMensal,
+                'meses' => $meses,
+                'verba_mensal' => $verbaMensal,
+                'plataformas' => $plataformas,
+                'iva' => $ivaPct * 100,
+                'adicional' => $adicional,
+                'prazo' => $prazo,
+            ],
+            'criacao' => $criacao,
+            'gestao' => $gestao,
+            'margem' => 0.0,
+            'adicional' => $adicional,
+            'preco' => $preco,
+            'iva' => $iva,
+            'total_com_iva' => $total,
+            'sinal' => $total,
+            'na_entrega' => 0.0,
+            // Informativo: não entra no total, o cliente paga direto à plataforma.
+            'verba_total_info' => round($verbaMensal * $meses, 2),
+        ];
+    }
+
+    /**
+     * Entregáveis do orçamento de anúncios (a verba aparece como fora do orçamento).
+     */
+    public function getAdsDeliverables(array $inputs, string $language = 'es'): array
+    {
+        $isEs = $language !== 'pt_BR';
+        $criativos = (int) ($inputs['criativos'] ?? 0);
+        $meses = (int) ($inputs['meses'] ?? 1);
+        $plataformas = implode(', ', array_map('ucfirst', (array) ($inputs['plataformas'] ?? [])));
+        $verba = number_format((float) ($inputs['verba_mensal'] ?? 0), 2, ',', '.');
+
+        $items = $isEs
+            ? [
+                "{$criativos} ".($criativos === 1 ? 'creatividad publicitaria' : 'creatividades publicitarias').' (vídeo o imagen)',
+                "Configuración y gestión de la campaña durante {$meses} ".($meses === 1 ? 'mes' : 'meses'),
+            ]
+            : [
+                "{$criativos} ".($criativos === 1 ? 'criativo de anúncio' : 'criativos de anúncio').' (vídeo ou imagem)',
+                "Configuração e gestão da campanha por {$meses} ".($meses === 1 ? 'mês' : 'meses'),
+            ];
+
+        if ($plataformas !== '') {
+            $items[] = ($isEs ? 'Plataformas: ' : 'Plataformas: ').$plataformas;
+        }
+
+        if ((float) ($inputs['verba_mensal'] ?? 0) > 0) {
+            $items[] = $isEs
+                ? "Inversión publicitaria de {$verba} €/mes: la pagas tú directamente a la plataforma (no incluida en este presupuesto)"
+                : "Verba de anúncio de {$verba} €/mês: paga por você direto à plataforma (não incluída neste orçamento)";
+        }
+
+        return $items;
+    }
+
     /**
      * Gera lista de entregáveis para a proposta do cliente (em espanhol ou português).
      */

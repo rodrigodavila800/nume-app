@@ -100,14 +100,22 @@ class QuoteController extends Controller
                 ->with('status', __('Seu pedido de orçamento #:num já está com a produtora.', ['num' => $open->number]));
         }
 
-        $quote = $requests->createFromPortal($cliente, $plan, [
+        $data = [
             'videos' => (int) $validated['videos'],
             'video_type_id' => $videoType?->id,
             'social_networks' => (int) $validated['social_networks'],
             'wants_ads' => (bool) ($validated['wants_ads'] ?? false),
             'ads_budget' => $validated['ads_budget'] ?? null,
             'message' => $validated['message'] ?? null,
-        ], $videoType, MarketingPlanGeneratorService::isSpanishLocale($cliente));
+        ];
+        $isEs = MarketingPlanGeneratorService::isSpanishLocale($cliente);
+
+        $quote = $requests->createFromPortal($cliente, $plan, $data, $videoType, $isEs);
+
+        // Anúncio é um orçamento à parte (serviço da NUME; a verba o cliente paga à plataforma).
+        if ($data['wants_ads'] && ! $requests->openRequest($cliente, $plan, Quote::KIND_ADS)) {
+            $requests->createAdsFromPortal($cliente, $plan, $data, $isEs);
+        }
 
         return redirect()->route('portal.quotes.index')
             ->with('status', __('Pedido de orçamento #:num enviado. A produtora revisa os valores e manda a proposta para você aprovar.', ['num' => $quote->number]));

@@ -139,7 +139,8 @@ class QuoteApprovalController extends Controller
             'application_fee_amount' => $applicationFee,
             'platform_fee_status' => $platformFeeStatus,
             // Quantidade de vídeos do próprio orçamento: vira a cota do cliente e aparece na fatura.
-            'video_quantity' => max(1, (int) ($quote->inputs['videos'] ?? 1)),
+            // Orçamento de anúncios é serviço (criativos e gestão): não gera cota de vídeos.
+            'video_quantity' => $quote->isAds() ? 0 : max(1, (int) ($quote->inputs['videos'] ?? 1)),
         ]);
 
         return match ($method) {

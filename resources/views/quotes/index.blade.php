@@ -22,6 +22,10 @@
                     </svg>
                     <span>{{ __('Novo Orçamento') }}</span>
                 </a>
+                <a href="{{ route('quotes.create', ['kind' => 'ads']) }}"
+                   class="inline-flex items-center gap-2 font-bold rounded-xl text-xs sm:text-sm px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 transition-all">
+                    📣 <span>{{ __('Orçamento de anúncios') }}</span>
+                </a>
             @endcan
         </div>
     </div>
@@ -149,6 +153,11 @@
                             </td>
                             <td class="py-3.5 px-4">
                                 <div class="flex items-center gap-1.5 flex-wrap">
+                                @if($quote->isAds())
+                                    <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] font-bold text-sky-300">
+                                        📣 {{ __('Anúncios') }} · {{ $inputs['criativos'] ?? 0 }} {{ __('criativos') }} · {{ $inputs['meses'] ?? 1 }} {{ __('mês(es)') }}
+                                    </span>
+                                @else
                                     <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] font-bold text-orange-400">
                                         📦 {{ $inputs['videos'] ?? 1 }} {{ ($inputs['videos'] ?? 1) == 1 ? 'vídeo' : 'vídeos' }}
                                     </span>
@@ -163,6 +172,7 @@
                                             🛸 Dron
                                         </span>
                                     @endif
+                                @endif
                                 </div>
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono font-semibold text-zinc-300">

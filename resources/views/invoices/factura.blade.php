@@ -232,7 +232,11 @@
                 <td>
                     <strong>{{ $pack?->name ?? ($purchase->quote?->project_title ?? 'Serviço de Produção Audiovisual') }}</strong>
                     <div class="item-subtext">
-                        Cota de {{ $pack?->video_quantity ?? ($purchase->video_quantity ?? 1) }} vídeos de alto impacto con roteirização e edição estratégica.
+                        @if($purchase->quote?->isAds())
+                            Creación de creatividades publicitarias y gestión de campaña. La inversión publicitaria la paga el cliente directamente a la plataforma y no forma parte de esta factura.
+                        @else
+                            Cota de {{ $pack?->video_quantity ?? ($purchase->video_quantity ?? 1) }} vídeos de alto impacto con roteirização e edição estratégica.
+                        @endif
                     </div>
                 </td>
                 <td class="text-center">1</td>

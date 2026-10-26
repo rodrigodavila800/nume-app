@@ -76,8 +76,13 @@ class QuoteController extends Controller
         $this->authorize('create', Quote::class);
 
         $tenant = $request->user()->tenant;
-        $defaults = $this->calculator->getDefaults($tenant);
         $clientes = Cliente::orderBy('name')->get();
+
+        if ($request->query('kind') === Quote::KIND_ADS) {
+            return view('quotes.ads_form', ['quote' => new Quote(['kind' => Quote::KIND_ADS, 'language' => 'es']), 'inputs' => $this->calculator->getAdsDefaults($tenant), 'clientes' => $clientes]);
+        }
+
+        $defaults = $this->calculator->getDefaults($tenant);
 
         return view('quotes.create', compact('defaults', 'clientes'));
     }
@@ -88,6 +93,14 @@ class QuoteController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $this->authorize('create', Quote::class);
+
+        if ($request->input('kind') === Quote::KIND_ADS) {
+            $quote = new Quote(['tenant_id' => $request->user()->tenant_id, 'user_id' => $request->user()->id, 'kind' => Quote::KIND_ADS, 'status' => 'draft']);
+            $this->fillAdsQuote($quote, $request)->save();
+
+            return redirect()->route('quotes.edit', $quote)
+                ->with('success', __('Orçamento salvo com sucesso! Nº :num', ['num' => $quote->number]));
+        }
 
         $validated = $this->validateQuoteInput($request);
 
@@ -134,6 +147,11 @@ class QuoteController extends Controller
 
         $quote->loadMissing('marketingPlan');
         $clientes = Cliente::orderBy('name')->get();
+
+        if ($quote->isAds()) {
+            return view('quotes.ads_form', ['quote' => $quote, 'inputs' => $quote->inputs ?? $this->calculator->getAdsDefaults($quote->tenant), 'clientes' => $clientes]);
+        }
+
         $defaults = $this->calculator->getDefaults($quote->tenant);
 
         return view('quotes.edit', compact('quote', 'clientes', 'defaults'));
@@ -145,6 +163,13 @@ class QuoteController extends Controller
     public function update(Request $request, Quote $quote): RedirectResponse
     {
         $this->authorize('update', $quote);
+
+        if ($quote->isAds()) {
+            $this->fillAdsQuote($quote, $request)->save();
+
+            return redirect()->route('quotes.edit', $quote)
+                ->with('success', __('Orçamento :num atualizado com sucesso!', ['num' => $quote->number]));
+        }
 
         $validated = $this->validateQuoteInput($request);
 
@@ -307,6 +332,55 @@ class QuoteController extends Controller
         $quote->update($updates);
 
         return back()->with('success', __('Status do orçamento atualizado para :status.', ['status' => ucfirst($validated['status'])]));
+    }
+
+    /**
+     * Valida e preenche um orçamento de anúncios (criativos + gestão; verba só informativa).
+     */
+    protected function fillAdsQuote(Quote $quote, Request $request): Quote
+    {
+        $validated = $request->validate([
+            'cliente_id' => ['nullable', Rule::exists('clientes', 'id')->where('tenant_id', $request->user()->tenant_id)],
+            'client_name' => 'required|string|max:255',
+            'client_contact' => 'nullable|string|max:255',
+            'client_email' => 'nullable|email|max:255',
+            'project_title' => 'nullable|string|max:255',
+            'language' => 'nullable|string|in:es,pt_BR',
+            'request_text' => 'nullable|string|max:20000',
+            'inputs' => 'required|array',
+            'inputs.criativos' => 'required|integer|min:0|max:100',
+            'inputs.valor_criativo' => 'required|numeric|min:0|max:100000',
+            'inputs.gestao_mensal' => 'required|numeric|min:0|max:100000',
+            'inputs.meses' => 'required|integer|min:1|max:24',
+            'inputs.verba_mensal' => 'nullable|numeric|min:0|max:10000000',
+            'inputs.plataformas' => 'nullable|array',
+            'inputs.plataformas.*' => ['string', Rule::in(QuoteCalculatorService::AD_PLATFORMS)],
+            'inputs.iva' => 'required|numeric|min:0|max:100',
+            'inputs.adicional' => 'nullable|numeric',
+            'inputs.prazo' => 'required|integer|min:1|max:365',
+        ]);
+
+        $calc = $this->calculator->calculateAds($validated['inputs']);
+
+        return $quote->fill([
+            'cliente_id' => $validated['cliente_id'] ?? null,
+            'client_name' => $validated['client_name'],
+            'client_contact' => $validated['client_contact'] ?? null,
+            'client_email' => $validated['client_email'] ?? null,
+            'project_title' => ($validated['project_title'] ?? null) ?: 'Campaña de anuncios',
+            'language' => $validated['language'] ?? 'es',
+            'request_text' => $validated['request_text'] ?? $quote->request_text,
+            'inputs' => $calc['inputs_sanitized'],
+            'calculation' => $calc,
+            'subtotal' => $calc['preco'],
+            'margin_amount' => 0,
+            'adjustment_amount' => $calc['adicional'],
+            'tax_rate' => $calc['inputs_sanitized']['iva'],
+            'tax_amount' => $calc['iva'],
+            'total_amount' => $calc['total_com_iva'],
+            'deposit_amount' => $calc['sinal'],
+            'balance_amount' => $calc['na_entrega'],
+        ]);
     }
 
     /**

@@ -86,7 +86,8 @@ class QuoteRequestTest extends TestCase
             'wants_ads' => '1', 'ads_budget' => '300 €', 'message' => 'Queremos começar em novembro',
         ])->assertRedirect(route('portal.quotes.index'))->assertSessionHas('status');
 
-        $quote = Quote::forTenant($this->tenant->id)->sole();
+        $quote = Quote::forTenant($this->tenant->id)->where('kind', Quote::KIND_PRODUCTION)->sole();
+        $this->assertSame(1, Quote::forTenant($this->tenant->id)->where('kind', Quote::KIND_ADS)->count(), 'anúncio vira pedido à parte');
         $this->assertSame(Quote::STATUS_REQUESTED, $quote->status);
         $this->assertSame(Quote::KIND_PRODUCTION, $quote->kind);
         $this->assertSame($this->cliente->id, $quote->cliente_id);

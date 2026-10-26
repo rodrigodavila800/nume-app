@@ -92,7 +92,7 @@
                         </span>
                     </div>
 
-                    @if($quote->deposit_amount > 0 && $quote->balance_amount > 0)
+                    @if($quote->deposit_amount > 0 && $quote->balance_amount > 0 && ! $quote->isAds())
                         <div class="text-left sm:text-right">
                             <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30">
                                 {{ __('Sinal del 50% para inicio') }}: <strong class="font-mono">€ {{ number_format($quote->deposit_amount, 2, ',', '.') }}</strong>
@@ -109,6 +109,12 @@
                         </div>
                     @endif
                 </div>
+
+                @if($quote->isAds() && ($quote->calculation['verba_total_info'] ?? 0) > 0)
+                    <p class="mt-4 text-xs text-zinc-300 bg-zinc-950/60 border border-zinc-800 rounded-xl p-4">
+                        📣 {{ __('Inversión publicitaria prevista: € :amount. La pagas directamente a la plataforma de anuncios; no está incluida en este importe.', ['amount' => number_format($quote->calculation['verba_total_info'], 2, ',', '.')]) }}
+                    </p>
+                @endif
             </section>
 
             <!-- Checkout / Aprovação -->
