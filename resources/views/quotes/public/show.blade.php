@@ -129,6 +129,58 @@
                 <form method="POST" action="{{ route('quotes.public.approve', $quote->approval_token) }}" class="space-y-6">
                     @csrf
 
+                    @if($errors->any())
+                        <div class="p-4 rounded-xl bg-red-950/60 border border-red-800 text-red-200 text-xs space-y-1">
+                            @foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach
+                        </div>
+                    @endif
+
+                    {{-- Datos de facturación: la factura sale con NIF y dirección. Nunca se muestran completos en esta página. --}}
+                    <fieldset class="space-y-3">
+                        <legend class="text-sm font-bold text-white mb-2">{{ __('Datos de facturación') }}</legend>
+
+                        @if($savedBilling)
+                            <label class="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
+                                <input type="checkbox" name="use_saved_billing" value="1" checked class="rounded border-zinc-700 bg-zinc-950 text-orange-600">
+                                <span>{{ __('Usar los datos de facturación ya registrados (NIF terminado en :tail)', ['tail' => $savedBilling['tax_tail']]) }}</span>
+                            </label>
+                            <p class="text-[11px] text-zinc-500">{{ __('Para cambiarlos, desmarca la casilla y rellena los datos nuevos.') }}</p>
+                        @endif
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="billing_type" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Tipo') }}</label>
+                                <select id="billing_type" name="billing_type" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                                    <option value="empresa" @selected(old('billing_type', 'empresa') === 'empresa')>{{ __('Empresa') }}</option>
+                                    <option value="autonomo" @selected(old('billing_type') === 'autonomo')>{{ __('Autónomo') }}</option>
+                                    <option value="particular" @selected(old('billing_type') === 'particular')>{{ __('Particular') }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="billing_tax_id" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('NIF / CIF / NIE') }}</label>
+                                <input id="billing_tax_id" name="billing_tax_id" maxlength="30" value="{{ old('billing_tax_id') }}" autocomplete="off" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="billing_legal_name" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Razón social o nombre completo') }}</label>
+                                <input id="billing_legal_name" name="billing_legal_name" maxlength="255" value="{{ old('billing_legal_name', $quote->client_name) }}" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="billing_address" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Dirección') }}</label>
+                                <input id="billing_address" name="billing_address" maxlength="255" value="{{ old('billing_address') }}" autocomplete="street-address" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label for="billing_postal_code" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Código postal') }}</label>
+                                <input id="billing_postal_code" name="billing_postal_code" maxlength="20" value="{{ old('billing_postal_code') }}" autocomplete="postal-code" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label for="billing_city" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Ciudad') }}</label>
+                                <input id="billing_city" name="billing_city" maxlength="100" value="{{ old('billing_city') }}" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            </div>
+                            <input type="hidden" name="billing_country" value="ES">
+                        </div>
+                        <p class="text-[11px] text-zinc-500">{{ __('Guardamos estos datos cifrados y solo los usamos para emitir tus facturas (RGPD).') }}</p>
+                    </fieldset>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         @if(!empty($activeMethods['stripe']))
                             <label class="relative flex flex-col p-4 rounded-xl border border-zinc-800 bg-zinc-950/60 cursor-pointer hover:border-orange-500/60 transition group">

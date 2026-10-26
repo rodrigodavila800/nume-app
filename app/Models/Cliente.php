@@ -42,6 +42,11 @@ class Cliente extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'billing_legal_name',
+        'billing_tax_id',
+        'billing_address',
+        'billing_postal_code',
+        'billing_city',
     ];
 
     protected function casts(): array
@@ -53,7 +58,19 @@ class Cliente extends Authenticatable
             'brand_study_generated_at' => 'datetime',
             'anamnesis' => 'array',
             'anamnesis_completed_at' => 'datetime',
+            // Dados de faturação: criptografados com a APP_KEY (gravados só via BillingProfile).
+            'billing_legal_name' => 'encrypted',
+            'billing_tax_id' => 'encrypted',
+            'billing_address' => 'encrypted',
+            'billing_postal_code' => 'encrypted',
+            'billing_city' => 'encrypted',
+            'billing_updated_at' => 'datetime',
         ];
+    }
+
+    public function hasBillingProfile(): bool
+    {
+        return $this->billing_updated_at !== null && filled($this->billing_legal_name);
     }
 
     /**

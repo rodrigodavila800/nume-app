@@ -23,6 +23,12 @@ class QuoteApprovalAndPaymentTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** Dados de faturação fictícios (CIF com dígito de controle válido). */
+    private const BILLING = [
+        'billing_type' => 'empresa', 'billing_legal_name' => 'TechCorp Ficticia S.L.', 'billing_tax_id' => 'B12345674',
+        'billing_address' => 'Calle Falsa 123', 'billing_postal_code' => '50001', 'billing_city' => 'Zaragoza', 'billing_country' => 'ES',
+    ];
+
     private Tenant $tenant;
 
     private User $admin;
@@ -175,7 +181,7 @@ class QuoteApprovalAndPaymentTest extends TestCase
     {
         $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", [
             'payment_method' => 'bank_transfer',
-        ]);
+        ] + self::BILLING);
 
         $response->assertRedirect();
         $this->followRedirects($response)
@@ -204,7 +210,7 @@ class QuoteApprovalAndPaymentTest extends TestCase
     {
         $this->quote->update(['inputs' => ['videos' => 0, 'prazo' => 15]]);
 
-        $this->post("/orcamento/{$this->quote->approval_token}/aprovar", ['payment_method' => 'bank_transfer'])->assertRedirect();
+        $this->post("/orcamento/{$this->quote->approval_token}/aprovar", ['payment_method' => 'bank_transfer'] + self::BILLING)->assertRedirect();
 
         $this->assertSame(1, PackPurchase::where('quote_id', $this->quote->id)->sole()->video_quantity);
     }
@@ -213,7 +219,7 @@ class QuoteApprovalAndPaymentTest extends TestCase
     {
         $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", [
             'payment_method' => 'redsys_card',
-        ]);
+        ] + self::BILLING);
 
         $response->assertOk();
         $response->assertViewIs('storefront.redsys_redirect');
@@ -245,7 +251,7 @@ class QuoteApprovalAndPaymentTest extends TestCase
 
         $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", [
             'payment_method' => 'stripe',
-        ]);
+        ] + self::BILLING);
 
         $response->assertRedirect('https://checkout.stripe.com/pay/cs_test_mock');
 

@@ -7,6 +7,7 @@ use App\Models\PackPurchase;
 use App\Models\Quote;
 use App\Services\Payment\PackCheckoutDispatcher;
 use App\Services\Payment\PaymentMethodAvailability;
+use App\Support\BillingProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -40,7 +41,28 @@ class QuoteApprovalController extends Controller
         $availability = PaymentMethodAvailability::forTenant($tenant);
         $activeMethods = $availability->getActiveMethods();
 
-        return view('quotes.public.show', compact('quote', 'tenant', 'activeMethods'));
+        // Página aberta só pelo token: dados de faturação já salvos nunca aparecem por inteiro aqui.
+        $savedBilling = $this->clienteFor($quote)?->hasBillingProfile()
+            ? ['tax_tail' => mb_substr((string) $this->clienteFor($quote)->billing_tax_id, -4)]
+            : null;
+
+        return view('quotes.public.show', compact('quote', 'tenant', 'activeMethods', 'savedBilling'));
+    }
+
+    /**
+     * Cliente do orçamento: o vinculado ou o do e-mail, sempre no tenant do orçamento.
+     */
+    private function clienteFor(Quote $quote): ?Cliente
+    {
+        $query = Cliente::withoutGlobalScope('tenant')->where('tenant_id', $quote->tenant_id);
+
+        if ($quote->cliente_id) {
+            return (clone $query)->find($quote->cliente_id);
+        }
+
+        $email = trim((string) $quote->client_email);
+
+        return $email === '' ? null : $query->where('email', $email)->first();
     }
 
     /**
@@ -99,8 +121,13 @@ class QuoteApprovalController extends Controller
             return back()->with('error', __('O orçamento não possui e-mail de contato cadastrado para envio das informações de cobrança.'));
         }
 
+        // Dados de faturação: obrigatórios antes do pagamento (a fatura sai com NIF e endereço).
+        $existing = $this->clienteFor($quote);
+        $useSaved = $request->boolean('use_saved_billing') && $existing?->hasBillingProfile();
+        $billing = $useSaved ? null : $request->validate(BillingProfile::rules());
+
         // Localiza ou provisiona a conta do cliente para o tenant da produtora
-        $cliente = Cliente::withoutGlobalScope('tenant')
+        $cliente = $existing ?? Cliente::withoutGlobalScope('tenant')
             ->where('tenant_id', $quote->tenant_id)
             ->where('email', $clientEmail)
             ->first();
@@ -112,6 +139,10 @@ class QuoteApprovalController extends Controller
                 'email' => $clientEmail,
                 'password' => bcrypt(Str::random(16)),
             ]);
+        }
+
+        if ($billing !== null) {
+            BillingProfile::save($cliente, $billing);
         }
 
         $amountToPay = (float) ($quote->deposit_amount > 0 ? $quote->deposit_amount : $quote->total_amount);
@@ -141,6 +172,7 @@ class QuoteApprovalController extends Controller
             // Quantidade de vídeos do próprio orçamento: vira a cota do cliente e aparece na fatura.
             // Orçamento de anúncios é serviço (criativos e gestão): não gera cota de vídeos.
             'video_quantity' => $quote->isAds() ? 0 : max(1, (int) ($quote->inputs['videos'] ?? 1)),
+            ...BillingProfile::purchaseAttributes($cliente),
         ]);
 
         return match ($method) {

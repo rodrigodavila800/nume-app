@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\SofiChatController;
 use App\Http\Controllers\Auth\GooglePortalController;
 use App\Http\Controllers\Portal\AnamnesisController;
+use App\Http\Controllers\Portal\BillingProfileController;
 use App\Http\Controllers\Portal\AuthenticatedSessionController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\MarketingPlanController;
@@ -51,6 +52,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::post('profile/analyze-dna', [ProfileController::class, 'analyzeDna'])->name('profile.analyze-dna');
+
+        // Dados de faturação (criptografados)
+        Route::get('faturacao', [BillingProfileController::class, 'edit'])->name('billing.edit');
+        Route::put('faturacao', [BillingProfileController::class, 'update'])->name('billing.update');
 
         // Rotas que exigem o perfil da marca preenchido
         Route::middleware('brand.profile.completed')->group(function () {

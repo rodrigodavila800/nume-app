@@ -21,6 +21,7 @@
             </p>
         </div>
         <div class="flex items-center gap-2">
+            <a href="{{ route('portal.billing.edit') }}" class="text-xs font-bold text-zinc-600 hover:text-orange-600 transition">{{ __('Dados de faturação') }}</a>
             @if ($canRequest)
                 <a href="{{ route('portal.quotes.request') }}"
                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-500 text-white shadow-xs transition">
