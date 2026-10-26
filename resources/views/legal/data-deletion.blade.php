@@ -37,7 +37,7 @@
                 com o assunto <strong>Exclusão de dados</strong>, a partir do e-mail cadastrado no portal.
             </p>
             <ul class="list-disc pl-5 space-y-1">
-                <li><strong>Prazo:</strong> respondemos em até 15 dias úteis, conforme o RGPD (Espanha) e a LGPD (Brasil).</li>
+                <li><strong>Prazo:</strong> respondemos em até 15 dias úteis, conforme o RGPD e a LOPDGDD (Espanha).</li>
                 <li><strong>O que apagamos:</strong> tokens e dados das redes conectadas, histórico de publicações, vídeos enviados e dados de perfil.</li>
                 <li><strong>O que podemos ter de manter:</strong> faturas e registros exigidos pela lei fiscal, pelo prazo legal.</li>
             </ul>

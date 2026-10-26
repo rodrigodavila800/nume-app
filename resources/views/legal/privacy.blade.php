@@ -6,13 +6,13 @@
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
     <div class="border-b border-zinc-200 pb-5">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-200 mb-2">
-            Compliance Legal Espanha (RGPD / LOPDGDD) & Brasil (LGPD)
+            Compliance Legal Espanha e União Europeia (RGPD / LOPDGDD)
         </span>
         <h1 class="text-3xl font-extrabold text-zinc-900 tracking-tight">
             {{ __('Política de Privacidade, Proteção de Dados e Gestão de Cookies') }}
         </h1>
         <p class="text-xs text-zinc-500 mt-2">
-            Última atualização: 25/10/2026 · Aplicável à plataforma NUME Creative (Espanha & Brasil).
+            Última atualização: 26/10/2026 · Aplicável à plataforma NUME Creative (Espanha).
         </p>
     </div>
 
@@ -33,11 +33,11 @@
         <section class="bg-white p-6 rounded-2xl border border-zinc-200 space-y-3">
             <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
                 <span>2.</span>
-                <span>Bases Legais e Finalidades (RGPD e LGPD)</span>
+                <span>Bases Legais e Finalidades (RGPD)</span>
             </h2>
             <ul class="list-disc pl-5 space-y-1 text-xs sm:text-sm">
                 <li><strong>Execução de Contrato:</strong> Coleta de dados corporativos (nome, empresa, e-mail, telefone) para prestação dos serviços contratados nos pacotes audiovisuais.</li>
-                <li><strong>Obrigação Legal e Fiscal:</strong> Emissão de faturas em conformidade com as leis fiscais da Espanha (Hacienda) e do Brasil (Receita Federal).</li>
+                <li><strong>Obrigação Legal e Fiscal:</strong> Emissão de faturas em conformidade com a legislação fiscal espanhola (Agencia Tributaria).</li>
                 <li><strong>Legítimo Interesse & Segurança:</strong> Proteção contra fraudes, tentativas de invasão e auditoria de logs de sessão.</li>
                 <li><strong>Consentimento:</strong> Utilização de cookies analíticos e de preferências de navegação.</li>
             </ul>
@@ -84,10 +84,10 @@
         <section class="bg-white p-6 rounded-2xl border border-zinc-200 space-y-3">
             <h2 class="text-base font-bold text-zinc-900 flex items-center gap-2">
                 <span>4.</span>
-                <span>Direitos do Titular de Dados (ARCO / LGPD)</span>
+                <span>Direitos do Titular de Dados (RGPD)</span>
             </h2>
             <p>
-                Em conformidade com o <strong>Regulamento Geral de Proteção de Dados da UE (RGPD - Arts. 15 a 22)</strong> e com a <strong>Lei Geral de Proteção de Dados do Brasil (LGPD - Art. 18)</strong>, você tem o direito de:
+                Em conformidade com o <strong>Regulamento Geral de Proteção de Dados da UE (RGPD - Arts. 15 a 22)</strong> e com a <strong>Lei Orgânica 3/2018 (LOPDGDD)</strong>, você tem o direito de:
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
@@ -105,6 +105,10 @@
             </div>
             <p class="text-xs text-zinc-500">
                 Para exercer qualquer direito, envie solicitação para <a href="mailto:admin@numecreative.com" class="text-orange-600 underline font-bold">admin@numecreative.com</a> com resposta garantida em até 15 dias úteis.
+            </p>
+            <p class="text-xs text-zinc-500">
+                Se entender que seus direitos não foram atendidos, você pode apresentar reclamação à
+                <a href="https://www.aepd.es" class="text-orange-600 underline font-bold" target="_blank" rel="noopener noreferrer">Agencia Española de Protección de Datos (AEPD)</a>.
             </p>
         </section>
 

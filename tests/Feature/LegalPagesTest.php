@@ -32,6 +32,18 @@ class LegalPagesTest extends TestCase
             ->assertSee(route('legal.privacy').'#redes-sociais', false);
     }
 
+    public function test_legal_pages_follow_spanish_data_protection_only(): void
+    {
+        $this->get(route('legal.privacy'))->assertOk()
+            ->assertSee('RGPD')
+            ->assertSee('LOPDGDD')
+            ->assertSee('Agencia Española de Protección de Datos')
+            ->assertDontSee('LGPD');
+
+        $this->get(route('legal.data-deletion'))->assertOk()->assertDontSee('LGPD');
+        $this->get(route('legal.terms'))->assertOk()->assertDontSee('LGPD');
+    }
+
     public function test_urls_are_stable_for_the_app_review_forms(): void
     {
         $this->assertSame('/privacidade', route('legal.privacy', absolute: false));

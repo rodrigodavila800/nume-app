@@ -14,6 +14,22 @@ Registro das decisões do dono do produto. Atualizar quando mudar.
 | 23/10/2026 | Redsys | **TPV por produtora**; plataforma não recebe e repassa (risco PSD2) | Credenciais Redsys em `tenant_settings`; webhook resolve o tenant antes de validar |
 | 23/10/2026 | Assinaturas de pacote | **Fora do lançamento**; voltam numa fase fiscal com fatura por ciclo | Checkout recusa pacote recorrente |
 | 23/10/2026 | Comissão fora da Stripe | **Item de uso (metered) na assinatura SaaS** da produtora | Registrar comissão devida por compra agora; cobrança em fase própria |
+| 24/10/2026 | Redes sociais | **App próprio da NUME** nas APIs oficiais (sem engenharia reversa); Upload-Post só como alternativa por rede | Nume Social Engine: 8 redes nativas, `social.routing` |
+| 26/10/2026 | Modelo de clientes | Hoje a NUME é a única produtora e usa a própria plataforma; os clientes são **empresas** que compram vídeo | Tenant `nume`; recursos de produtora valem para a NUME |
+| 26/10/2026 | Proteção de dados | **Só Espanha por enquanto: RGPD + LOPDGDD** (sem LGPD, não vende para o Brasil) | Textos legais citam RGPD/LOPDGDD e AEPD; e-mail comercial segue a LSSI-CE (validar com jurídico) |
+| 26/10/2026 | Vídeo após postar | O arquivo final **é apagado da hospedagem depois de postado** | Apagar só quando não houver publicação pendente/agendada/em andamento; cópia de entrega fica no link (Drive) |
+| 26/10/2026 | Limite de postagens | **Mensal, por plano**; valores a definir | Mecanismo configurável por plano; unidade de contagem a confirmar |
+| 26/10/2026 | CRM | **Da NUME e das produtoras** (módulo por tenant); inclui o **suporte** (gestão de demandas) | Funil + origem do lead + histórico; demandas ligadas ao cliente |
+| 26/10/2026 | Tipos de vídeo | **Cadastrados pelo admin da NUME**; cada tipo define seus blocos e duração | Catálogo por tenant; roteiro guarda o tipo; Sofi monta pelo tipo |
+| 26/10/2026 | Anúncios | **Serviço**: a NUME cria a mídia; o cliente paga a verba direto à plataforma de anúncios; orçamento do anúncio → aprovação → fatura | Sem API de anúncios por ora; item de anúncio no orçamento |
+| 26/10/2026 | Chat do portal | Vira **suporte** (porta de entrada das demandas do CRM), sem sugerir roteiros | Chat de vendas da vitrine continua como está |
+
+## Pendente com o analista
+- Quem sobe o arquivo aprovado no Drive para a plataforma? (equipe manualmente ou integração com o Drive)
+- O cliente recebe o arquivo final antes ou depois de quitar o saldo? (hoje: download e publicação só após quitação)
+- O limite mensal conta **envios** (várias redes = 1) ou **posts por rede**?
+- A fatura do anúncio inclui a verba ou só o serviço da NUME? (recomendado: só o serviço)
+- O cliente poderá criar e editar roteiro manualmente? (hoje só a equipe)
 
 ## Pendente com a gestoria
 - A retenção de IRPF se aplica a clientes particulares? (hoje: nunca retém para particular)

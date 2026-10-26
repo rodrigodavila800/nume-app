@@ -110,14 +110,14 @@
                 <span>© {{ date('Y') }} {{ __('NUME Creative. Produção Estratégica.') }}</span>
             </div>
             <div class="flex items-center gap-4 text-xs">
-                <a href="{{ route('legal.privacy') }}" class="text-zinc-400 hover:text-white underline">{{ __('Privacidade & Cookies (RGPD / LGPD)') }}</a>
+                <a href="{{ route('legal.privacy') }}" class="text-zinc-400 hover:text-white underline">{{ __('Privacidade & Cookies (RGPD)') }}</a>
                 <span>·</span>
                 <a href="{{ route('login') }}" class="hover:text-orange-500 transition">{{ __('Acesso Produtora') }}</a>
             </div>
         </div>
     </footer>
 
-    <!-- Banner de Consentimento de Cookies & Privacidade (RGPD Espanha / LGPD Brasil) -->
+    <!-- Banner de Consentimento de Cookies & Privacidade (RGPD / LOPDGDD) -->
     <div id="cookie-consent-banner" 
          class="fixed bottom-0 inset-x-0 z-50 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 p-4 sm:p-5 shadow-2xl transition-all duration-300 transform translate-y-full">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -127,7 +127,7 @@
                     <h3 class="text-xs font-bold uppercase tracking-wider text-white">Privacidade & Uso de Cookies</h3>
                 </div>
                 <p class="text-xs text-zinc-400 leading-relaxed">
-                    Utilizamos cookies para assegurar a autenticação segura do portal e aprimorar a experiência de navegação conforme as exigências da <strong>RGPD (Espanha / UE)</strong> e da <strong>LGPD (Brasil)</strong>. Você pode ler nossa 
+                    Utilizamos cookies para assegurar a autenticação segura do portal e aprimorar a experiência de navegação conforme as exigências do <strong>RGPD (UE)</strong> e da <strong>LOPDGDD (Espanha)</strong>. Você pode ler nossa 
                     <a href="{{ route('legal.privacy') }}" class="text-orange-400 hover:underline font-bold">Política de Privacidade e Proteção de Dados</a>.
                 </p>
             </div>

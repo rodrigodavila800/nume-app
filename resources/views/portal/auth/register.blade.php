@@ -181,7 +181,7 @@
                             <span class="text-xs text-zinc-600 leading-tight">
                                 {{ __('Li e concordo com os') }}
                                 <a href="{{ route('legal.privacy') }}" target="_blank" class="text-orange-600 hover:underline font-semibold">
-                                    {{ __('Termos de Privacidade e Proteção de Dados (RGPD / LGPD)') }}
+                                    {{ __('Termos de Privacidade e Proteção de Dados (RGPD)') }}
                                 </a>.
                             </span>
                         </label>

@@ -106,7 +106,7 @@ Chave no `.env` como `GEMINI_API_KEY` (o nome coincide com o que o projeto já u
 | **Pacote jovem / mudanças de API** | Não verifiquei versão nem política de estabilidade | Fixar versão, ler *release notes* a cada update, manter camada fina entre controllers e Agents |
 | **Perda do fallback heurístico** | O SDK faz failover entre provedores/modelos, não entrega texto de template | Manter try/catch com o motor heurístico atual em volta da chamada ao Agent |
 | **Custo descontrolado** | Loops de tools e `MaxSteps` altos | `#[MaxSteps]`, `#[MaxTokens]`, middleware com `Stop::unless(...)` por tokens, limite por tenant |
-| **LGPD/GDPR** | Dados de clientes (UE) vão a um provedor externo | Registrar provedor no aviso de privacidade; evitar enviar NIF/CIF, e-mails e dados de fatura em prompts |
+| **RGPD** | Dados de clientes (UE) vão a um provedor externo | Registrar provedor no aviso de privacidade; evitar enviar NIF/CIF, e-mails e dados de fatura em prompts |
 
 ---
 
