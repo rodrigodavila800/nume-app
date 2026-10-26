@@ -160,10 +160,20 @@
 
                     {{-- Barra de Ações --}}
                     <div class="pt-3 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div class="text-xs text-zinc-500">
-                            @if ($quote->inputs && isset($quote->inputs['videos']))
+                        <div class="text-xs text-zinc-500 flex flex-wrap items-center gap-3">
+                            @if ($quote->isAds())
+                                <span>📣 {{ __('Anúncios') }}</span>
+                            @elseif ($quote->inputs && isset($quote->inputs['videos']))
                                 <span>🎥 {{ $quote->inputs['videos'] }} {{ __('vídeos previstos') }}</span>
                             @endif
+                            @foreach ($quote->packPurchases as $invoicePurchase)
+                                @if ($invoicePurchase->isPaid())
+                                    <a href="{{ route('portal.purchases.invoice', $invoicePurchase) }}"
+                                       class="inline-flex items-center gap-1 font-bold text-orange-700 hover:text-orange-800">
+                                        📄 {{ __('Fatura :num (PDF)', ['num' => $invoicePurchase->invoice_number]) }}
+                                    </a>
+                                @endif
+                            @endforeach
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">

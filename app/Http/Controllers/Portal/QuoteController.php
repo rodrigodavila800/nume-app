@@ -26,6 +26,12 @@ class QuoteController extends Controller
 
         $quotes = $cliente->allQuotes()
             ->whereIn('status', [Quote::STATUS_REQUESTED, 'sent', 'accepted', 'rejected'])
+            // Faturas emitidas das compras deste cliente (download confere o dono de novo)
+            ->with(['packPurchases' => fn ($q) => $q->withoutGlobalScope('tenant')
+                ->where('tenant_id', $cliente->tenant_id)
+                ->where('cliente_id', $cliente->id)
+                ->whereNotNull('invoice_number')
+                ->orderBy('id')])
             ->latest()
             ->paginate(10);
 
