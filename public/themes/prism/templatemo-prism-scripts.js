@@ -98,176 +98,132 @@ https://templatemo.com/tm-600-prism-flux
             }
         }
 
-        // Initialize carousel
-        let currentIndex = 0;
-        const carousel = document.getElementById('carousel');
-        const indicatorsContainer = document.getElementById('indicators');
+        // =========================================================================
+        // ORBITAL 3D RING CAROUSEL ENGINE (Template 2167 Orbital Integration)
+        // =========================================================================
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const spacingLevels = [0.76, 0.95, 1.12];
+        let spacingIndex = 1;
+        let orbitalRotation = 0;
+        let orbitalVelocity = 0;
+        let orbitalDragging = false;
+        let orbitalLastX = 0;
+        let orbitalDragDistance = 0;
+        let orbitalLoopStarted = false;
+
+        function baseOrbitalRadius() {
+            const raw = getComputedStyle(document.documentElement).getPropertyValue('--orbital-radius');
+            return parseFloat(raw) || 360;
+        }
+
+        function effectiveOrbitalRadius() {
+            return baseOrbitalRadius() * spacingLevels[spacingIndex];
+        }
+
+        function positionOrbitalPanels() {
+            const ring = document.getElementById('carousel');
+            if (!ring) return;
+            const panels = ring.querySelectorAll('.orbital-panel');
+            const count = panels.length;
+            if (!count) return;
+
+            const r = effectiveOrbitalRadius();
+            panels.forEach((panel, i) => {
+                const angle = (360 / count) * i;
+                const tilt = Math.sin((i / count) * Math.PI * 2) * 7.5;
+                panel.style.setProperty('--ry', angle + 'deg');
+                panel.style.setProperty('--tz', r + 'px');
+                panel.style.setProperty('--rz', tilt.toFixed(2) + 'deg');
+                panel.style.setProperty('--i', i);
+            });
+        }
 
         function createCarouselItem(data, index) {
-            const item = document.createElement('div');
-            item.className = 'carousel-item';
-            item.dataset.index = index;
-            
+            const panel = document.createElement('div');
+            panel.className = 'orbital-panel';
+            panel.dataset.index = index;
+
             const isVertical = data.is_vertical !== false;
-            const escapedTitle = (data.title || '').replace(/'/g, "\\'");
             const videoUrl = data.video_url || '#';
             const embedUrl = data.embed_url || '';
+            const numStr = String(index + 1).padStart(2, '0');
+            const formatBadge = isVertical ? '📱 9:16 SHORTS' : '🎬 16:9 WIDE';
+            const categoryName = (data.tech && data.tech[1]) || 'NUME 4K';
 
-            if (isVertical) {
-                item.classList.add('is-vertical');
-                const categoryName = (data.tech && data.tech[1]) || 'Reels';
-
-                item.innerHTML = `
-                    <div class="card">
-                        <img src="${data.image}" alt="${data.title}" class="shorts-backdrop">
-                        <div class="shorts-gradient-overlay"></div>
-                        <div class="shorts-top-bar">
-                            <span class="shorts-badge">📱 9:16 SHORTS</span>
-                            <span class="shorts-category">${categoryName}</span>
-                        </div>
-                        <div class="shorts-center-play">▶</div>
-                        <div class="shorts-bottom-info">
-                            <h3 class="shorts-title">${data.title}</h3>
-                            <div class="shorts-meta">
-                                <span style="color: #fb923c; font-weight: 800;">${(window.__ ? window.__('retention_badge', '⚡ 94% Retenção') : '⚡ 94% Retenção')}</span>
-                                <span>·</span>
-                                <span>NUME 4K</span>
-                            </div>
-                            <button type="button" class="shorts-cta-btn">
-                                <span>${(window.__ ? window.__('watch_shorts', 'Assistir Shorts') : 'Assistir Shorts')}</span>
-                                <span>▶</span>
-                            </button>
-                        </div>
+            panel.innerHTML = `
+                <div class="orbital-panel-face orbital-panel-face--text">
+                    <span class="p-num">${numStr} · ${categoryName}</span>
+                    <span class="p-label">${data.title || ''}</span>
+                    <span class="p-meta">${formatBadge}</span>
+                </div>
+                <div class="orbital-panel-face orbital-panel-face--image">
+                    <img src="${data.image}" alt="${(data.title || '').replace(/"/g, '&quot;')}" loading="lazy">
+                    <div class="orbital-panel-scrim"></div>
+                    <span class="orbital-panel-badge">${formatBadge}</span>
+                    <div class="orbital-panel-play">▶</div>
+                    <div class="orbital-panel-cap">
+                        <span class="p-num">${numStr}</span>
+                        <span class="orbital-panel-cap-title">${data.title || ''}</span>
                     </div>
-                `;
-            } else {
-                item.classList.add('is-horizontal');
-                const techBadges = (data.tech || []).map(tech => 
-                    `<span class="tech-badge">${tech}</span>`
-                ).join('');
+                </div>
+            `;
 
-                item.innerHTML = `
-                    <div class="card">
-                        <div class="card-number">0${data.id || (index + 1)}</div>
-                        <div class="card-image" style="height: 190px; overflow: hidden; border-radius: 14px; position: relative;">
-                            <img src="${data.image}" alt="${data.title}" style="width: 100%; height: 100%; object-fit: cover;">
-                            <div style="position: absolute; top: 10px; left: 10px; z-index: 2;">
-                                <span style="background: rgba(24, 24, 27, 0.9); color: #e4e4e7; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">🎬 16:9 WIDE</span>
-                            </div>
-                            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.35);">
-                                <div style="width: 48px; height: 48px; border-radius: 50%; background: #ea580c; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 0 20px rgba(234, 88, 12, 0.6); transition: transform 0.2s ease;">▶</div>
-                            </div>
-                        </div>
-                        <h3 class="card-title" style="margin-top: 15px; font-size: 18px;">${data.title}</h3>
-                        <p class="card-description" style="font-size: 13px; line-height: 1.4;">${data.description || ''}</p>
-                        <div class="card-tech">${techBadges}</div>
-                        <button type="button" class="card-cta">${(window.__ ? window.__('watch_video', 'Assistir Vídeo') : 'Assistir Vídeo')} ▶</button>
-                    </div>
-                `;
-            }
-
-            // Ação unificada Click + Touch
-            function triggerCardAction(e) {
-                if (e) {
+            panel.addEventListener('click', (e) => {
+                if (orbitalDragDistance > 8) {
+                    e.preventDefault();
                     e.stopPropagation();
+                    return;
                 }
-                const currentIdx = typeof currentIndex !== 'undefined' ? currentIndex : 0;
-                const thisIdx = parseInt(item.dataset.index, 10);
-                
-                if (thisIdx === currentIdx) {
-                    if (window.openVideoModal) {
-                        window.openVideoModal(videoUrl, data.title, isVertical, embedUrl);
-                    }
-                } else {
-                    if (typeof goToSlide === 'function') {
-                        goToSlide(thisIdx);
-                    }
+                if (window.openVideoModal) {
+                    window.openVideoModal(videoUrl, data.title, isVertical, embedUrl);
                 }
-            }
+            });
 
-            // Click padrão
-            item.addEventListener('click', triggerCardAction);
-
-            // Touch dedicado para mobile
-            let tapStartX = 0;
-            let tapStartY = 0;
-            let tapStartTime = 0;
-            item.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    tapStartX = e.touches[0].clientX;
-                    tapStartY = e.touches[0].clientY;
-                    tapStartTime = Date.now();
-                }
-            }, { passive: true });
-
-            item.addEventListener('touchend', (e) => {
-                if (e.changedTouches.length === 1) {
-                    const diffX = Math.abs(e.changedTouches[0].clientX - tapStartX);
-                    const diffY = Math.abs(e.changedTouches[0].clientY - tapStartY);
-                    const duration = Date.now() - tapStartTime;
-                    // Se foi um toque curto (< 400ms e < 15px de arraste), dispara a ação
-                    if (diffX < 15 && diffY < 15 && duration < 400) {
-                        triggerCardAction(e);
-                    }
-                }
-            }, { passive: false });
-            
-            return item;
+            return panel;
         }
 
         function rebuildCarousel() {
             const carousel = document.getElementById('carousel');
-            const indicatorsContainer = document.getElementById('indicators');
-            if (!carousel || !indicatorsContainer) return;
+            if (!carousel) return;
 
             carousel.innerHTML = '';
-            indicatorsContainer.innerHTML = '';
-            currentIndex = 0;
 
-            if (portfolioData.length === 0) {
+            if (!portfolioData || portfolioData.length === 0) {
+                carousel.style.transform = 'none';
                 carousel.innerHTML = `
-                    <div style="text-align: center; color: #a1a1aa; padding: 60px 20px; font-size: 14px; width: 100%;">
+                    <div class="orbital-empty-state">
                         ${(window.__ ? window.__('no_videos_found', '⚡ Nenhum vídeo encontrado para este formato no momento.') : '⚡ Nenhum vídeo encontrado para este formato no momento.')}
                     </div>
                 `;
                 return;
             }
 
-            portfolioData.forEach((data, index) => {
+            // Ensure at least 8 panels around the 360° cylinder so the 3D ring geometry looks complete
+            const ringItems = [];
+            const minPanels = 8;
+            const targetCount = Math.max(portfolioData.length, minPanels);
+            for (let i = 0; i < targetCount; i++) {
+                ringItems.push(portfolioData[i % portfolioData.length]);
+            }
+
+            ringItems.forEach((data, index) => {
                 const item = createCarouselItem(data, index);
                 carousel.appendChild(item);
-                
-                const indicator = document.createElement('div');
-                indicator.className = 'indicator';
-                if (index === 0) indicator.classList.add('active');
-                indicator.dataset.index = index;
-                indicator.addEventListener('click', () => goToSlide(index));
-                indicatorsContainer.appendChild(indicator);
             });
-            
-            updateCarousel();
+
+            positionOrbitalPanels();
         }
 
         window.filterPortfolio = function(filterType, btnEl) {
-            // Atualiza botões
             const buttons = document.querySelectorAll('.portfolio-tab-btn');
             buttons.forEach(btn => {
                 btn.classList.remove('active');
-                btn.style.background = 'rgba(18, 18, 20, 0.75)';
-                btn.style.color = '#a1a1aa';
-                btn.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                btn.style.boxShadow = 'none';
             });
 
             if (btnEl) {
                 btnEl.classList.add('active');
-                btnEl.style.background = 'linear-gradient(135deg, #ea580c, #f97316)';
-                btnEl.style.color = '#ffffff';
-                btnEl.style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                btnEl.style.boxShadow = '0 6px 20px rgba(234, 88, 12, 0.45)';
             }
 
-            // Filtra os dados
             if (filterType === 'vertical') {
                 portfolioData = rawPortfolioData.filter(item => item.is_vertical !== false);
             } else if (filterType === 'horizontal') {
@@ -279,122 +235,148 @@ https://templatemo.com/tm-600-prism-flux
             rebuildCarousel();
         };
 
+        function isModalOpen() {
+            const modal = document.getElementById('storefront-video-modal');
+            return modal && (modal.classList.contains('is-open') || modal.style.display === 'flex');
+        }
+
         function initCarousel() {
             rebuildCarousel();
+
+            if (orbitalLoopStarted) return;
+            orbitalLoopStarted = true;
+
+            const wrapper = document.getElementById('orbitalWrapper');
+            const stage = document.getElementById('orbitalStage');
+            const parallax = document.getElementById('orbitalParallax');
+            const ringTilt = document.getElementById('orbitalRingTilt');
+            const ring = document.getElementById('carousel');
+
+            const baseDrift = reduceMotion ? 0 : 0.12;
+            const friction = 0.94;
+            const MAX_VELOCITY = 7;
+            const DRAG_SENS = 0.32;
+            const WHEEL_SENS = 0.05;
+
+            function clamp(v, min, max) {
+                return Math.max(min, Math.min(max, v));
+            }
+
+            let targetX = 8, targetY = 0, currentX = 8, currentY = 0;
+            const rangeY = 24;
+            const rangeX = 24;
+            const biasX = 8;
+
+            if (!reduceMotion) {
+                window.addEventListener('mousemove', (e) => {
+                    const mx = (e.clientX / window.innerWidth) - 0.5;
+                    const my = (e.clientY / window.innerHeight) - 0.5;
+                    targetY = mx * rangeY;
+                    targetX = (-my * rangeX) + biasX;
+                });
+            }
+
+            if (stage) {
+                stage.addEventListener('pointerdown', (e) => {
+                    orbitalDragging = true;
+                    orbitalLastX = e.clientX;
+                    orbitalDragDistance = 0;
+                    orbitalVelocity = 0;
+                    stage.classList.add('dragging');
+                });
+
+                window.addEventListener('pointermove', (e) => {
+                    if (!orbitalDragging) return;
+                    const dx = e.clientX - orbitalLastX;
+                    orbitalLastX = e.clientX;
+                    orbitalDragDistance += Math.abs(dx);
+                    const step = dx * DRAG_SENS;
+                    orbitalRotation += step;
+                    orbitalVelocity = clamp(step, -MAX_VELOCITY, MAX_VELOCITY);
+                });
+
+                const endDrag = () => {
+                    if (!orbitalDragging) return;
+                    orbitalDragging = false;
+                    stage.classList.remove('dragging');
+                };
+
+                window.addEventListener('pointerup', endDrag);
+                window.addEventListener('pointercancel', endDrag);
+
+                stage.addEventListener('wheel', (e) => {
+                    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                        e.preventDefault();
+                        orbitalVelocity = clamp(orbitalVelocity + e.deltaX * WHEEL_SENS, -MAX_VELOCITY, MAX_VELOCITY);
+                    }
+                }, { passive: false });
+            }
+
+            // Keyboard left/right spins the orbital ring
+            document.addEventListener('keydown', (e) => {
+                if (isModalOpen()) return;
+                if (e.key === 'ArrowLeft') orbitalVelocity = clamp(orbitalVelocity + 2.2, -MAX_VELOCITY, MAX_VELOCITY);
+                if (e.key === 'ArrowRight') orbitalVelocity = clamp(orbitalVelocity - 2.2, -MAX_VELOCITY, MAX_VELOCITY);
+            });
+
+            // HUD Controls: VISUALS, ZOOM, SPACING
+            const visualsSwitch = document.getElementById('visualsSwitch');
+            if (visualsSwitch && wrapper) {
+                visualsSwitch.addEventListener('click', () => {
+                    const on = visualsSwitch.getAttribute('aria-checked') !== 'true';
+                    visualsSwitch.setAttribute('aria-checked', on ? 'true' : 'false');
+                    wrapper.classList.toggle('visuals-on', on);
+                });
+            }
+
+            const zoomSwitch = document.getElementById('zoomSwitch');
+            if (zoomSwitch && ringTilt) {
+                zoomSwitch.addEventListener('click', () => {
+                    const on = zoomSwitch.getAttribute('aria-checked') !== 'true';
+                    zoomSwitch.setAttribute('aria-checked', on ? 'true' : 'false');
+                    ringTilt.style.setProperty('--zoom', on ? '1.22' : '1');
+                });
+            }
+
+            const spacingSteps = document.querySelectorAll('.orbital-spacing-step');
+            spacingSteps.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const idx = parseInt(btn.getAttribute('data-space'), 10);
+                    spacingIndex = isNaN(idx) ? 1 : idx;
+                    const r = effectiveOrbitalRadius();
+                    if (ring) {
+                        ring.querySelectorAll('.orbital-panel').forEach((p) => {
+                            p.style.setProperty('--tz', r + 'px');
+                        });
+                    }
+                    spacingSteps.forEach((b) => {
+                        b.classList.toggle('is-active', parseInt(b.getAttribute('data-space'), 10) === spacingIndex);
+                    });
+                });
+            });
+
+            function orbitalFrame() {
+                if (!orbitalDragging && !isModalOpen()) {
+                    orbitalRotation += baseDrift + orbitalVelocity;
+                    orbitalVelocity *= friction;
+                    if (Math.abs(orbitalVelocity) < 0.0015) orbitalVelocity = 0;
+                }
+                if (ring && portfolioData && portfolioData.length > 0) {
+                    ring.style.transform = 'rotateY(' + orbitalRotation.toFixed(3) + 'deg)';
+                }
+                if (!reduceMotion && parallax) {
+                    currentX += (targetX - currentX) * 0.06;
+                    currentY += (targetY - currentY) * 0.06;
+                    parallax.style.transform = 'rotateX(' + currentX.toFixed(2) + 'deg) rotateY(' + currentY.toFixed(2) + 'deg)';
+                }
+                requestAnimationFrame(orbitalFrame);
+            }
+
+            orbitalFrame();
         }
 
         function updateCarousel() {
-            const items = document.querySelectorAll('.carousel-item');
-            const indicators = document.querySelectorAll('.indicator');
-            const totalItems = items.length;
-            const isSmallMobile = window.innerWidth <= 480;
-            const isMobile = window.innerWidth <= 768;
-            const isTablet = window.innerWidth <= 1024;
-            
-            // Adjust spacing based on orientation and screen size
-            const hasVertical = items.length > 0 && items[0].classList.contains('is-vertical');
-            let spacing1 = hasVertical ? 310 : 410;
-            let spacing2 = hasVertical ? 480 : 630;
-            let spacing3 = hasVertical ? 630 : 770;
-            
-            if (isSmallMobile) {
-                spacing1 = hasVertical ? 150 : 200;
-                spacing2 = hasVertical ? 250 : 310;
-                spacing3 = hasVertical ? 350 : 420;
-            } else if (isMobile) {
-                spacing1 = hasVertical ? 210 : 270;
-                spacing2 = hasVertical ? 330 : 410;
-                spacing3 = hasVertical ? 450 : 540;
-            } else if (isTablet) {
-                spacing1 = hasVertical ? 260 : 340;
-                spacing2 = hasVertical ? 410 : 520;
-                spacing3 = hasVertical ? 540 : 650;
-            }
-
-            items.forEach((item, index) => {
-                // Calculate relative position
-                let offset = index - currentIndex;
-                
-                // Wrap around for continuous rotation
-                if (offset > totalItems / 2) {
-                    offset -= totalItems;
-                } else if (offset < -totalItems / 2) {
-                    offset += totalItems;
-                }
-                
-                const absOffset = Math.abs(offset);
-                const sign = offset < 0 ? -1 : 1;
-                
-                // Reset transform
-                item.style.transform = '';
-                item.style.opacity = '';
-                item.style.zIndex = '';
-                item.style.transition = 'all 0.8s cubic-bezier(0.4, 0.0, 0.2, 1)';
-                
-                if (absOffset === 0) {
-                    // Center item: foco absoluto para touch e clique
-                    item.style.transform = 'translate(-50%, -50%) translateZ(0) scale(1)';
-                    item.style.opacity = '1';
-                    item.style.zIndex = '50';
-                    item.style.pointerEvents = 'auto';
-                } else if (absOffset === 1) {
-                    // Side items
-                    const translateX = sign * spacing1;
-                    const rotation = isMobile ? 25 : 30;
-                    const scale = isMobile ? 0.88 : 0.85;
-                    item.style.transform = `translate(-50%, -50%) translateX(${translateX}px) translateZ(-200px) rotateY(${-sign * rotation}deg) scale(${scale})`;
-                    item.style.opacity = '0.8';
-                    item.style.zIndex = '20';
-                    item.style.pointerEvents = 'auto';
-                } else if (absOffset === 2) {
-                    // Further side items
-                    const translateX = sign * spacing2;
-                    const rotation = isMobile ? 35 : 40;
-                    const scale = isMobile ? 0.75 : 0.7;
-                    item.style.transform = `translate(-50%, -50%) translateX(${translateX}px) translateZ(-350px) rotateY(${-sign * rotation}deg) scale(${scale})`;
-                    item.style.opacity = '0.5';
-                    item.style.zIndex = '10';
-                    item.style.pointerEvents = 'auto';
-                } else if (absOffset === 3) {
-                    // Even further items
-                    const translateX = sign * spacing3;
-                    const rotation = isMobile ? 40 : 45;
-                    const scale = isMobile ? 0.65 : 0.6;
-                    item.style.transform = `translate(-50%, -50%) translateX(${translateX}px) translateZ(-450px) rotateY(${-sign * rotation}deg) scale(${scale})`;
-                    item.style.opacity = '0.3';
-                    item.style.zIndex = '5';
-                    item.style.pointerEvents = 'auto';
-                } else {
-                    // Hidden items (behind)
-                    item.style.transform = 'translate(-50%, -50%) translateZ(-500px) scale(0.5)';
-                    item.style.opacity = '0';
-                    item.style.zIndex = '1';
-                    item.style.pointerEvents = 'none';
-                }
-            });
-            
-            // Update indicators
-            indicators.forEach((indicator, index) => {
-                indicator.classList.toggle('active', index === currentIndex);
-            });
-        }
-
-        function nextSlide() {
-            if (!portfolioData || portfolioData.length <= 1) return;
-            currentIndex = (currentIndex + 1) % portfolioData.length;
-            updateCarousel();
-        }
-
-        function prevSlide() {
-            if (!portfolioData || portfolioData.length <= 1) return;
-            currentIndex = (currentIndex - 1 + portfolioData.length) % portfolioData.length;
-            updateCarousel();
-        }
-
-        function goToSlide(index) {
-            if (!portfolioData || portfolioData.length === 0) return;
-            currentIndex = index;
-            updateCarousel();
+            positionOrbitalPanels();
         }
 
         // Initialize hexagonal skills grid
@@ -456,89 +438,13 @@ https://templatemo.com/tm-600-prism-flux
             initParticles();
         }
 
-        // Event listeners
-        const nextBtn = document.getElementById('nextBtn');
-        const prevBtn = document.getElementById('prevBtn');
-        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
-        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
-
-        // Auto-rotate carousel inteligente com pausa em hover/touch/modal
-        let autoRotateTimer = null;
-        function isModalOpen() {
-            const modal = document.getElementById('storefront-video-modal');
-            return modal && modal.style.display === 'flex';
-        }
-
-        function startAutoRotate() {
-            stopAutoRotate();
-            autoRotateTimer = setInterval(() => {
-                if (isModalOpen()) return;
-                nextSlide();
-            }, 6000);
-        }
-
-        function stopAutoRotate() {
-            if (autoRotateTimer) {
-                clearInterval(autoRotateTimer);
-                autoRotateTimer = null;
-            }
-        }
-
-        startAutoRotate();
-
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (isModalOpen()) return;
-            if (e.key === 'ArrowLeft') prevSlide();
-            if (e.key === 'ArrowRight') nextSlide();
-        });
-
-        // Touch swipe support for mobile
-        const carouselContainer = document.querySelector('.carousel-container');
-        if (carouselContainer) {
-            carouselContainer.addEventListener('mouseenter', stopAutoRotate);
-            carouselContainer.addEventListener('mouseleave', startAutoRotate);
-
-            let touchStartX = 0;
-            let touchStartY = 0;
-            let touchEndX = 0;
-            let touchEndY = 0;
-
-            carouselContainer.addEventListener('touchstart', (e) => {
-                stopAutoRotate();
-                if (e.touches.length === 1) {
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
-                }
-            }, { passive: true });
-
-            carouselContainer.addEventListener('touchend', (e) => {
-                if (e.changedTouches.length === 1) {
-                    touchEndX = e.changedTouches[0].clientX;
-                    touchEndY = e.changedTouches[0].clientY;
-                    const diffX = touchEndX - touchStartX;
-                    const diffY = touchEndY - touchStartY;
-
-                    // Se foi um swipe horizontal claro (> 40px e mais horizontal que vertical)
-                    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
-                        if (diffX < 0) {
-                            nextSlide();
-                        } else {
-                            prevSlide();
-                        }
-                    }
-                }
-                setTimeout(startAutoRotate, 7000);
-            }, { passive: true });
-        }
-
         // Update carousel on window resize
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 updateCarousel();
-            }, 250);
+            }, 200);
         });
 
         // Mobile menu toggle

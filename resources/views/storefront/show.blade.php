@@ -131,19 +131,43 @@
             </button>
         </div>
 
-        <!-- 3D Carousel Container -->
-        <div class="carousel-container swiper-3d-portfolio">
-            <div class="carousel" id="carousel">
-                <!-- Carousel items dynamically built by Prism 3D Engine -->
+        <!-- 3D Orbital Ring Carousel (Template 2167 Orbital Engine) -->
+        <div class="orbital-carousel-wrapper visuals-on" id="orbitalWrapper">
+            <div class="orbital-stage" id="orbitalStage">
+                <div class="orbital-parallax" id="orbitalParallax">
+                    <div class="orbital-ring-tilt" id="orbitalRingTilt">
+                        <div class="orbital-ring" id="carousel">
+                            <!-- Orbital panels dynamically built by Orbital 3D Engine -->
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="carousel-controls">
-                <button class="carousel-btn swiper-3d-prev" id="prevBtn" aria-label="Anterior">‹</button>
-                <button class="carousel-btn swiper-3d-next" id="nextBtn" aria-label="Próximo">›</button>
+
+            <div class="orbital-controls">
+                <div class="orbital-ctrl">
+                    <span class="orbital-ctrl-label">{{ __('VISUALS') }}</span>
+                    <button class="orbital-switch" id="visualsSwitch" type="button" role="switch" aria-checked="true" aria-label="{{ __('Alternar miniaturas e fichas técnicas') }}">
+                        <span class="orbital-knob"></span>
+                    </button>
+                </div>
+                <div class="orbital-ctrl">
+                    <span class="orbital-ctrl-label">{{ __('ZOOM') }}</span>
+                    <button class="orbital-switch" id="zoomSwitch" type="button" role="switch" aria-checked="false" aria-label="{{ __('Alternar zoom do anel orbital') }}">
+                        <span class="orbital-knob"></span>
+                    </button>
+                </div>
+                <div class="orbital-ctrl">
+                    <span class="orbital-ctrl-label">{{ __('SPACING') }}</span>
+                    <div class="orbital-spacing" role="group" aria-label="{{ __('Espaçamento do anel') }}">
+                        <button class="orbital-spacing-step" type="button" data-space="0" aria-label="Compacto"><i></i></button>
+                        <button class="orbital-spacing-step is-active" type="button" data-space="1" aria-label="Padrão"><i></i></button>
+                        <button class="orbital-spacing-step" type="button" data-space="2" aria-label="Amplo"><i></i></button>
+                    </div>
+                </div>
             </div>
-            
-            <div class="carousel-indicators swiper-3d-pagination" id="indicators">
-                <!-- Indicators dynamically generated -->
+
+            <div class="orbital-drag-hint">
+                <span>⟷ {{ __('Arraste para girar o anel 3D · Clique em qualquer vídeo para assistir') }}</span>
             </div>
         </div>
 

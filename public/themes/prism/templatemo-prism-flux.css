@@ -4615,4 +4615,458 @@ body.nav-menu-open {
 .text-accent {
 	color: #ea580c;
 }
-
+
+
+/* ========================================================
+   ORBITAL 3D RING CAROUSEL (Tooplate 2167 Orbital Engine)
+   Adapted to NUME Brand Identity — Zero Inline CSS
+   ======================================================== */
+:root {
+	--orbital-ease: cubic-bezier(0.16, 1, 0.3, 1);
+	--orbital-radius: 360px;
+	--orbital-vermilion: #c42b14;
+	--orbital-orange: #ea580c;
+	--orbital-amber: #fb923c;
+}
+
+.orbital-carousel-wrapper {
+	position: relative;
+	width: 100%;
+	height: 540px;
+	margin: 10px auto 15px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 15;
+}
+
+.orbital-stage {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	perspective: 1300px;
+	cursor: grab;
+	touch-action: pan-y;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.orbital-stage.dragging {
+	cursor: grabbing;
+}
+
+.orbital-stage.dragging .orbital-panel {
+	cursor: grabbing;
+}
+
+.orbital-parallax {
+	position: relative;
+	width: 1px;
+	height: 1px;
+	transform-style: preserve-3d;
+	transition: transform 0.6s var(--orbital-ease);
+}
+
+.orbital-ring-tilt {
+	position: absolute;
+	top: 0;
+	left: 0;
+	transform-style: preserve-3d;
+	transform: rotateX(var(--tiltX, -16deg)) scale3d(var(--zoom, 1), var(--zoom, 1), var(--zoom, 1));
+	transition: transform 0.8s var(--orbital-ease);
+}
+
+.orbital-ring {
+	position: absolute;
+	top: 0;
+	left: 0;
+	transform-style: preserve-3d;
+	will-change: transform;
+}
+
+.orbital-panel {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 176px;
+	height: 244px;
+	margin-left: -88px;
+	margin-top: -122px;
+	border-radius: 18px;
+	background: rgba(18, 18, 22, 0.72);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	box-shadow: inset 0 0 34px rgba(196, 43, 20, 0.2), 0 12px 42px rgba(0, 0, 0, 0.55);
+	transform: rotateY(var(--ry, 0deg)) translateZ(var(--tz, 340px)) rotateZ(var(--rz, 0deg)) scale(var(--s, 1));
+	transition: transform 0.7s var(--orbital-ease), box-shadow 0.7s var(--orbital-ease);
+	cursor: pointer;
+}
+
+.orbital-panel::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	padding: 1px;
+	background: linear-gradient(135deg, rgba(196, 43, 20, 0.65), rgba(251, 146, 60, 0.25));
+	-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask-composite: exclude;
+	pointer-events: none;
+	transition: background 0.7s var(--orbital-ease), opacity 0.7s var(--orbital-ease);
+}
+
+.orbital-panel:hover {
+	--s: 1.11;
+	box-shadow: inset 0 0 44px rgba(196, 43, 20, 0.35), 0 0 55px rgba(234, 88, 12, 0.45);
+}
+
+.orbital-panel:hover::after {
+	background: linear-gradient(135deg, rgba(234, 88, 12, 0.98), rgba(251, 146, 60, 0.8));
+}
+
+.orbital-panel .p-num {
+	font-family: 'Orbitron', monospace;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 2px;
+	color: var(--orbital-amber);
+}
+
+.orbital-panel .p-label {
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.3;
+	letter-spacing: 0.2px;
+	color: #ffffff;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.orbital-panel .p-meta {
+	font-family: 'Rajdhani', monospace;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 1px;
+	color: rgba(255, 255, 255, 0.55);
+	text-transform: uppercase;
+}
+
+.orbital-panel-face {
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	transition: opacity 0.8s var(--orbital-ease);
+	transition-delay: calc(var(--i, 0) * 0.04s);
+}
+
+.orbital-panel-face--text {
+	padding: 18px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	opacity: 1;
+}
+
+.orbital-panel-face--image {
+	overflow: hidden;
+	opacity: 0;
+	background: linear-gradient(140deg, #1f1210, #0d0d11);
+}
+
+.orbital-panel-face--image img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transform: scale(1.08);
+	transition: transform 1.2s var(--orbital-ease);
+	transition-delay: calc(var(--i, 0) * 0.04s);
+}
+
+.orbital-panel-scrim {
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(to top, rgba(5, 5, 7, 0.94), rgba(5, 5, 7, 0.1) 58%),
+		linear-gradient(140deg, rgba(196, 43, 20, 0.32), rgba(234, 88, 12, 0.18));
+	transition: opacity 0.5s var(--orbital-ease);
+}
+
+.orbital-panel:hover .orbital-panel-scrim {
+	opacity: 0.25;
+}
+
+.orbital-panel-badge {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 2;
+	padding: 3px 9px;
+	border-radius: 9999px;
+	background: rgba(9, 9, 11, 0.78);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	font-size: 9.5px;
+	font-weight: 800;
+	letter-spacing: 0.6px;
+	color: #f4f4f5;
+	backdrop-filter: blur(6px);
+}
+
+.orbital-panel-play {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) scale(0.94);
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #c42b14, #ea580c);
+	color: #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 14px;
+	padding-left: 2px;
+	box-shadow: 0 6px 22px rgba(196, 43, 20, 0.65);
+	transition: transform 0.35s var(--orbital-ease), box-shadow 0.35s var(--orbital-ease);
+	z-index: 2;
+}
+
+.orbital-panel:hover .orbital-panel-play {
+	transform: translate(-50%, -50%) scale(1.1);
+	box-shadow: 0 8px 28px rgba(234, 88, 12, 0.85);
+}
+
+.orbital-panel-cap {
+	position: absolute;
+	bottom: 12px;
+	left: 14px;
+	right: 14px;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	color: #ffffff;
+	text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
+}
+
+.orbital-panel-cap-title {
+	font-size: 12.5px;
+	font-weight: 700;
+	line-height: 1.25;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.orbital-carousel-wrapper.visuals-on .orbital-panel-face--text {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.orbital-carousel-wrapper.visuals-on .orbital-panel-face--image {
+	opacity: 1;
+}
+
+.orbital-carousel-wrapper.visuals-on .orbital-panel-face--image img {
+	transform: scale(1);
+}
+
+/* HUD Controls docked bottom-right of the stage */
+.orbital-controls {
+	position: absolute;
+	right: clamp(18px, 4vw, 48px);
+	bottom: 18px;
+	z-index: 25;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 12px;
+	background: rgba(12, 12, 15, 0.72);
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	backdrop-filter: blur(12px);
+	padding: 12px 16px;
+	border-radius: 16px;
+}
+
+.orbital-ctrl {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.orbital-ctrl-label {
+	font-family: 'Orbitron', monospace;
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 2px;
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.orbital-switch {
+	position: relative;
+	width: 44px;
+	height: 24px;
+	border-radius: 24px;
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	cursor: pointer;
+	padding: 0;
+	transition: background 0.5s var(--orbital-ease), border-color 0.5s var(--orbital-ease), box-shadow 0.5s var(--orbital-ease);
+}
+
+.orbital-switch .orbital-knob {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.65);
+	transition: transform 0.5s var(--orbital-ease), background 0.5s var(--orbital-ease), box-shadow 0.5s var(--orbital-ease);
+}
+
+.orbital-switch[aria-checked="true"] {
+	background: linear-gradient(135deg, #c42b14, #ea580c);
+	border-color: rgba(251, 146, 60, 0.75);
+	box-shadow: 0 0 18px rgba(234, 88, 12, 0.45);
+}
+
+.orbital-switch[aria-checked="true"] .orbital-knob {
+	transform: translateX(20px);
+	background: #ffffff;
+	box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+}
+
+.orbital-spacing {
+	display: flex;
+	gap: 3px;
+	padding: 3px;
+	border-radius: 24px;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.orbital-spacing-step {
+	width: 26px;
+	height: 22px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	border-radius: 18px;
+	cursor: pointer;
+	transition: background 0.4s var(--orbital-ease);
+}
+
+.orbital-spacing-step i {
+	display: block;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.35);
+	transition: background 0.4s var(--orbital-ease), box-shadow 0.4s var(--orbital-ease);
+}
+
+.orbital-spacing-step:nth-child(1) i { width: 5px; height: 5px; }
+.orbital-spacing-step:nth-child(2) i { width: 8px; height: 8px; }
+.orbital-spacing-step:nth-child(3) i { width: 11px; height: 11px; }
+
+.orbital-spacing-step.is-active {
+	background: rgba(234, 88, 12, 0.22);
+}
+
+.orbital-spacing-step.is-active i {
+	background: #fb923c;
+	box-shadow: 0 0 10px #ea580c;
+}
+
+.orbital-drag-hint {
+	position: absolute;
+	bottom: 16px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 20;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.6px;
+	color: rgba(255, 255, 255, 0.5);
+	background: rgba(12, 12, 15, 0.65);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	padding: 6px 16px;
+	border-radius: 9999px;
+	backdrop-filter: blur(8px);
+	pointer-events: none;
+	white-space: nowrap;
+}
+
+.orbital-empty-state {
+	text-align: center;
+	color: #a1a1aa;
+	padding: 60px 20px;
+	font-size: 14px;
+	width: 280px;
+	margin-left: -140px;
+	margin-top: -30px;
+}
+
+@media (max-width: 900px) {
+	:root {
+		--orbital-radius: 265px;
+	}
+
+	.orbital-carousel-wrapper {
+		height: 460px;
+	}
+
+	.orbital-panel {
+		width: 146px;
+		height: 202px;
+		margin-left: -73px;
+		margin-top: -101px;
+	}
+
+	.orbital-controls {
+		right: 14px;
+		bottom: 54px;
+		padding: 10px 12px;
+		gap: 8px;
+	}
+}
+
+@media (max-width: 600px) {
+	:root {
+		--orbital-radius: 195px;
+	}
+
+	.orbital-carousel-wrapper {
+		height: 400px;
+	}
+
+	.orbital-panel {
+		width: 122px;
+		height: 170px;
+		margin-left: -61px;
+		margin-top: -85px;
+		border-radius: 14px;
+	}
+
+	.orbital-panel .p-label {
+		font-size: 12px;
+	}
+
+	.orbital-panel-face--text {
+		padding: 12px;
+	}
+
+	.orbital-drag-hint {
+		font-size: 10px;
+		padding: 5px 12px;
+		bottom: 8px;
+	}
+}

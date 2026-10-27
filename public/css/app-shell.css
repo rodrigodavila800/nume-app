@@ -9,10 +9,10 @@
     --bg-secondary: #232325;
     --bg-card: #2c2c2e;
     --bg-card-hover: #343436;
-    --accent-copper: #b87333;
-    --accent-copper-light: #c9845a;
-    --accent-gradient: linear-gradient(135deg, #b87333 0%, #d4945a 50%, #c9845a 100%);
-    --accent-gradient-hover: linear-gradient(135deg, #c9845a 0%, #daa57a 50%, #d4945a 100%);
+    --accent-copper: #c42b14;
+    --accent-copper-light: #e6452c;
+    --accent-gradient: linear-gradient(135deg, #c42b14 0%, #dc351d 100%);
+    --accent-gradient-hover: linear-gradient(135deg, #a8220e 0%, #c42b14 100%);
     --text-primary: #f5f0e8;
     --text-secondary: #a8a8a8;
     --text-muted: #6e6e6e;
@@ -29,10 +29,10 @@
     --bg-secondary: #ffffff;
     --bg-card: #ffffff;
     --bg-card-hover: #f0f0f2;
-    --accent-copper: #b87333;
-    --accent-copper-light: #d4945a;
-    --accent-gradient: linear-gradient(135deg, #d4945a 0%, #e8b88a 50%, #f0c89a 100%);
-    --accent-gradient-hover: linear-gradient(135deg, #e8b88a 0%, #f0c89a 50%, #f5d4a8 100%);
+    --accent-copper: #c42b14;
+    --accent-copper-light: #c42b14;
+    --accent-gradient: linear-gradient(135deg, #c42b14 0%, #dc351d 100%);
+    --accent-gradient-hover: linear-gradient(135deg, #a8220e 0%, #c42b14 100%);
     --text-primary: #1c1c1e;
     --text-secondary: #6e6e6e;
     --text-muted: #9a9a9a;
@@ -196,9 +196,16 @@ body {
     align-items: center;
     gap: 12px;
     margin-bottom: 20px;
-    padding: 0 6px;
+    padding: 4px 8px;
     text-decoration: none;
     flex-shrink: 0;
+}
+
+.sidebar-logo-img {
+    height: 26px;
+    width: auto;
+    object-fit: contain;
+    display: block;
 }
 
 .logo-icon {
@@ -211,8 +218,8 @@ body {
     justify-content: center;
     font-weight: 700;
     font-size: 15px;
-    color: #1c1c1e;
-    box-shadow: 0 4px 12px rgba(184, 115, 51, 0.22);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(196, 43, 20, 0.25);
     flex-shrink: 0;
 }
 
@@ -271,9 +278,9 @@ body {
 
 .nav-item.active {
     background: var(--accent-gradient);
-    color: #1c1c1e !important;
+    color: #ffffff !important;
     font-weight: 600;
-    box-shadow: 0 3px 10px rgba(184, 115, 51, 0.22);
+    box-shadow: 0 3px 10px rgba(196, 43, 20, 0.25);
 }
 
 .nav-item.active:hover {
@@ -289,7 +296,7 @@ body {
 
 .nav-item.active .nav-icon {
     opacity: 1;
-    stroke: #1c1c1e;
+    stroke: #ffffff;
 }
 
 .nav-badge {
@@ -297,13 +304,13 @@ body {
     font-weight: 600;
     padding: 1px 7px;
     border-radius: 20px;
-    background-color: rgba(184, 115, 51, 0.18);
+    background-color: rgba(196, 43, 20, 0.14);
     color: var(--accent-copper-light);
 }
 
 .nav-item.active .nav-badge {
-    background-color: rgba(28, 28, 30, 0.2);
-    color: #1c1c1e;
+    background-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
 }
 
 /* Sidebar Footer (Pinned at bottom) */
@@ -486,7 +493,7 @@ body {
 
 .lang-btn.active {
     background: var(--accent-gradient);
-    color: #1c1c1e;
+    color: #ffffff;
 }
 
 .user-menu {
@@ -509,7 +516,7 @@ body {
     justify-content: center;
     font-weight: 700;
     font-size: 13px;
-    color: #1c1c1e;
+    color: #ffffff;
 }
 
 .user-info {
@@ -616,13 +623,13 @@ body {
 .stat-card.primary .stat-label,
 .stat-card.primary .stat-value,
 .stat-card.primary .stat-change {
-    color: #1c1c1e !important;
+    color: #ffffff !important;
 }
 
 .stat-icon {
     width: 44px;
     height: 44px;
-    background-color: rgba(184, 115, 51, 0.14);
+    background-color: rgba(196, 43, 20, 0.12);
     border-radius: 11px;
     display: flex;
     align-items: center;
@@ -706,7 +713,7 @@ body {
 
 .settings-tab.active {
     background: var(--accent-gradient);
-    color: #1c1c1e !important;
+    color: #ffffff !important;
     font-weight: 600;
 }
 
@@ -738,7 +745,7 @@ body {
 
 .filter-tab.active {
     background: var(--accent-gradient);
-    color: #1c1c1e !important;
+    color: #ffffff !important;
     font-weight: 600;
 }
 
@@ -771,7 +778,7 @@ body {
 .btn.primary {
     background: var(--accent-gradient);
     border: none;
-    color: #1c1c1e !important;
+    color: #ffffff !important;
 }
 
 .btn.primary:hover {
@@ -806,7 +813,7 @@ body {
 }
 
 .status-pill.copper {
-    background-color: rgba(184, 115, 51, 0.18);
+    background-color: rgba(196, 43, 20, 0.14);
     color: var(--accent-copper-light);
 }
 
@@ -847,7 +854,7 @@ body {
 }
 
 .market-table tr:hover td {
-    background-color: rgba(184, 115, 51, 0.04);
+    background-color: rgba(196, 43, 20, 0.04);
 }
 
 .list-row {
@@ -918,10 +925,10 @@ body {
     color: var(--text-muted) !important;
 }
 
-/* Replace neon orange with editorial copper gradient */
+/* Replace neon orange with authentic NUME vermilion gradient */
 .dashboard .bg-orange-600 {
     background: var(--accent-gradient) !important;
-    color: #1c1c1e !important;
+    color: #ffffff !important;
     border-color: transparent !important;
     box-shadow: none !important;
 }
@@ -929,7 +936,7 @@ body {
 .dashboard .bg-orange-600:hover,
 .dashboard .hover\:bg-orange-500:hover {
     background: var(--accent-gradient-hover) !important;
-    color: #1c1c1e !important;
+    color: #ffffff !important;
 }
 
 .dashboard .text-orange-400,
@@ -942,13 +949,13 @@ body {
 .dashboard .bg-orange-500\/10,
 .dashboard .bg-orange-500\/15,
 .dashboard .bg-orange-500\/20 {
-    background-color: rgba(184, 115, 51, 0.14) !important;
+    background-color: rgba(196, 43, 20, 0.12) !important;
 }
 
 .dashboard .border-orange-500\/20,
 .dashboard .border-orange-500\/30,
 .dashboard .border-orange-500\/40 {
-    border-color: rgba(184, 115, 51, 0.32) !important;
+    border-color: rgba(196, 43, 20, 0.28) !important;
 }
 
 /* Soften semantic colors to sage green & muted terracotta */

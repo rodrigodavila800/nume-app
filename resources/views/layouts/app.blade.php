@@ -41,8 +41,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <a href="{{ route('productions.index') }}" class="logo">
-                <div class="logo-icon">N</div>
-                <span class="logo-text">NUME Studio</span>
+                <img src="{{ asset('assests/img/logo.png') }}" alt="NUME" class="sidebar-logo-img">
             </a>
 
             <div class="sidebar-nav">
