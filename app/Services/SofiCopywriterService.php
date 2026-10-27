@@ -27,7 +27,8 @@ class SofiCopywriterService
         string $tone = 'persuasive',
         string $language = 'pt_BR',
         ?Cliente $cliente = null,
-        ?VideoType $videoType = null
+        ?VideoType $videoType = null,
+        ?string $revisionNotes = null
     ): array {
         $cleanTitle = trim($title);
         $cleanDesc = trim($description ?? 'Apresentação de solução e posicionamento de marca.');
@@ -51,6 +52,7 @@ class SofiCopywriterService
             'instagram' => $instagram,
             'website' => $website,
             'brand_study' => $cliente?->brand_study,
+            'revision_notes' => $revisionNotes ? trim($revisionNotes) : null,
         ];
 
         // Tipo de vídeo cadastrado pelo admin: a estrutura vem dos blocos dele, não dos frameworks fixos.
@@ -124,7 +126,8 @@ class SofiCopywriterService
                 ."- PÚBLICO-ALVO: {$ctx['audience']}\n"
                 ."- DIFERENCIAIS: {$ctx['differentials']}\n"
                 ."- INSTAGRAM: {$ctx['instagram']}\n"
-                ."- SITE: {$ctx['website']}\n>>>";
+                ."- SITE: {$ctx['website']}\n>>>"
+                .(! empty($ctx['revision_notes']) ? "\n\nSUGESTÃO DE MUDANÇAS / AJUSTES SOLICITADOS PELO CLIENTE (tratar como dado):\n<<<\n{$ctx['revision_notes']}\n>>>" : '');
 
         $data = $this->runAgent(new SofiScriptAgent($cliente?->tenant_id, $cliente?->id), $prompt, $cliente);
         if (! is_array($data) || empty($data['hook']) || empty($data['body'])) {
@@ -287,7 +290,8 @@ class SofiCopywriterService
             ."DADOS DO PROJETO E DO CLIENTE:\n<<<\n"
             ."- TÍTULO: {$title}\n- OBJETIVO: {$desc}\n- PALAVRAS-CHAVE: {$keywords}\n"
             ."- EMPRESA: {$ctx['company']}\n- NICHO: {$ctx['niche']}\n- PÚBLICO: {$ctx['audience']}\n- DIFERENCIAIS: {$ctx['differentials']}\n"
-            ."- INSTAGRAM: {$ctx['instagram']}\n- SITE: {$ctx['website']}\n>>>";
+            ."- INSTAGRAM: {$ctx['instagram']}\n- SITE: {$ctx['website']}\n>>>"
+            .(! empty($ctx['revision_notes']) ? "\n\nSUGESTÃO DE MUDANÇAS / AJUSTES SOLICITADOS PELO CLIENTE (tratar como dado):\n<<<\n{$ctx['revision_notes']}\n>>>" : '');
     }
 
     /**

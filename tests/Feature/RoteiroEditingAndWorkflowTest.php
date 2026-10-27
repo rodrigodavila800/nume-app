@@ -15,7 +15,9 @@ class RoteiroEditingAndWorkflowTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private User $editor;
+
     private Production $production;
 
     protected function setUp(): void
@@ -53,14 +55,15 @@ class RoteiroEditingAndWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_editor_can_edit_draft_and_submitted_roteiro(): void
+    public function test_producer_can_edit_draft_and_rejected_roteiro_manually_or_with_sofi(): void
     {
         $roteiro = Roteiro::create([
             'tenant_id' => $this->tenant->id,
             'production_id' => $this->production->id,
             'created_by' => $this->editor->id,
             'content' => 'Gancho 0-3s de alto impacto para prender a atenção do público em Zaragoza.',
-            'status' => 'submitted',
+            'status' => 'rejected',
+            'rejection_reason' => 'Por favor, destacar a garantia de 2 anos no bloco final.',
         ]);
 
         $response = $this->actingAs($this->editor)
@@ -68,31 +71,57 @@ class RoteiroEditingAndWorkflowTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('roteiros.edit');
-        $response->assertSee('Roteiro Aguardando Aprovação do Cliente');
+        $response->assertSee('Por favor, destacar a garantia de 2 anos no bloco final.');
+
+        $newContent = 'Conteúdo ajustado pela produtora destacando a garantia de 2 anos no bloco final.';
+
+        $updateResponse = $this->actingAs($this->editor)
+            ->patch(route('roteiros.update', ['production' => $this->production, 'roteiro' => $roteiro]), [
+                'content' => $newContent,
+            ]);
+
+        $updateResponse->assertRedirect(route('roteiros.show', ['production' => $this->production, 'roteiro' => $roteiro]));
+        $this->assertDatabaseHas('roteiros', [
+            'id' => $roteiro->id,
+            'content' => $newContent,
+            'status' => 'draft',
+            'rejection_reason' => null,
+        ]);
     }
 
-    public function test_editor_can_update_submitted_roteiro(): void
+    public function test_submitted_roteiro_in_client_review_cannot_be_edited_manually(): void
     {
         $roteiro = Roteiro::create([
             'tenant_id' => $this->tenant->id,
             'production_id' => $this->production->id,
             'created_by' => $this->editor->id,
-            'content' => 'Conteúdo inicial do roteiro que precisa de mais de 50 caracteres para ser validado com sucesso.',
+            'content' => 'Conteúdo enviado para revisão do cliente no portal e bloqueado contra edição manual.',
             'status' => 'submitted',
+            'submitted_at' => now(),
         ]);
 
-        $newContent = 'Conteúdo novo devidamente revisado pela equipe técnica da produtora e pronto para validação.';
+        $this->actingAs($this->editor)
+            ->get(route('roteiros.show', ['production' => $this->production, 'roteiro' => $roteiro]))
+            ->assertOk()
+            ->assertSee('Em Revisão pelo Cliente (Edição Bloqueada)')
+            ->assertDontSee(route('roteiros.edit', ['production' => $this->production, 'roteiro' => $roteiro]), false);
 
-        $response = $this->actingAs($this->editor)
+        $this->actingAs($this->editor)
+            ->get(route('roteiros.edit', ['production' => $this->production, 'roteiro' => $roteiro]))
+            ->assertRedirect(route('roteiros.show', ['production' => $this->production, 'roteiro' => $roteiro]))
+            ->assertSessionHas('error');
+
+        $this->actingAs($this->editor)
             ->patch(route('roteiros.update', ['production' => $this->production, 'roteiro' => $roteiro]), [
-                'content' => $newContent,
-            ]);
+                'content' => 'Tentativa de alterar roteiro enquanto está em revisão pelo cliente.',
+            ])
+            ->assertRedirect(route('roteiros.show', ['production' => $this->production, 'roteiro' => $roteiro]))
+            ->assertSessionHas('error');
 
-        $response->assertRedirect(route('roteiros.show', ['production' => $this->production, 'roteiro' => $roteiro]));
-        $this->assertDatabaseHas('roteiros', [
-            'id' => $roteiro->id,
-            'content' => $newContent,
-        ]);
+        $this->assertSame(
+            'Conteúdo enviado para revisão do cliente no portal e bloqueado contra edição manual.',
+            $roteiro->fresh()->content
+        );
     }
 
     public function test_approved_roteiro_cannot_be_edited_and_redirects_without_type_error(): void

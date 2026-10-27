@@ -23,6 +23,19 @@
         </a>
     </div>
 
+    @if ($roteiro->status === 'rejected')
+        <div class="p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
+            <span class="text-base leading-none">💬</span>
+            <div class="space-y-1 flex-1">
+                <p class="font-bold text-rose-300">{{ __('Sugestão de Mudanças Enviada pelo Cliente') }}</p>
+                @if($roteiro->rejection_reason)
+                    <p class="text-xs text-rose-200/90 bg-rose-950/80 p-2.5 rounded-xl border border-rose-900/60 font-mono">{{ $roteiro->rejection_reason }}</p>
+                @endif
+                <p class="text-zinc-400 text-xs">{{ __('Você pode pedir para a Sofi IA reescrever o roteiro aplicando essa sugestão automaticamente ou editar o texto na mão abaixo. Ao salvar, o roteiro voltará para Rascunho para reenvio ao cliente.') }}</p>
+            </div>
+        </div>
+    @endif
+
     <!-- Sofi AI Copilot Copywriting Engine Hub -->
     <div class="p-6 rounded-2xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-orange-500/20 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800">
@@ -34,7 +47,7 @@
                     <h2 class="text-sm font-bold text-white flex items-center gap-1.5">
                         <span>{{ __('Regerar Narrativa com Sofi AI (/copywriter)') }}</span>
                     </h2>
-                    <p class="text-[11px] text-zinc-400">{{ __('Substitua ou aprimore este roteiro com frameworks científicos de retenção.') }}</p>
+                    <p class="text-[11px] text-zinc-400">{{ __('A Sofi reescreve o roteiro aplicando as sugestões do cliente ou a sua orientação nos blocos do vídeo.') }}</p>
                 </div>
             </div>
             <span class="text-[10px] font-mono text-zinc-500">Frameworks Meta / YouTube</span>
@@ -71,38 +84,27 @@
             </div>
         </div>
 
+        <div class="space-y-1">
+            <label for="sofiRevisionNotes" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                {{ __('Sugestão de Mudanças do Cliente / Orientação para a Sofi (Opcional)') }}
+            </label>
+            <input type="text" id="sofiRevisionNotes" maxlength="1000"
+                   value="{{ $roteiro->rejection_reason }}"
+                   placeholder="{{ __('Ex.: Deixar o gancho de 3s mais direto e destacar a garantia...') }}"
+                   class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-orange-500 transition placeholder:text-zinc-600">
+        </div>
+
         <div class="pt-1 flex items-center justify-between">
             <p class="text-[11px] text-zinc-500">
-                💡 {{ __('A Sofi utilizará o briefing desta produção para estruturar uma nova proposta de roteiro.') }}
+                💡 {{ __('A Sofi gera a nova versão abaixo, e você também pode ajustar o texto manualmente antes de salvar.') }}
             </p>
             <button type="button" id="btnGenerateSofi" onclick="generateSofiScript()"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 active:scale-95 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-orange-900/20 transition-all">
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 active:scale-95 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-orange-900/20 transition-all cursor-pointer">
                 <span id="sofiSpinner" class="hidden animate-spin">🔄</span>
                 <span id="sofiBtnText">✨ {{ __('Regerar com Sofi') }}</span>
             </button>
         </div>
     </div>
-
-    @if ($roteiro->status === 'submitted')
-        <div class="p-4 rounded-2xl bg-amber-950/60 border border-amber-500/40 text-amber-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
-            <span class="text-base leading-none">⚠️</span>
-            <div class="space-y-0.5">
-                <p class="font-bold text-amber-300">{{ __('Roteiro Aguardando Aprovação do Cliente') }}</p>
-                <p class="text-zinc-300 text-xs">{{ __('Este roteiro já foi enviado ao cliente. Qualquer modificação feita aqui atualizará diretamente a proposta visível no Portal do Cliente.') }}</p>
-            </div>
-        </div>
-    @elseif ($roteiro->status === 'rejected')
-        <div class="p-4 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
-            <span class="text-base leading-none">✗</span>
-            <div class="space-y-1">
-                <p class="font-bold text-rose-300">{{ __('Roteiro Precisa de Ajustes') }}</p>
-                @if($roteiro->rejection_reason)
-                    <p class="text-xs text-rose-200/90 bg-rose-950/80 p-2.5 rounded-xl border border-rose-900/60 font-mono">{{ $roteiro->rejection_reason }}</p>
-                @endif
-                <p class="text-zinc-400 text-xs">{{ __('Ao salvar as alterações, este roteiro voltará para Rascunho para que você possa submetê-lo novamente.') }}</p>
-            </div>
-        </div>
-    @endif
 
     @if ($errors->any())
         <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold">
@@ -114,7 +116,7 @@
         </div>
     @endif
 
-    <!-- Form de Edição -->
+    <!-- Form de Edição Manual / Confirmação da Produtora -->
     <form action="{{ route('roteiros.update', ['production' => $production, 'roteiro' => $roteiro]) }}" method="POST" class="p-6 sm:p-8 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-5">
         @csrf
         @method('PATCH')
@@ -123,7 +125,7 @@
         <div class="space-y-1.5">
             <div class="flex items-center justify-between">
                 <label for="content" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                    {{ __('Conteúdo do Roteiro') }} <span class="text-orange-500">*</span>
+                    {{ __('Conteúdo do Roteiro (Editável pela Produtora)') }} <span class="text-orange-500">*</span>
                 </label>
                 <span id="scriptBadge" class="hidden text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                     ✓ {{ __('Roteiro Atualizado pela Sofi') }}
@@ -136,8 +138,8 @@
 
         <div class="flex items-center gap-3 pt-4 border-t border-zinc-800">
             <button type="submit"
-                    class="flex-1 sm:flex-initial bg-orange-600 hover:bg-orange-500 active:scale-[0.98] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg shadow-orange-900/20 transition-all">
-                {{ __('Atualizar Roteiro') }}
+                    class="flex-1 sm:flex-initial bg-orange-600 hover:bg-orange-500 active:scale-[0.98] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-lg shadow-orange-900/20 transition-all cursor-pointer">
+                {{ __('Salvar Roteiro') }}
             </button>
             <a href="{{ route('roteiros.show', ['production' => $production, 'roteiro' => $roteiro]) }}"
                class="flex-1 sm:flex-initial inline-flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold text-sm px-6 py-2.5 rounded-xl transition">
@@ -159,6 +161,7 @@
         const tone = document.getElementById('sofiTone').value;
         const language = document.getElementById('sofiLanguage').value;
         const video_type_id = document.getElementById('sofiVideoType').value || null;
+        const revision_notes = document.getElementById('sofiRevisionNotes')?.value || null;
 
         // UI Loading state
         btn.disabled = true;
@@ -173,7 +176,7 @@
                     "X-CSRF-TOKEN": "{{ csrf_token() }}",
                     "Accept": "application/json"
                 },
-                body: JSON.stringify({ framework, tone, language, video_type_id })
+                body: JSON.stringify({ framework, tone, language, video_type_id, revision_notes })
             });
 
             const result = await response.json();

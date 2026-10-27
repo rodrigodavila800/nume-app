@@ -339,8 +339,15 @@
                                 <a href="{{ route('productions.show', $item->production) }}" class="text-emerald-400 hover:underline font-bold">
                                     🎬 {{ __('Ver Produção →') }}
                                 </a>
+                            @elseif ($latestPlan->isApproved())
+                                <form action="{{ route('clientes.marketing-plan.convert-item', [$cliente, $item]) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="px-2.5 py-1 rounded-lg bg-orange-600/20 hover:bg-orange-600 text-orange-400 hover:text-white border border-orange-500/30 font-bold text-[10px] transition cursor-pointer">
+                                        🎬 {{ __('Gerar Produção & Roteiro →') }}
+                                    </button>
+                                </form>
                             @else
-                                <span class="text-zinc-600">{{ __('Ainda não convertido em produção') }}</span>
+                                <span class="text-zinc-600">{{ __('Aguardando aprovação do plano') }}</span>
                             @endif
                         </div>
                     </div>

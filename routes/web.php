@@ -108,6 +108,9 @@ Route::middleware('auth')->group(function () {
     Route::post('clientes/{cliente}/marketing-plan/regenerate', [ClienteController::class, 'regenerateMarketingPlan'])
         ->whereNumber('cliente')
         ->name('clientes.marketing-plan.regenerate');
+    Route::post('clientes/{cliente}/marketing-plan/items/{item}/convert', [ClienteController::class, 'convertMarketingPlanItem'])
+        ->whereNumber(['cliente', 'item'])
+        ->name('clientes.marketing-plan.convert-item');
     Route::resource('clientes', ClienteController::class);
 
     // Taxonomia e Categorias

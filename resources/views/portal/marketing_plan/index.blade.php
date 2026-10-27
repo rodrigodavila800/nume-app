@@ -38,21 +38,13 @@
             
             <div class="mt-4 flex md:ml-4 md:mt-0 gap-3">
                 @if($allInProduction)
-                    <button type="button" disabled class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 cursor-not-allowed opacity-90 shadow-sm" title="{{ __('Todos os vídeos desta grade já foram enviados para produção na esteira.') }}">
+                    <span class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 shadow-sm">
                         <span>✓</span>
                         <span>{{ __('Grade 100% em Produção') }}</span>
-                    </button>
-                @else
-                    <form id="form-regenerate-plan" action="{{ route('portal.marketing-plan.regenerate') }}" method="POST">
-                        @csrf
-                        <button type="button" onclick="confirmRegeneratePlan(event)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-zinc-700 bg-white border border-zinc-300 shadow-sm hover:bg-zinc-50 hover:text-zinc-900 transition cursor-pointer">
-                            <span>🔄</span>
-                            <span>{{ __('Recalcular com Sofi IA') }}</span>
-                        </button>
-                    </form>
+                    </span>
                 @endif
 
-                <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 shadow-sm transition">
+                <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 shadow-sm transition cursor-pointer">
                     <span>🖨️</span>
                     <span>{{ __('Imprimir / Salvar PDF') }}</span>
                 </button>
@@ -246,26 +238,22 @@
                             </div>
                         </div>
 
-                        <!-- Footer com Status e Ação de Conversão em 1 Clique -->
+                        <!-- Footer com Status do Item na Esteira -->
                         <div class="mt-5 pt-4 border-t border-zinc-100 flex flex-col gap-2.5 print:hidden">
                             @if ($item->production_id && $item->production)
                                 <a href="{{ route('portal.productions.show', $item->production) }}" 
                                    class="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition shadow-xs">
-                                    <span>✓</span>
-                                    <span>{{ __('Em Produção na Esteira') }}</span>
+                                    <span>🎬</span>
+                                    <span>{{ __('Ver Produção & Revisar Roteiro') }}</span>
                                     <span>→</span>
                                 </a>
                             @elseif (! $plan->isApproved())
                                 <p class="text-xs text-zinc-500 text-center">{{ __('Aprove o plano para enviar este vídeo à produção.') }}</p>
                             @else
-                                <form action="{{ route('portal.marketing-plan.convert-item', $item) }}" method="POST" class="w-full">
-                                    @csrf
-                                    <button type="submit" 
-                                            class="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 active:scale-98 text-white shadow-md shadow-orange-900/15 transition cursor-pointer">
-                                        <span>🎬</span>
-                                        <span>{{ __('Transformar em Produção Audiovisual') }}</span>
-                                    </button>
-                                </form>
+                                <div class="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-50 text-zinc-600 border border-zinc-200">
+                                    <span>⏳</span>
+                                    <span>{{ __('Aguardando elaboração do roteiro pela produtora') }}</span>
+                                </div>
                             @endif
                         </div>
                     </div>

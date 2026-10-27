@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Cliente;
 use App\Models\MarketingPlan;
+use App\Models\MarketingPlanItem;
+use App\Models\Production;
+use App\Models\Roteiro;
 use App\Models\SupportTicket;
 use App\Services\Crm\LeadAutomation;
 use App\Services\MarketingPlanGeneratorService;
 use App\Services\SocialPublishing\PublishingLimits;
+use App\Services\SofiCopywriterService;
 use App\Support\Anamnesis;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -97,6 +101,83 @@ class ClienteController extends Controller
 
         return redirect()->route('clientes.show', $cliente)
             ->with('success', __('Grade recalculada pela Sofi IA considerando os ajustes e devolvida para aprovação do cliente!'));
+    }
+
+    /**
+     * Produtora gera a Produção + Roteiro a partir de um item aprovado do Plano de Marketing do cliente.
+     */
+    public function convertMarketingPlanItem(
+        Request $request,
+        Cliente $cliente,
+        MarketingPlanItem $item,
+        SofiCopywriterService $copywriter,
+    ): RedirectResponse {
+        $this->authorize('view', $cliente);
+        $this->authorize('create', Production::class);
+        $this->authorize('create', Roteiro::class);
+
+        $plan = MarketingPlan::forTenant($cliente->tenant_id)
+            ->where('cliente_id', $cliente->id)
+            ->find($item->marketing_plan_id);
+
+        if (! $plan) {
+            abort(404);
+        }
+
+        if ($item->production_id && $item->production) {
+            return redirect()->route('productions.show', $item->production)
+                ->with('success', __('Este item do plano já possui produção vinculada.'));
+        }
+
+        if (! $plan->isApproved()) {
+            return redirect()->route('clientes.show', $cliente)
+                ->with('error', __('O plano de marketing precisa ser aprovado pelo cliente antes de converter itens em produção.'));
+        }
+
+        $videoType = $item->videoType()->where('tenant_id', $cliente->tenant_id)->first();
+        $keywords = is_array($item->hashtags) ? implode(', ', $item->hashtags) : null;
+        $description = "Vídeo planejado na Grade Editorial (Semana {$item->week_number} - Funil ".strtoupper((string) $item->funnel_stage).'). '.($item->seo_caption ?? '');
+
+        $production = Production::create([
+            'tenant_id' => $cliente->tenant_id,
+            'cliente_id' => $cliente->id,
+            'pack_purchase_id' => $plan->pack_purchase_id,
+            'video_type_id' => $videoType?->id,
+            'created_by' => $request->user()->id,
+            'title' => $item->topic,
+            'description' => $description,
+            'status' => 'draft',
+            'seo_keywords' => $keywords,
+        ]);
+
+        $generated = $copywriter->generate(
+            title: $production->title,
+            description: $production->description,
+            keywords: $keywords,
+            framework: 'pattern_interrupt',
+            tone: 'persuasive',
+            language: MarketingPlanGeneratorService::isSpanishLocale($cliente) ? 'es' : session('locale', 'pt_BR'),
+            cliente: $cliente,
+            videoType: $videoType
+        );
+
+        $roteiro = Roteiro::create([
+            'tenant_id' => $cliente->tenant_id,
+            'production_id' => $production->id,
+            'video_type_id' => $videoType?->id,
+            'structure' => $videoType?->snapshot(),
+            'created_by' => $request->user()->id,
+            'status' => 'draft',
+            'content' => $generated['full_script'] ?? $description,
+        ]);
+
+        $item->update([
+            'production_id' => $production->id,
+            'status' => 'in_production',
+        ]);
+
+        return redirect()->route('roteiros.show', [$production, $roteiro])
+            ->with('success', __('Produção e roteiro gerados pela Sofi! Revise (ou edite se desejar) e submeta para aprovação do cliente.'));
     }
 
     public function create(): View

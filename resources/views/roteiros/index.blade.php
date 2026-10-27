@@ -81,10 +81,12 @@
                             </a>
 
                             @can('update', $roteiro)
-                                @if ($roteiro->status === 'draft')
+                                @if (in_array($roteiro->status, ['draft', 'rejected']))
                                     <a href="{{ route('roteiros.edit', ['production' => $production, 'roteiro' => $roteiro]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition">
-                                        ✏️ {{ __('Editar') }}
+                                        ✏️ {{ $roteiro->status === 'rejected' ? __('Ajustar') : __('Editar') }}
                                     </a>
+                                @endif
+                                @if ($roteiro->status === 'draft')
                                     <form action="{{ route('roteiros.submit', ['production' => $production, 'roteiro' => $roteiro]) }}" method="POST" class="inline">
                                         @csrf
                                         <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition cursor-pointer">

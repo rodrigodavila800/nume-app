@@ -6,13 +6,13 @@ use App\Models\Production;
 use App\Models\Roteiro;
 use App\Models\VideoType;
 use App\Services\Roteiros\RoteiroPlanGate;
-use App\Services\VideoTypes\VideoTypeCatalog;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 use App\Services\SofiCopywriterService;
+use App\Services\VideoTypes\VideoTypeCatalog;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class RoteiroController extends Controller
 {
@@ -54,7 +54,10 @@ class RoteiroController extends Controller
     {
         $this->authorize('view', $production);
 
-        $request->validate(['video_type_id' => 'nullable|integer']);
+        $request->validate([
+            'video_type_id' => 'nullable|integer',
+            'revision_notes' => 'nullable|string|max:1000',
+        ]);
 
         // Roteiro só depois do plano aprovado (admin pode gerar para liberar com justificativa ao salvar).
         // Produção que já tem roteiro passou pela trava: regenerar na edição continua liberado.
@@ -71,6 +74,7 @@ class RoteiroController extends Controller
         $tone = $request->input('tone', 'persuasive');
         $language = $request->input('language', session('locale', 'pt_BR'));
         $videoType = $this->resolveVideoType($request->input('video_type_id'), $production);
+        $revisionNotes = $request->input('revision_notes');
 
         $generated = $this->copywriterService->generate(
             title: $production->title,
@@ -80,7 +84,8 @@ class RoteiroController extends Controller
             tone: $tone,
             language: $language,
             cliente: $production->cliente,
-            videoType: $videoType
+            videoType: $videoType,
+            revisionNotes: $revisionNotes
         );
 
         return response()->json([
@@ -167,9 +172,9 @@ class RoteiroController extends Controller
     {
         $this->authorize('update', $roteiro);
 
-        if (in_array($roteiro->status, ['approved', 'in_production'])) {
+        if (in_array($roteiro->status, ['submitted', 'approved', 'in_production'])) {
             return redirect()->route('roteiros.show', [$production, $roteiro])
-                ->with('error', __('Roteiros já aprovados ou em produção não podem ser editados diretamente.'));
+                ->with('error', __('Roteiros em revisão pelo cliente, já aprovados ou em produção não podem ser editados. Aguarde a aprovação ou sugestão de mudanças do cliente.'));
         }
 
         $videoTypes = $this->videoTypes->active($production->tenant_id);
@@ -187,9 +192,9 @@ class RoteiroController extends Controller
     {
         $this->authorize('update', $roteiro);
 
-        if (in_array($roteiro->status, ['approved', 'in_production'])) {
+        if (in_array($roteiro->status, ['submitted', 'approved', 'in_production'])) {
             return redirect()->route('roteiros.show', [$production, $roteiro])
-                ->with('error', __('Roteiros já aprovados ou em produção não podem ser editados diretamente.'));
+                ->with('error', __('Roteiros em revisão pelo cliente, já aprovados ou em produção não podem ser editados. Aguarde a aprovação ou sugestão de mudanças do cliente.'));
         }
 
         $validated = $request->validate([
@@ -226,7 +231,7 @@ class RoteiroController extends Controller
     {
         $this->authorize('update', $roteiro);
 
-        if (!$roteiro->submit()) {
+        if (! $roteiro->submit()) {
             return redirect()->back()
                 ->with('error', 'Roteiro já foi submetido ou aprovado.');
         }
@@ -242,7 +247,7 @@ class RoteiroController extends Controller
     {
         $this->authorize('approve', $roteiro);
 
-        if (!$roteiro->approve(auth()->user())) {
+        if (! $roteiro->approve(auth()->user())) {
             return redirect()->back()
                 ->with('error', 'Roteiro deve estar em "submitted" para ser aprovado.');
         }
@@ -262,7 +267,7 @@ class RoteiroController extends Controller
             'rejection_reason' => 'required|string|min:10|max:500',
         ]);
 
-        if (!$roteiro->reject(auth()->user(), $validated['rejection_reason'])) {
+        if (! $roteiro->reject(auth()->user(), $validated['rejection_reason'])) {
             return redirect()->back()
                 ->with('error', 'Roteiro deve estar em "submitted" para ser rejeitado.');
         }
@@ -278,7 +283,7 @@ class RoteiroController extends Controller
     {
         $this->authorize('update', $roteiro);
 
-        if (!$roteiro->markAsInProduction()) {
+        if (! $roteiro->markAsInProduction()) {
             return redirect()->back()
                 ->with('error', 'Roteiro deve estar aprovado para entrar em produção.');
         }

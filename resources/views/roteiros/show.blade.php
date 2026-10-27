@@ -39,12 +39,17 @@
 
         <div class="flex items-center gap-2">
             @can('update', $roteiro)
-                @if (!in_array($roteiro->status, ['approved', 'in_production']))
+                @if (in_array($roteiro->status, ['draft', 'rejected']))
                     <a href="{{ route('roteiros.edit', ['production' => $production, 'roteiro' => $roteiro]) }}" 
                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-500 text-white shadow-md shadow-orange-900/20 transition cursor-pointer">
                         <span>✏️</span>
-                        <span>{{ __('Editar Roteiro com Sofi') }}</span>
+                        <span>{{ $roteiro->status === 'rejected' ? __('Aplicar Ajustes (Sofi ou Manual)') : __('Editar Roteiro (Sofi ou Manual)') }}</span>
                     </a>
+                @elseif ($roteiro->status === 'submitted')
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30" title="{{ __('Em revisão pelo cliente: edição bloqueada até o cliente aprovar ou sugerir mudanças') }}">
+                        <span>⏳</span>
+                        <span>{{ __('Em Revisão pelo Cliente (Edição Bloqueada)') }}</span>
+                    </span>
                 @else
                     <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-400 bg-zinc-800/80 border border-zinc-700/60" title="{{ __('Roteiro aprovado não permite edição direta') }}">
                         <span>🔒</span>
@@ -91,7 +96,7 @@
         </div>
     </div>
 
-    <!-- Conteúdo do Roteiro (Editor / Leitor de Alto Contraste) -->
+    <!-- Conteúdo do Roteiro (Leitor de Alto Contraste) -->
     <div class="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-xl space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
             <div class="flex items-center gap-2">
@@ -135,27 +140,44 @@
             </p>
         </div>
     @elseif ($roteiro->rejection_reason)
-        <div class="bg-rose-950/40 border border-rose-500/30 rounded-2xl p-5 text-rose-200 text-xs sm:text-sm space-y-2">
-            <p class="font-extrabold text-rose-300 flex items-center gap-2">
-                <span>✗</span> 
-                <span>{{ __('Roteiro Precisa de Ajustes') }}</span>
-            </p>
-            <p class="text-zinc-400">
-                {{ __('Solicitado por:') }} <strong class="text-white">{{ $roteiro->approved_by_cliente_id ? $roteiro->approverCliente?->name . ' (cliente)' : $roteiro->approver?->name }}</strong>
-            </p>
+        <div class="bg-rose-950/40 border border-rose-500/30 rounded-2xl p-5 text-rose-200 text-xs sm:text-sm space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <p class="font-extrabold text-rose-300 flex items-center gap-2">
+                        <span>💬</span> 
+                        <span>{{ __('O Cliente Sugeriu Mudanças neste Roteiro') }}</span>
+                    </p>
+                    <p class="text-zinc-400 text-xs mt-0.5">
+                        {{ __('Solicitado por:') }} <strong class="text-white">{{ $roteiro->approved_by_cliente_id ? $roteiro->approverCliente?->name . ' (cliente)' : $roteiro->approver?->name }}</strong>
+                    </p>
+                </div>
+                @can('update', $roteiro)
+                    <a href="{{ route('roteiros.edit', ['production' => $production, 'roteiro' => $roteiro]) }}"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-extrabold transition shrink-0">
+                        ✨ {{ __('Reescrever com Sofi ou Ajustar Manualmente →') }}
+                    </a>
+                @endcan
+            </div>
             <div class="p-3 bg-zinc-950 border border-rose-900/50 rounded-xl text-xs text-rose-200">
                 {{ $roteiro->rejection_reason }}
             </div>
         </div>
     @elseif ($roteiro->submitted_at)
-        <div class="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-5 text-amber-200 text-xs sm:text-sm space-y-1">
-            <p class="font-extrabold text-amber-300 flex items-center gap-2">
-                <span>⏳</span> 
-                <span>{{ __('Aguardando Aprovação do Cliente') }}</span>
-            </p>
-            <p class="text-zinc-400">
-                {{ __('Submetido para o Portal em:') }} <strong class="text-white">{{ $roteiro->submitted_at->format('d/m/Y H:i') }}</strong>
-            </p>
+        <div class="bg-amber-950/40 border border-amber-500/30 rounded-2xl p-5 text-amber-200 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+                <p class="font-extrabold text-amber-300 flex items-center gap-2">
+                    <span>⏳</span> 
+                    <span>{{ __('Aguardando Revisão do Cliente no Portal') }}</span>
+                </p>
+                <p class="text-zinc-400 text-xs">
+                    {{ __('Submetido em:') }} <strong class="text-white">{{ $roteiro->submitted_at->format('d/m/Y H:i') }}</strong> · {{ __('Enquanto está em revisão com o cliente, a edição manual fica bloqueada até o cliente aprovar ou sugerir mudanças.') }}
+                </p>
+            </div>
+            <a href="{{ $roteiro->getWhatsAppShareUrl() }}" target="_blank" rel="noopener noreferrer"
+               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shrink-0">
+                <span>📲</span>
+                <span>{{ __('Enviar Link no WhatsApp') }}</span>
+            </a>
         </div>
     @endif
 
@@ -196,4 +218,3 @@
 
 </div>
 @endsection
-
