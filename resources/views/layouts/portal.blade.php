@@ -55,45 +55,45 @@
                 </div>
 
                 <!-- Navegação Central (Abas Estilo Segmented Control) -->
-                <nav class="hidden xl:flex items-center p-1 bg-zinc-100/90 rounded-xl border border-zinc-200/70 gap-0.5 overflow-x-auto max-w-full">
+                <nav class="hidden xl:flex items-center p-1 bg-zinc-100/90 rounded-xl border border-zinc-200/70 gap-0.5 max-w-full">
                     <a href="{{ route('portal.dashboard') }}" 
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.dashboard*') || request()->routeIs('portal.productions*') || request()->routeIs('portal.roteiros*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                       class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.dashboard*') || request()->routeIs('portal.productions*') || request()->routeIs('portal.roteiros*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        <svg class="w-3.5 h-3.5 shrink-0 hidden 2xl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         {{ __('Esteira de Produção') }}
                     </a>
                     <a href="{{ route('portal.profile.edit') }}" 
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.profile*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                       class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.profile*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        <svg class="w-3.5 h-3.5 shrink-0 hidden 2xl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                         {{ __('DNA da Marca') }}
                     </a>
                     <a href="{{ route('portal.marketing-plan.index') }}" 
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.marketing-plan*', 'portal.anamnesis*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                       class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.marketing-plan*', 'portal.anamnesis*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        <svg class="w-3.5 h-3.5 shrink-0 hidden 2xl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         {{ __('Grade Editorial') }}
                     </a>
                     <a href="{{ route('portal.social.index') }}" 
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.social*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                       class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.social*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        <svg class="w-3.5 h-3.5 shrink-0 hidden 2xl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         {{ __('Redes Sociais') }}
                     </a>
                     <a href="{{ route('portal.plans.index') }}" 
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.plans*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                       class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.plans*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        <svg class="w-3.5 h-3.5 shrink-0 hidden 2xl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         {{ __('Planos') }}
                     </a>
                     <a href="{{ route('portal.packs.index') }}" 
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.packs*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                       class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.packs*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        <svg class="w-3.5 h-3.5 shrink-0 hidden 2xl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                         {{ __('Pacotes') }}
                     </a>
                     <a href="{{ route('portal.quotes.index') }}" 
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.quotes*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                       class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.quotes*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        <svg class="w-3.5 h-3.5 shrink-0 hidden 2xl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         {{ __('Orçamentos') }}
                     </a>
                     <a href="{{ route('portal.support.index') }}"
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.support*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        🛟 {{ __('Suporte') }}
+                       class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.support*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
+                        <span class="hidden 2xl:inline">🛟</span> {{ __('Suporte') }}
                     </a>
                 </nav>
 

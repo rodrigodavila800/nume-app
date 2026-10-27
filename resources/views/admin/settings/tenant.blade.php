@@ -136,6 +136,94 @@
             </div>
         </div>
 
+        <!-- Seção 1.5: Nume Social Engine — Credenciais OAuth Nativas das 8 Redes -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5">
+            <div class="border-b border-zinc-800/80 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>🔐</span>
+                        <span>{{ __('Nume Social Engine — Credenciais OAuth das Redes') }}</span>
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-1">
+                        {{ __('Configure aqui o Client ID e Client Secret oficiais de cada rede (criptografados com AES-256 no banco). Assim que preenchidos, os botões "Conectar" ficam ativos no Portal do Cliente.') }}
+                    </p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                    🔒 AES-256 Encrypted
+                </span>
+            </div>
+
+            <div class="space-y-4">
+                @foreach ($oauthProviders ?? [] as $provider)
+                    <div class="bg-zinc-950/70 border border-zinc-800/90 rounded-xl p-4 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <span class="text-xs font-extrabold text-white tracking-wide">{{ $provider['label'] }}</span>
+                            @if ($provider['configured'])
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    {{ __('OAuth Ativo') }}
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+                                    {{ __('OAuth Pendente') }}
+                                </span>
+                            @endif
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label for="{{ $provider['id_field'] }}" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                                    {{ $provider['id_label'] }}
+                                </label>
+                                <input type="text"
+                                    id="{{ $provider['id_field'] }}"
+                                    name="{{ $provider['id_field'] }}"
+                                    value="{{ old($provider['id_field'], $provider['id_value']) }}"
+                                    placeholder="{{ __('Cole o Client ID / App ID...') }}"
+                                    class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-orange-500 focus:outline-none transition font-mono">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label for="{{ $provider['secret_field'] }}" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                                    {{ $provider['secret_label'] }}
+                                </label>
+                                <input type="password"
+                                    id="{{ $provider['secret_field'] }}"
+                                    name="{{ $provider['secret_field'] }}"
+                                    autocomplete="new-password"
+                                    placeholder="{{ $provider['has_secret'] ? __('•••••••••••• (já configurado — preencha apenas para substituir)') : __('Cole o Client Secret / App Secret...') }}"
+                                    class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-orange-500 focus:outline-none transition font-mono">
+                            </div>
+                        </div>
+
+                        @if (! empty($provider['extra_field']))
+                            <div class="space-y-1">
+                                <label for="{{ $provider['extra_field'] }}" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                                    {{ $provider['extra_label'] }}
+                                </label>
+                                <input type="text"
+                                    id="{{ $provider['extra_field'] }}"
+                                    name="{{ $provider['extra_field'] }}"
+                                    value="{{ old($provider['extra_field'], $provider['extra_value'] ?? '') }}"
+                                    placeholder="{{ __('Opcional — usado no Meta Login for Business') }}"
+                                    class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-orange-500 focus:outline-none transition font-mono">
+                            </div>
+                        @endif
+
+                        <div class="pt-1 border-t border-zinc-900 flex flex-col gap-1">
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                                {{ __('Redirect URI para cadastrar no Console da Rede:') }}
+                            </span>
+                            @foreach ($provider['callbacks'] as $cb)
+                                <code class="text-[11px] font-mono text-orange-300/90 bg-zinc-900/90 px-2.5 py-1 rounded border border-zinc-800 select-all break-all">{{ $cb }}</code>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
         <!-- Seção 2: SEO da Plataforma (calibrado pela Sofi) -->
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5">
             <div class="border-b border-zinc-800/80 pb-4 flex items-center justify-between">

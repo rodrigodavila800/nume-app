@@ -89,8 +89,27 @@ class Setting extends Model
             $stripePriceId = static::get('stripe_price_id', config('services.stripe.price_id'));
             $stripeFee = static::get('stripe_platform_fee_percent', config('services.stripe.platform_fee_percent', 10));
 
-            $googleClientId = static::get('google_client_id', config('services.google.client_id'));
-            $googleClientSecret = static::get('google_client_secret', config('services.google.client_secret'));
+            $googleClientId = static::get('google_client_id') ?: config('services.google.client_id');
+            $googleClientSecret = static::get('google_client_secret') ?: config('services.google.client_secret');
+
+            $metaClientId = static::get('meta_client_id') ?: config('services.meta.client_id');
+            $metaClientSecret = static::get('meta_client_secret') ?: config('services.meta.client_secret');
+            $metaConfigId = static::get('meta_config_id') ?: config('services.meta.config_id');
+
+            $threadsClientId = static::get('threads_client_id') ?: config('services.threads.client_id');
+            $threadsClientSecret = static::get('threads_client_secret') ?: config('services.threads.client_secret');
+
+            $tiktokClientKey = static::get('tiktok_client_key') ?: config('services.tiktok.client_key');
+            $tiktokClientSecret = static::get('tiktok_client_secret') ?: config('services.tiktok.client_secret');
+
+            $linkedinClientId = static::get('linkedin_client_id') ?: config('services.linkedin.client_id');
+            $linkedinClientSecret = static::get('linkedin_client_secret') ?: config('services.linkedin.client_secret');
+
+            $pinterestClientId = static::get('pinterest_client_id') ?: config('services.pinterest.client_id');
+            $pinterestClientSecret = static::get('pinterest_client_secret') ?: config('services.pinterest.client_secret');
+
+            $xClientId = static::get('x_client_id') ?: config('services.x.client_id');
+            $xClientSecret = static::get('x_client_secret') ?: config('services.x.client_secret');
 
             config([
                 'services.stripe.secret' => $stripeSecret,
@@ -100,6 +119,19 @@ class Setting extends Model
                 'services.stripe.platform_fee_percent' => $stripeFee,
                 'services.google.client_id' => $googleClientId,
                 'services.google.client_secret' => $googleClientSecret,
+                'services.meta.client_id' => $metaClientId,
+                'services.meta.client_secret' => $metaClientSecret,
+                'services.meta.config_id' => $metaConfigId,
+                'services.threads.client_id' => $threadsClientId,
+                'services.threads.client_secret' => $threadsClientSecret,
+                'services.tiktok.client_key' => $tiktokClientKey,
+                'services.tiktok.client_secret' => $tiktokClientSecret,
+                'services.linkedin.client_id' => $linkedinClientId,
+                'services.linkedin.client_secret' => $linkedinClientSecret,
+                'services.pinterest.client_id' => $pinterestClientId,
+                'services.pinterest.client_secret' => $pinterestClientSecret,
+                'services.x.client_id' => $xClientId,
+                'services.x.client_secret' => $xClientSecret,
             ]);
         } catch (Exception $e) {
             // Silently ignore if DB connection is not ready during console boots

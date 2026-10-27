@@ -1104,5 +1104,15 @@
     "OAuth pendente": "OAuth pendiente",
     "Uso de IA": "Uso de IA",
     "Uso de IA & Limites Mensais": "Uso de IA y límites mensuales",
-    "Limites mensais de tokens atualizados.": "Límites mensuales de tokens actualizados."
+    "Limites mensais de tokens atualizados.": "Límites mensuales de tokens actualizados.",
+    "Nume Social Engine — Credenciais OAuth das Redes": "Nume Social Engine — Credenciales OAuth de las redes",
+    "Configure aqui o Client ID e Client Secret oficiais de cada rede (criptografados com AES-256 no banco). Assim que preenchidos, os botões \"Conectar\" ficam ativos no Portal do Cliente.": "Configura aquí el Client ID y el Client Secret oficiales de cada red (cifrados con AES-256 en la base de datos). En cuanto los completes, los botones \"Conectar\" se activarán en el Portal del Cliente.",
+    "OAuth Ativo": "OAuth activo",
+    "OAuth Pendente": "OAuth pendiente",
+    "Cole o Client ID / App ID...": "Pega el Client ID / App ID...",
+    "•••••••••••• (já configurado — preencha apenas para substituir)": "•••••••••••• (ya configurado — rellena solo para sustituir)",
+    "Cole o Client Secret / App Secret...": "Pega el Client Secret / App Secret...",
+    "Opcional — usado no Meta Login for Business": "Opcional — usado en Meta Login for Business",
+    "Redirect URI para cadastrar no Console da Rede:": "Redirect URI para registrar en la consola de la red:",
+    "Configurações de Redes Sociais, OAuth e SEO da plataforma atualizadas com sucesso!": "¡Configuración de redes sociales, OAuth y SEO de la plataforma actualizada correctamente!"
 }

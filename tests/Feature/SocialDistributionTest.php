@@ -3,12 +3,17 @@
 namespace Tests\Feature;
 
 use App\Models\Cliente;
+use App\Models\Pack;
+use App\Models\PackPurchase;
 use App\Models\Production;
+use App\Models\Setting;
 use App\Models\SocialProfile;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoPublication;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class SocialDistributionTest extends TestCase
@@ -16,10 +21,12 @@ class SocialDistributionTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
-    private Cliente $cliente;
-    private \App\Models\User $staff;
 
-    private \App\Models\Pack $pack;
+    private Cliente $cliente;
+
+    private User $staff;
+
+    private Pack $pack;
 
     protected function setUp(): void
     {
@@ -31,7 +38,7 @@ class SocialDistributionTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->staff = \App\Models\User::create([
+        $this->staff = User::create([
             'tenant_id' => $this->tenant->id,
             'name' => 'Editor Staff',
             'email' => 'editor@produtora.com',
@@ -49,7 +56,7 @@ class SocialDistributionTest extends TestCase
             'instagram_handle' => '@cliente.moda',
         ]);
 
-        $this->pack = \App\Models\Pack::create([
+        $this->pack = Pack::create([
             'tenant_id' => $this->tenant->id,
             'name' => 'Pack Social 5 Vídeos',
             'slug' => 'pack-social-5',
@@ -58,7 +65,7 @@ class SocialDistributionTest extends TestCase
             'status' => 'active',
         ]);
 
-        \App\Models\PackPurchase::create([
+        PackPurchase::create([
             'tenant_id' => $this->tenant->id,
             'cliente_id' => $this->cliente->id,
             'pack_id' => $this->pack->id,
@@ -101,7 +108,7 @@ class SocialDistributionTest extends TestCase
         $profile = SocialProfile::create([
             'tenant_id' => $this->tenant->id,
             'cliente_id' => $this->cliente->id,
-            'upload_post_username' => (string) \Illuminate\Support\Str::uuid(),
+            'upload_post_username' => (string) Str::uuid(),
             'connected' => false,
             'platforms_connected' => [],
         ]);
@@ -118,7 +125,7 @@ class SocialDistributionTest extends TestCase
         $profile = SocialProfile::create([
             'tenant_id' => $this->tenant->id,
             'cliente_id' => $this->cliente->id,
-            'upload_post_username' => (string) \Illuminate\Support\Str::uuid(),
+            'upload_post_username' => (string) Str::uuid(),
             'connected' => true,
             'platforms_connected' => ['instagram', 'tiktok'],
         ]);
@@ -128,7 +135,7 @@ class SocialDistributionTest extends TestCase
             'cliente_id' => $this->cliente->id,
             'created_by' => $this->staff->id,
             'title' => 'Campanha Primavera Verão',
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'status' => 'approved',
         ]);
 
@@ -176,7 +183,7 @@ class SocialDistributionTest extends TestCase
         $outroProfile = SocialProfile::create([
             'tenant_id' => $this->tenant->id,
             'cliente_id' => $this->cliente->id,
-            'upload_post_username' => (string) \Illuminate\Support\Str::uuid(),
+            'upload_post_username' => (string) Str::uuid(),
             'connected' => true,
             'platforms_connected' => ['instagram'],
         ]);
@@ -186,7 +193,7 @@ class SocialDistributionTest extends TestCase
             'cliente_id' => $outroCliente->id,
             'created_by' => $this->staff->id,
             'title' => 'Produção Confidencial Outro Cliente',
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'status' => 'approved',
         ]);
 
@@ -214,7 +221,7 @@ class SocialDistributionTest extends TestCase
         $profile = SocialProfile::create([
             'tenant_id' => $this->tenant->id,
             'cliente_id' => $this->cliente->id,
-            'upload_post_username' => (string) \Illuminate\Support\Str::uuid(),
+            'upload_post_username' => (string) Str::uuid(),
             'connected' => true,
             'platforms_connected' => ['instagram'],
         ]);
@@ -238,7 +245,7 @@ class SocialDistributionTest extends TestCase
             'cliente_id' => $this->cliente->id,
             'created_by' => $this->staff->id,
             'title' => 'Campanha Sem Cota',
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'status' => 'approved',
         ]);
 
@@ -265,7 +272,7 @@ class SocialDistributionTest extends TestCase
         $profile = SocialProfile::create([
             'tenant_id' => $this->tenant->id,
             'cliente_id' => $this->cliente->id,
-            'upload_post_username' => (string) \Illuminate\Support\Str::uuid(),
+            'upload_post_username' => (string) Str::uuid(),
             'connected' => true,
             'platforms_connected' => ['instagram'],
         ]);
@@ -282,7 +289,7 @@ class SocialDistributionTest extends TestCase
         }
 
         // Compra com Add-on de distribuição ativo
-        \App\Models\PackPurchase::create([
+        PackPurchase::create([
             'tenant_id' => $this->tenant->id,
             'cliente_id' => $this->cliente->id,
             'pack_id' => $this->pack->id,
@@ -301,7 +308,7 @@ class SocialDistributionTest extends TestCase
             'cliente_id' => $this->cliente->id,
             'created_by' => $this->staff->id,
             'title' => 'Campanha com Addon',
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'status' => 'approved',
         ]);
 
@@ -321,5 +328,54 @@ class SocialDistributionTest extends TestCase
             ]);
 
         $response->assertStatus(202);
+    }
+
+    public function test_admin_can_configure_encrypted_social_oauth_credentials_and_activate_portal_connect_buttons(): void
+    {
+        $this->tenant->update([
+            'status' => 'active',
+            'subscription_expires_at' => now()->addYear(),
+        ]);
+
+        $admin = User::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Admin Produtora',
+            'email' => 'admin@produtora.com',
+            'password' => bcrypt('Senha@Segura123'),
+            'role' => 'admin',
+        ]);
+
+        $saveResponse = $this->actingAs($admin)
+            ->post(route('admin.settings.platform.update'), [
+                'meta_client_id' => 'meta_app_id_123',
+                'meta_client_secret' => 'meta_super_secret_456',
+                'tiktok_client_key' => 'tiktok_key_789',
+                'tiktok_client_secret' => 'tiktok_secret_999',
+            ]);
+
+        $saveResponse->assertRedirect(route('admin.settings.platform'));
+
+        // Verifica que foi salvo criptografado e que loadIntoConfig popula config('services.*')
+        $rawMetaSecret = Setting::where('key', 'meta_client_secret')->value('value');
+        $this->assertNotNull($rawMetaSecret);
+        $this->assertNotEquals('meta_super_secret_456', $rawMetaSecret);
+        $this->assertEquals('meta_super_secret_456', Setting::get('meta_client_secret'));
+        $this->assertEquals('meta_app_id_123', config('services.meta.client_id'));
+        $this->assertEquals('tiktok_key_789', config('services.tiktok.client_key'));
+
+        // A tela do admin nunca deve exibir o secret em texto puro no HTML
+        $adminView = $this->actingAs($admin)->get(route('admin.settings.platform'));
+        $adminView->assertStatus(200);
+        $adminView->assertDontSee('meta_super_secret_456');
+        $adminView->assertSee('OAuth Ativo');
+
+        // Agora no Portal do Cliente, Instagram, Facebook e TikTok exibem o botão "Conectar"
+        $portalView = $this->actingAs($this->cliente, 'cliente')
+            ->get(route('portal.social.index'));
+
+        $portalView->assertStatus(200);
+        $portalView->assertSee('Conectar Instagram');
+        $portalView->assertSee('Conectar Facebook');
+        $portalView->assertSee('Conectar TikTok');
     }
 }
