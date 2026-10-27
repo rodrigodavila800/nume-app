@@ -31,7 +31,7 @@
                 
                 <!-- Ícone de Segurança / Tempo -->
                 <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-2xl shadow-inner">
-                    🛡️
+                    
                 </div>
 
                 <div>

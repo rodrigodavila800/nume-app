@@ -35,14 +35,14 @@ enum PlataformaAlvo: string
     public function icon(): string
     {
         return match ($this) {
-            self::INSTAGRAM => '📸',
-            self::YOUTUBE => '▶️',
-            self::TIKTOK => '🎵',
-            self::FACEBOOK => '👥',
-            self::LINKEDIN => '💼',
-            self::X => '𝕏',
-            self::THREADS => '🧵',
-            self::PINTEREST => '📌',
+            self::INSTAGRAM => 'IG',
+            self::YOUTUBE => 'YT',
+            self::TIKTOK => 'TT',
+            self::FACEBOOK => 'FB',
+            self::LINKEDIN => 'IN',
+            self::X => 'X',
+            self::THREADS => 'TH',
+            self::PINTEREST => 'PI',
         };
     }
 

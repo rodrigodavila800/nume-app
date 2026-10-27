@@ -36,7 +36,6 @@
             <!-- Download PDF -->
             <a href="{{ route('quotes.pdf', $quote) }}"
                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition border border-zinc-700">
-                <span>📄</span>
                 <span>{{ __('Baixar PDF') }}</span>
             </a>
 
@@ -67,16 +66,16 @@
                 {{ $quote->isRequested() ? __('Pedido do cliente pelo portal: revise os valores e envie a proposta') : __('Pedido original do cliente') }}
             </p>
             <div class="flex flex-wrap gap-2">
-                <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">🎥 {{ $req['videos'] ?? '?' }} {{ __('vídeos/mês') }}</span>
+                <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">{{ $req['videos'] ?? '?' }} {{ __('vídeos/mês') }}</span>
                 @if(! empty($req['video_type_name']))
-                    <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">🎬 {{ $req['video_type_name'] }}</span>
+                    <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">{{ $req['video_type_name'] }}</span>
                 @endif
-                <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">📲 {{ $req['social_networks'] ?? '?' }} {{ __('redes') }}</span>
+                <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">{{ $req['social_networks'] ?? '?' }} {{ __('redes') }}</span>
                 <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">
-                    📣 {{ ! empty($req['wants_ads']) ? __('Quer anúncios').(! empty($req['ads_budget']) ? ' · '.$req['ads_budget'] : '') : __('Sem anúncios') }}
+                    {{ ! empty($req['wants_ads']) ? __('Quer anúncios').(! empty($req['ads_budget']) ? ' · '.$req['ads_budget'] : '') : __('Sem anúncios') }}
                 </span>
                 @if($quote->marketingPlan)
-                    <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">🗓️ {{ __('Plano') }} {{ $quote->marketingPlan->month_year }}</span>
+                    <span class="px-2.5 py-1 rounded-lg bg-sky-900/60 border border-sky-700/50">{{ __('Plano') }} {{ $quote->marketingPlan->month_year }}</span>
                 @endif
             </div>
             @if(! empty($req['message']))
@@ -109,7 +108,7 @@
                 <div class="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3 shadow-lg shadow-black/30">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
-                            <span>✨</span> {{ __('Pedido do cliente') }}
+{{ __('Pedido do cliente') }}
                         </span>
                         <span class="text-[10px] text-zinc-500">{{ __('Sofi IA Parser') }}</span>
                     </div>
@@ -122,7 +121,7 @@
                     <div class="flex flex-wrap items-center gap-2 pt-1">
                         <button type="button" id="btn-falar"
                                 class="px-3 py-1.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition">
-                            🎙 {{ __('Falar o pedido') }}
+                            {{ __('Falar o pedido') }}
                         </button>
                         <button type="button" id="btn-estimar"
                                 class="px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition shadow-md shadow-orange-900/30">
@@ -138,7 +137,7 @@
                         @if(!empty($quote->ai_reading))
                             <div class="p-3.5 rounded-xl bg-orange-950/30 border border-orange-800/40 space-y-2 mt-3">
                                 <div class="flex items-center gap-2 text-xs font-bold text-orange-400">
-                                    <span>✨</span> <span>{{ $quote->ai_reading['resumo'] ?? '' }}</span>
+<span>{{ $quote->ai_reading['resumo'] ?? '' }}</span>
                                 </div>
                                 @if(!empty($quote->ai_reading['suposicoes']))
                                     <div>
@@ -167,7 +166,7 @@
                     <div class="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
                         <button type="button" id="btn-copiar"
                                 class="flex-1 py-2 px-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs transition">
-                            📋 {{ __('Copiar Orçamento') }}
+                            {{ __('Copiar Orçamento') }}
                         </button>
                         <button type="button" id="btn-reset"
                                 class="py-2 px-3 rounded-xl border border-zinc-700 hover:bg-zinc-800 text-zinc-300 font-semibold text-xs transition">
@@ -209,14 +208,14 @@
                     </div>
 
                     <div class="flex items-center justify-between text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
-                        <span>📎 Anexo:</span>
+                        <span>Anexo:</span>
                         <span class="font-mono text-orange-400 font-bold">Presupuesto_{{ $quote->number }}.pdf</span>
                     </div>
 
                     <div class="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
                         <button type="button" id="btn-enviar-email"
                                 class="flex-1 py-2 px-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs transition">
-                            ➤ {{ __('Enviar Agora via SMTP') }}
+                            {{ __('Enviar Agora via SMTP') }}
                         </button>
                         <button type="button" id="btn-refazer-email"
                                 class="py-2 px-3 rounded-xl border border-zinc-700 hover:bg-zinc-800 text-zinc-300 font-semibold text-xs transition">
@@ -249,7 +248,7 @@
                 <div class="space-y-3.5 pb-5 border-b border-zinc-800">
                     <div class="flex items-center justify-between">
                         <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span>👤</span> {{ __('Cliente & Projeto') }}
+{{ __('Cliente & Projeto') }}
                         </h2>
                         @if($clientes->isNotEmpty())
                             <select id="cliente_select" name="cliente_id"
@@ -337,7 +336,7 @@
                 <!-- Seção 2: Horas de Trabalho (Sliders) -->
                 <div class="space-y-4 pb-5 border-b border-zinc-800">
                     <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>⏱</span> {{ __('Horas de Trabalho da Equipe') }}
+{{ __('Horas de Trabalho da Equipe') }}
                     </h2>
 
                     <!-- Pré-produção -->
@@ -405,7 +404,7 @@
                 <!-- Seção 3: Filmmakers & Tarifas -->
                 <div class="space-y-4 pb-5 border-b border-zinc-800">
                     <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>🎥</span> {{ __('Equipe de Filmmakers & Tarifas Horárias') }}
+{{ __('Equipe de Filmmakers & Tarifas Horárias') }}
                     </h2>
 
                     @php
@@ -449,7 +448,7 @@
                 <!-- Seção 4: Serviços Extras, Drone, Margem & IVA -->
                 <div class="space-y-4 pb-5 border-b border-zinc-800">
                     <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>⚡</span> {{ __('Serviços Extras, Dron & Tributos') }}
+{{ __('Serviços Extras, Dron & Tributos') }}
                     </h2>
 
                     <!-- Extras 1, 2, 3 -->
@@ -480,7 +479,7 @@
                             <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
                                 <input id="drone" name="inputs[drone]" type="checkbox" value="1" {{ !empty($inputs['drone']) ? 'checked' : '' }}
                                        class="w-4 h-4 rounded text-orange-600 focus:ring-0">
-                                <span>🛸 {{ __('Incluir Dron') }}</span>
+                                <span>{{ __('Incluir Dron') }}</span>
                             </label>
                             <input id="drone_valor" name="inputs[drone_valor]" type="number" min="0" step="10" value="{{ $inputs['drone_valor'] ?? $defaults['drone_valor'] }}"
                                    class="w-24 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-white font-mono text-right ml-auto">
@@ -533,7 +532,7 @@
 
                     <button type="submit"
                             class="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-sm transition shadow-lg shadow-orange-900/30">
-                        💾 {{ __('Salvar Alterações') }}
+                        {{ __('Salvar Alterações') }}
                     </button>
                 </div>
             </form>

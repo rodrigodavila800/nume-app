@@ -10,7 +10,7 @@
         <div>
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-200">
-                    📄 {{ __('Propostas Comerciais') }}
+                    {{ __('Propostas Comerciais') }}
                 </span>
             </div>
             <h1 class="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight mt-1">
@@ -43,7 +43,7 @@
     @if ($quotes->isEmpty())
         <div class="p-12 rounded-3xl bg-white border border-zinc-200 shadow-sm text-center space-y-4">
             <div class="w-16 h-16 rounded-2xl bg-zinc-100 border border-zinc-200 text-zinc-400 flex items-center justify-center mx-auto text-2xl">
-                📑
+                
             </div>
             <div class="space-y-1">
                 <h3 class="text-base font-bold text-zinc-900">{{ __('Nenhum orçamento pendente') }}</h3>
@@ -162,15 +162,15 @@
                     <div class="pt-3 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div class="text-xs text-zinc-500 flex flex-wrap items-center gap-3">
                             @if ($quote->isAds())
-                                <span>📣 {{ __('Anúncios') }}</span>
+                                <span>{{ __('Anúncios') }}</span>
                             @elseif ($quote->inputs && isset($quote->inputs['videos']))
-                                <span>🎥 {{ $quote->inputs['videos'] }} {{ __('vídeos previstos') }}</span>
+                                <span>{{ $quote->inputs['videos'] }} {{ __('vídeos previstos') }}</span>
                             @endif
                             @foreach ($quote->packPurchases as $invoicePurchase)
                                 @if ($invoicePurchase->isPaid())
                                     <a href="{{ route('portal.purchases.invoice', $invoicePurchase) }}"
                                        class="inline-flex items-center gap-1 font-bold text-orange-700 hover:text-orange-800">
-                                        📄 {{ __('Fatura :num (PDF)', ['num' => $invoicePurchase->invoice_number]) }}
+                                        {{ __('Fatura :num (PDF)', ['num' => $invoicePurchase->invoice_number]) }}
                                     </a>
                                 @endif
                             @endforeach

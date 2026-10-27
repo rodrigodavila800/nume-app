@@ -31,7 +31,7 @@
             <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800/80">
                 <dt class="text-zinc-500 font-bold uppercase text-[10px]">{{ __('Pronto para Cobranças') }}</dt>
                 <dd class="text-sm font-bold mt-1 {{ $tenant->canReceivePayments() ? 'text-emerald-400' : 'text-amber-400' }}">
-                    {{ $tenant->canReceivePayments() ? '✅ ' . __('Habilitado') : '⚡ ' . __('Requer Conexão') }}
+                    {{ $tenant->canReceivePayments() ? '' . __('Habilitado') : '' . __('Requer Conexão') }}
                 </dd>
             </div>
         </div>

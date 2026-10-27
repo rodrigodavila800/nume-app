@@ -44,7 +44,7 @@
                 <span class="text-xl font-black text-white mt-1 block">{{ $stats['total'] }}</span>
             </div>
             <div class="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 border border-zinc-700 flex items-center justify-center text-lg font-bold">
-                🚀
+                
             </div>
         </div>
 
@@ -64,7 +64,7 @@
                 <span class="text-xl font-black text-purple-400 mt-1 block">{{ $stats['agendados'] ?? 0 }}</span>
             </div>
             <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg font-bold border border-purple-500/20">
-                ⏰
+                
             </div>
         </div>
 
@@ -74,7 +74,7 @@
                 <span class="text-xl font-black text-amber-400 mt-1 block">{{ $stats['processando'] }}</span>
             </div>
             <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg font-bold border border-amber-500/20 animate-pulse">
-                ⏳
+                
             </div>
         </div>
 
@@ -84,7 +84,7 @@
                 <span class="text-xl font-black text-rose-400 mt-1 block">{{ $stats['falhas'] }}</span>
             </div>
             <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg font-bold border border-rose-500/20">
-                ⚠️
+                
             </div>
         </div>
     </div>
@@ -119,7 +119,7 @@
 
             <div class="sm:col-span-1 flex items-center gap-1">
                 <button type="submit" class="w-full h-full py-2.5 px-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition flex items-center justify-center shadow-md shadow-orange-900/20 cursor-pointer">
-                    🔍
+                    
                 </button>
             </div>
         </form>
@@ -188,7 +188,6 @@
                                 <td class="px-5 py-4 font-mono text-[11px]">
                                     @if($pub->status === 'agendado' && $pub->scheduled_at)
                                         <span class="text-purple-400 font-bold flex items-center gap-1">
-                                            <span>⏰</span>
                                             <span>{{ $pub->scheduled_at->format('d/m/Y H:i') }}</span>
                                         </span>
                                     @else
@@ -219,7 +218,7 @@
         @else
             <div class="p-12 text-center space-y-3">
                 <div class="w-12 h-12 mx-auto rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 flex items-center justify-center text-xl">
-                    📡
+                    
                 </div>
                 <div class="space-y-1">
                     <h4 class="text-sm font-bold text-white">{{ __('Nenhuma publicação social encontrada') }}</h4>

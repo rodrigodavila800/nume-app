@@ -24,7 +24,7 @@
                 </a>
                 <a href="{{ route('quotes.create', ['kind' => 'ads']) }}"
                    class="inline-flex items-center gap-2 font-bold rounded-xl text-xs sm:text-sm px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 transition-all">
-                    📣 <span>{{ __('Orçamento de anúncios') }}</span>
+                    <span>{{ __('Orçamento de anúncios') }}</span>
                 </a>
             @endcan
         </div>
@@ -157,21 +157,21 @@
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                 @if($quote->isAds())
                                     <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] font-bold text-sky-300">
-                                        📣 {{ __('Anúncios') }} · {{ $inputs['criativos'] ?? 0 }} {{ __('criativos') }} · {{ $inputs['meses'] ?? 1 }} {{ __('mês(es)') }}
+                                        {{ __('Anúncios') }} · {{ $inputs['criativos'] ?? 0 }} {{ __('criativos') }} · {{ $inputs['meses'] ?? 1 }} {{ __('mês(es)') }}
                                     </span>
                                 @else
                                     <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] font-bold text-orange-400">
-                                        📦 {{ $inputs['videos'] ?? 1 }} {{ ($inputs['videos'] ?? 1) == 1 ? 'vídeo' : 'vídeos' }}
+                                        {{ $inputs['videos'] ?? 1 }} {{ ($inputs['videos'] ?? 1) == 1 ? 'vídeo' : 'vídeos' }}
                                     </span>
                                     <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400 font-mono">
-                                        ⏱ {{ number_format($calc['horas'] ?? 0, 1) }}h
+                                        {{ number_format($calc['horas'] ?? 0, 1) }}h
                                     </span>
                                     <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400">
-                                        🎥 {{ $inputs['filmmakers'] ?? 1 }} FM
+                                        {{ $inputs['filmmakers'] ?? 1 }} FM
                                     </span>
                                     @if(!empty($inputs['drone']))
                                         <span class="px-1.5 py-0.5 rounded bg-sky-950/40 text-sky-400 border border-sky-800/30 text-[9px] font-bold">
-                                            🛸 Dron
+                                            Dron
                                         </span>
                                     @endif
                                 @endif
@@ -193,20 +193,20 @@
                                     <a href="{{ route('quotes.pdf', $quote) }}"
                                        class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition"
                                        title="{{ __('Baixar Proposta PDF') }}">
-                                        📄
+                                        
                                     </a>
                                     @can('update', $quote)
                                         <a href="{{ route('quotes.edit', $quote) }}"
                                            class="p-1.5 rounded-lg bg-zinc-800 hover:bg-orange-600 text-zinc-300 hover:text-white transition"
                                            title="{{ __('Editar & Simular') }}">
-                                            ✏️
+                                            
                                         </a>
                                     @endcan
                                     @can('delete', $quote)
                                         <form action="{{ route('quotes.destroy', $quote) }}" method="POST" class="inline" onsubmit="return confirm('Remover este orçamento?')">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-rose-950 hover:text-rose-400 text-zinc-400 transition" title="{{ __('Excluir') }}">
-                                                🗑
+                                                
                                             </button>
                                         </form>
                                     @endcan

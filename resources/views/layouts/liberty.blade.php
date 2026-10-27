@@ -37,9 +37,6 @@
         <div class="preloader-inner">
             <span class="dot"></span>
             <div class="dots">
-                <span></span>
-                <span></span>
-                <span></span>
             </div>
         </div>
     </div>
@@ -66,16 +63,16 @@
 
                             <!-- Language Switcher -->
                             <li class="d-flex align-items-center px-2">
-                                <a href="{{ route('lang.switch', 'pt_BR') }}" class="p-1 text-decoration-none {{ session('locale', 'pt_BR') === 'pt_BR' ? 'opacity-100' : 'opacity-50' }}" title="Português">🇧🇷</a>
+                                <a href="{{ route('lang.switch', 'pt_BR') }}" class="p-1 text-decoration-none {{ session('locale', 'pt_BR') === 'pt_BR' ? 'opacity-100' : 'opacity-50' }}" title="Português"></a>
                                 <span class="text-secondary mx-1">|</span>
-                                <a href="{{ route('lang.switch', 'es') }}" class="p-1 text-decoration-none {{ session('locale') === 'es' ? 'opacity-100' : 'opacity-50' }}" title="Español">🇪🇸</a>
+                                <a href="{{ route('lang.switch', 'es') }}" class="p-1 text-decoration-none {{ session('locale') === 'es' ? 'opacity-100' : 'opacity-50' }}" title="Español"></a>
                             </li>
 
                             <!-- Portal do Cliente / Login -->
                             @if(auth('cliente')->check())
-                                <li><a href="{{ route('portal.dashboard') }}" class="text-warning">👤 {{ __('Portal do Cliente') }}</a></li>
+                                <li><a href="{{ route('portal.dashboard') }}" class="text-warning">{{ __('Portal do Cliente') }}</a></li>
                             @elseif(auth('web')->check())
-                                <li><a href="{{ route('productions.index') }}" class="text-warning">⚡ {{ __('Área da Produtora') }}</a></li>
+                                <li><a href="{{ route('productions.index') }}" class="text-warning">{{ __('Área da Produtora') }}</a></li>
                             @else
                                 <li><a href="{{ route('portal.login') }}">{{ __('Acessar Portal do Cliente') }}</a></li>
                             @endif
@@ -123,7 +120,7 @@
                         <a href="{{ route('portal.login') }}" class="text-secondary text-decoration-none hover:text-white">{{ __('Portal do Cliente') }}</a>
                     </div>
                     <p class="small text-muted mb-0">
-                        ⚡ {{ __('Pagamentos via Bizum BBVA, Tarjeta Redsys e Stripe') }}
+                        {{ __('Pagamentos via Bizum BBVA, Tarjeta Redsys e Stripe') }}
                     </p>
                 </div>
             </div>

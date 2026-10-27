@@ -10,7 +10,7 @@
         <div>
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                    🔁 {{ __('Modo Criador & Retainers') }}
+                    {{ __('Modo Criador & Retainers') }}
                 </span>
             </div>
             <h1 class="text-2xl font-extrabold text-white tracking-tight mt-1">{{ __('Criar Plano de Assinatura Recorrente') }}</h1>
@@ -53,7 +53,7 @@
                     <option value="">{{ __('Nenhum (Sem vídeo de demonstração)') }}</option>
                     @foreach($showcaseVideos as $video)
                         <option value="{{ $video->id }}" @selected(old('showcase_video_id') == $video->id)>
-                            {{ $video->is_vertical ? '📱 [9:16]' : '🖥️ [16:9]' }} {{ $video->title }}
+                            {{ $video->is_vertical ? '[9:16]' : '[16:9]' }} {{ $video->title }}
                         </option>
                     @endforeach
                 </select>
@@ -105,8 +105,8 @@
                 </label>
                 <select name="status"
                         class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-orange-500">
-                    <option value="active" @selected(old('status', 'active') === 'active')>🟢 {{ __('Ativo para Venda') }}</option>
-                    <option value="inactive" @selected(old('status') === 'inactive')>⚪ {{ __('Rascunho / Oculto') }}</option>
+                    <option value="active" @selected(old('status', 'active') === 'active')>{{ __('Ativo para Venda') }}</option>
+                    <option value="inactive" @selected(old('status') === 'inactive')>{{ __('Rascunho / Oculto') }}</option>
                 </select>
             </div>
         </div>

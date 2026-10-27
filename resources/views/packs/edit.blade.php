@@ -14,7 +14,7 @@
         <div class="flex items-center gap-3">
             <button type="button" id="btn-sofi-generate"
                     class="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg shadow-orange-950/40 transition active:scale-[0.98]">
-                <span id="sofi-icon">✨</span>
+                <span id="sofi-icon"></span>
                 <span>{{ __('Gerar com Sofi IA') }}</span>
             </button>
             <a href="{{ route('packs.index') }}" class="text-xs font-bold text-zinc-400 hover:text-white transition flex items-center gap-1.5">
@@ -25,7 +25,7 @@
 
     <!-- Feedback da Sofi IA -->
     <div id="sofi-alert" class="hidden p-4 rounded-xl bg-orange-950/40 border border-orange-500/30 text-xs text-orange-200 flex items-start gap-3">
-        <span class="text-base">💡</span>
+        <span class="text-base"></span>
         <div class="space-y-0.5">
             <strong class="font-bold text-orange-400">{{ __('Sofi IA (/ceo + /copywriter):') }}</strong>
             <p id="sofi-alert-msg">{{ __('Estrutura de alta conversão, entregáveis e Add-ons atualizados com sucesso!') }}</p>
@@ -63,7 +63,7 @@
                     <option value="">{{ __('Nenhum (Sem vídeo de demonstração)') }}</option>
                     @foreach($showcaseVideos as $video)
                         <option value="{{ $video->id }}" @selected(old('showcase_video_id', $pack->showcase_video_id) == $video->id)>
-                            {{ $video->is_vertical ? '📱 [9:16]' : '🖥️ [16:9]' }} {{ $video->title }}
+                            {{ $video->is_vertical ? '[9:16]' : '[16:9]' }} {{ $video->title }}
                         </option>
                     @endforeach
                 </select>
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
     btnSofi.addEventListener('click', async function() {
         btnSofi.disabled = true;
         btnSofi.classList.add('opacity-70');
-        sofiIcon.innerHTML = '⏳';
+        sofiIcon.innerHTML = '';
 
         const categoryId = document.getElementById('field-category-id').value;
         const name = document.getElementById('field-name').value;
@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             btnSofi.disabled = false;
             btnSofi.classList.remove('opacity-70');
-            sofiIcon.innerHTML = '✨';
+            sofiIcon.innerHTML = '';
         }
     });
 });

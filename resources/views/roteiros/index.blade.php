@@ -30,7 +30,7 @@
     @if ($roteiros->isEmpty())
         <div class="bg-zinc-900 border border-zinc-800 p-12 rounded-2xl text-center space-y-3">
             <div class="w-12 h-12 mx-auto rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 flex items-center justify-center text-xl">
-                ✍️
+                
             </div>
             <h3 class="text-sm font-bold text-white">{{ __('Nenhum roteiro criado ainda') }}</h3>
             <p class="text-xs text-zinc-400 max-w-sm mx-auto">
@@ -83,14 +83,14 @@
                             @can('update', $roteiro)
                                 @if (in_array($roteiro->status, ['draft', 'rejected']))
                                     <a href="{{ route('roteiros.edit', ['production' => $production, 'roteiro' => $roteiro]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition">
-                                        ✏️ {{ $roteiro->status === 'rejected' ? __('Ajustar') : __('Editar') }}
+                                        {{ $roteiro->status === 'rejected' ? __('Ajustar') : __('Editar') }}
                                     </a>
                                 @endif
                                 @if ($roteiro->status === 'draft')
                                     <form action="{{ route('roteiros.submit', ['production' => $production, 'roteiro' => $roteiro]) }}" method="POST" class="inline">
                                         @csrf
                                         <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition cursor-pointer">
-                                            🚀 {{ __('Submeter') }}
+                                            {{ __('Submeter') }}
                                         </button>
                                     </form>
                                 @endif
@@ -104,7 +104,7 @@
 
                     @if ($roteiro->rejection_reason)
                         <div class="p-3 bg-rose-950/40 border border-rose-500/30 rounded-xl text-xs text-rose-300 space-y-1">
-                            <p class="font-bold text-rose-400">⚠️ {{ __('Motivo do Feedback / Ajuste:') }}</p>
+                            <p class="font-bold text-rose-400">{{ __('Motivo do Feedback / Ajuste:') }}</p>
                             <p>{{ $roteiro->rejection_reason }}</p>
                         </div>
                     @endif

@@ -1,11 +1,11 @@
 @php
     $isEs = str_starts_with(session('locale', app()->getLocale() ?: 'pt_BR'), 'es');
     $greeting = $isEs 
-        ? '¡Hola! 👋 Soy Sofi, consultora audiovisual de ' . $tenant->name . '. ¿Qué objetivo deseas alcanzar con tus vídeos este mes?' 
-        : 'Olá! 👋 Sou a Sofi, consultora audiovisual da ' . $tenant->name . '. Qual objetivo você quer acelerar com seus vídeos este mês?';
+        ? '¡Hola! Soy Sofi, consultora audiovisual de ' . $tenant->name . '. ¿Qué objetivo deseas alcanzar con tus vídeos este mes?' 
+        : 'Olá! Sou a Sofi, consultora audiovisual da ' . $tenant->name . '. Qual objetivo você quer acelerar com seus vídeos este mês?';
     $bubbleText = $isEs 
-        ? '👋 ¿Qué tipo de vídeo aumentará las ventas de tu negocio?' 
-        : '👋 Qual formato de vídeo vai atrair mais clientes para a sua empresa?';
+        ? '¿Qué tipo de vídeo aumentará las ventas de tu negocio?' 
+        : 'Qual formato de vídeo vai atrair mais clientes para a sua empresa?';
 @endphp
 
 <!-- Sofi Sales Copilot Floating Widget -->
@@ -15,7 +15,7 @@
     <div id="sofiTeaserBubble" class="sofi-teaser-bubble" onclick="toggleSofiChat(true)">
         <div class="sofi-teaser-content">
             <div class="sofi-teaser-icon">
-                ✨
+                
             </div>
             <div>
                 <div class="sofi-teaser-header">
@@ -41,7 +41,7 @@
             <div class="sofi-chat-profile">
                 <div class="sofi-avatar-wrapper">
                     <div class="sofi-avatar-inner">
-                        🤖
+                        
                     </div>
                     <span class="sofi-avatar-dot"></span>
                 </div>
@@ -57,7 +57,6 @@
             </div>
             <div class="flex items-center gap-1.5">
                 <button type="button" onclick="resetSofiChatSession()" class="sofi-action-header-btn" title="{{ $isEs ? 'Reiniciar consulta y elegir otro nicho' : 'Reiniciar consulta e escolher outro nicho' }}">
-                    <span>🔄</span>
                     <span>{{ $isEs ? 'Nuevo Nicho' : 'Novo Nicho' }}</span>
                 </button>
                 <button type="button" onclick="toggleSofiChat(false)" class="sofi-close-btn" title="{{ __('Fechar') }}">
@@ -72,7 +71,7 @@
             <!-- Mensagem de Boas-vindas da Sofi -->
             <div class="sofi-msg-row">
                 <div class="sofi-bot-icon-small">
-                    🤖
+                    
                 </div>
                 <div class="sofi-bubble-bot">
                     <p class="m-0">{{ $greeting }}</p>
@@ -83,26 +82,26 @@
             <div id="sofiInitialChips" class="sofi-quick-chips-wrapper">
                 <button type="button" onclick="sendQuickPrompt('{{ $isEs ? '¿Qué paquete me recomiendas para mi negocio?' : 'Qual pacote é ideal para o meu negócio?' }}')" 
                         class="sofi-quick-chip-btn">
-                    ⚡ {{ $isEs ? 'Recomiéndame un paquete' : 'Recomende um pacote' }}
+                    {{ $isEs ? 'Recomiéndame un paquete' : 'Recomende um pacote' }}
                 </button>
                 <button type="button" onclick="sendQuickPrompt('{{ $isEs ? 'Quiero un guion y calendario de 30 días para mi empresa' : 'Quero um roteiro e calendário de 30 dias para a minha empresa' }}')" 
                         class="sofi-quick-chip-btn">
-                    📝 {{ $isEs ? 'Guiones y Plan 30 Días' : 'Roteiros e Grade 30 Dias' }}
+                    {{ $isEs ? 'Guiones y Plan 30 Días' : 'Roteiros e Grade 30 Dias' }}
                 </button>
                 <button type="button" onclick="sendQuickPrompt('{{ $isEs ? '¿Cuáles son las formas de pago y facturación?' : 'Quais são as formas de pagamento e fatura?' }}')" 
                         class="sofi-quick-chip-btn">
-                    💳 {{ $isEs ? 'Bizum, Redsys y Factura' : 'Bizum, Cartão e Fatura' }}
+                    {{ $isEs ? 'Bizum, Redsys y Factura' : 'Bizum, Cartão e Fatura' }}
                 </button>
                 <button type="button" onclick="resetSofiChatSession()" 
                         class="sofi-quick-chip-btn">
-                    🎯 {{ $isEs ? 'Elegir Nicho' : 'Escolher Nicho' }}
+                    {{ $isEs ? 'Elegir Nicho' : 'Escolher Nicho' }}
                 </button>
             </div>
 
             <!-- Indicador de Digitação -->
             <div id="sofiTypingIndicator" class="sofi-typing-indicator hidden">
                 <div class="sofi-bot-icon-small">
-                    🤖
+                    
                 </div>
                 <div class="sofi-typing-dots">
                     <span class="sofi-dot"></span>
@@ -120,7 +119,6 @@
                        placeholder="{{ $isEs ? 'Escribe tu duda o cuéntame tu nicho...' : 'Digite sua dúvida ou conte seu nicho...' }}" 
                        class="sofi-chat-input">
                 <button type="submit" id="sofiSubmitBtn" class="sofi-chat-submit-btn">
-                    <span>➤</span>
                 </button>
             </form>
             <p class="sofi-footer-tagline">
@@ -136,7 +134,6 @@
             <span class="sofi-launcher-dot-ping"></span>
             <span class="sofi-launcher-dot-solid"></span>
         </span>
-        <span>🤖</span>
         <span>{{ $isEs ? 'Consultar con Sofi' : 'Consultar com Sofi' }}</span>
     </button>
 
@@ -200,7 +197,7 @@
 
         <div class="sofi-pack-modal-footer">
             <a href="{{ route('portal.register') }}" id="modalRegisterBtn" class="sofi-pack-modal-btn-primary">
-                {{ $isEs ? '🚀 Crear Cuenta e Iniciar Producción' : '🚀 Criar Conta e Iniciar Produção' }}
+                {{ $isEs ? 'Crear Cuenta e Iniciar Producción' : 'Criar Conta e Iniciar Produção' }}
             </a>
             <a href="{{ route('portal.login') }}" id="modalLoginBtn" class="sofi-pack-modal-btn-secondary">
                 {{ $isEs ? 'Ya tengo cuenta · Iniciar sesión' : 'Já sou cliente · Entrar no Portal' }}
@@ -269,7 +266,7 @@
 
         list.innerHTML = `
             <div class="sofi-msg-row">
-                <div class="sofi-bot-icon-small">🤖</div>
+                <div class="sofi-bot-icon-small">S</div>
                 <div class="sofi-bubble-bot">
                     <p class="m-0">${escapeHtml(greetingText)}</p>
                 </div>
@@ -277,19 +274,19 @@
             <div id="sofiInitialChips" class="sofi-quick-chips-wrapper">
                 <button type="button" onclick="sendQuickPrompt('{{ $isEs ? 'Soy una clínica o profesional de la salud' : 'Sou de uma clínica ou profissional da saúde' }}')" 
                         class="sofi-quick-chip-btn">
-                    🏥 {{ $isEs ? 'Clínica & Salud' : 'Clínica & Saúde' }}
+                    {{ $isEs ? 'Clínica & Salud' : 'Clínica & Saúde' }}
                 </button>
                 <button type="button" onclick="sendQuickPrompt('{{ $isEs ? 'Soy del sector inmobiliario o reformas' : 'Sou do setor imobiliário ou reformas' }}')" 
                         class="sofi-quick-chip-btn">
-                    🏢 {{ $isEs ? 'Inmobiliaria' : 'Imóveis & Construção' }}
+                    {{ $isEs ? 'Inmobiliaria' : 'Imóveis & Construção' }}
                 </button>
                 <button type="button" onclick="sendQuickPrompt('{{ $isEs ? 'Tengo una tienda de moda o e-commerce' : 'Tenho uma loja de moda ou e-commerce' }}')" 
                         class="sofi-quick-chip-btn">
-                    🛍️ {{ $isEs ? 'Moda & E-commerce' : 'Moda & Varejo' }}
+                    {{ $isEs ? 'Moda & E-commerce' : 'Moda & Varejo' }}
                 </button>
                 <button type="button" onclick="sendQuickPrompt('{{ $isEs ? 'Ofrezco consultoría o servicios B2B' : 'Ofereço consultoria ou serviços B2B' }}')" 
                         class="sofi-quick-chip-btn">
-                    💼 {{ $isEs ? 'Servicios B2B' : 'Serviços B2B' }}
+                    {{ $isEs ? 'Servicios B2B' : 'Serviços B2B' }}
                 </button>
             </div>
         `;
@@ -388,11 +385,11 @@
         if (callToAction === 'register_dna') {
             actionCardHtml = `
                 <div class="sofi-dna-card-in-chat">
-                    <span class="sofi-dna-card-badge">🎯 {{ $isEs ? 'ADN de Marca en el Portal' : 'DNA de Marca no Portal' }}</span>
+                    <span class="sofi-dna-card-badge">{{ $isEs ? 'ADN de Marca en el Portal' : 'DNA de Marca no Portal' }}</span>
                     <h4 class="sofi-dna-card-title">{{ $isEs ? 'Calibración Estratégica Gratuita' : 'Calibração Estratégica Gratuita' }}</h4>
                     <p class="sofi-dna-card-desc">{{ $isEs ? 'Crea tu acceso en 30 segundos para definir tu nicho, público ideal y generar tu Grade Editorial de 30 días con Sofi IA.' : 'Crie seu acesso em 30 segundos para definir nicho, público-alvo e gerar sua Grade Editorial de 30 dias com a Sofi IA.' }}</p>
                     <a href="${baseRegisterUrl}" class="sofi-dna-card-btn">
-                        🚀 {{ $isEs ? 'Crear Cuenta y Diagnosticar ADN' : 'Criar Conta e Calibrar DNA' }}
+                        {{ $isEs ? 'Crear Cuenta y Diagnosticar ADN' : 'Criar Conta e Calibrar DNA' }}
                     </a>
                 </div>
             `;
@@ -402,7 +399,7 @@
                 <div class="sofi-pack-card-in-chat">
                     <div class="sofi-pack-card-header">
                         <span class="sofi-pack-card-badge">
-                            ★ ${escapeHtml(recommendedPack.badge)}
+                            ${escapeHtml(recommendedPack.badge)}
                         </span>
                         <span class="sofi-pack-card-price">${escapeHtml(recommendedPack.price)} ${escapeHtml(recommendedPack.currency)}</span>
                     </div>
@@ -412,7 +409,7 @@
                     </div>
                     <button type="button" onclick="openPackModal(window.lastRecommendedPack)" 
                             class="sofi-pack-card-btn">
-                        ⚡ {{ $isEs ? 'Ver Detalles y Contratar' : 'Ver Detalhes e Contratar' }}
+                        {{ $isEs ? 'Ver Detalles y Contratar' : 'Ver Detalhes e Contratar' }}
                     </button>
                 </div>
             `;
@@ -432,7 +429,7 @@
         wrapper.innerHTML = `
             <div class="sofi-msg-row">
                 <div class="sofi-bot-icon-small">
-                    🤖
+                    
                 </div>
                 <div class="sofi-bubble-bot">
                     <p class="m-0">${escapeHtml(replyText)}</p>
@@ -533,11 +530,11 @@
         const addonsParam = selectedAddonNames.length > 0 ? `&addons=${encodeURIComponent(selectedAddonNames.join(','))}` : '';
 
         if (isClientAuthenticated) {
-            document.getElementById('modalRegisterBtn').innerText = "{{ $isEs ? '⚡ Contratar en mi Portal' : '⚡ Contratar no meu Portal' }}";
+            document.getElementById('modalRegisterBtn').innerText = "{{ $isEs ? 'Contratar en mi Portal' : 'Contratar no meu Portal' }}";
             document.getElementById('modalRegisterBtn').href = portalPacksUrl;
             document.getElementById('modalLoginBtn').classList.add('hidden');
         } else {
-            document.getElementById('modalRegisterBtn').innerText = "{{ $isEs ? '🚀 Crear Cuenta e Iniciar Producción' : '🚀 Criar Conta e Iniciar Produção' }}";
+            document.getElementById('modalRegisterBtn').innerText = "{{ $isEs ? 'Crear Cuenta e Iniciar Producción' : 'Criar Conta e Iniciar Produção' }}";
             document.getElementById('modalRegisterBtn').href = `${baseRegisterUrl}?pack=${encodeURIComponent(currentPackData.slug)}${addonsParam}`;
             document.getElementById('modalLoginBtn').classList.remove('hidden');
             document.getElementById('modalLoginBtn').href = `${baseLoginUrl}?intended_pack_slug=${encodeURIComponent(currentPackData.slug)}${addonsParam}`;

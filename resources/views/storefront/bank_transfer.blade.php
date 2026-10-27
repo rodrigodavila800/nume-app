@@ -14,7 +14,7 @@
     <main class="max-w-xl w-full rounded-3xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8 text-left shadow-2xl space-y-6">
         <div class="text-center space-y-2">
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                ⏳ {{ __('Aguardando Pagamento') }}
+                {{ __('Aguardando Pagamento') }}
             </span>
             <h1 class="text-2xl font-black text-white tracking-tight">{{ __('Instruções para Transferência') }}</h1>
             <p class="text-xs text-zinc-400 max-w-md mx-auto">
@@ -47,7 +47,7 @@
         {{-- Dados Bancários --}}
         <div class="p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-zinc-800 space-y-3.5 text-xs">
             <h2 class="font-bold text-white flex items-center gap-2 text-sm border-b border-zinc-800 pb-2">
-                <span>🏛️</span> {{ __('Dados da Conta da Produtora') }}
+{{ __('Dados da Conta da Produtora') }}
             </h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -94,7 +94,7 @@
                 <span class="text-zinc-400 text-[11px] block">{{ __('Pacote Contratado') }}</span>
                 <span class="font-bold text-white">{{ $purchase->pack?->name ?? ($purchase->quote?->project_title ?? __('Pacote Audiovisual')) }}</span>
             </div>
-            <span class="text-emerald-400 font-bold">📦 {{ $purchase->video_quantity }} {{ __('vídeos') }}</span>
+            <span class="text-emerald-400 font-bold">{{ $purchase->video_quantity }} {{ __('vídeos') }}</span>
         </div>
 
         <div class="pt-2 space-y-3">

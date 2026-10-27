@@ -32,7 +32,7 @@
                 <input type="radio" name="is_vertical" value="1" @checked($isVerticalVal == '1')
                        class="sr-only format-radio" id="radio-vertical" onchange="updateFormatCards()">
                 <div class="w-10 h-10 rounded-lg bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-xl shrink-0">
-                    📱
+                    
                 </div>
                 <div class="flex flex-col">
                     <span class="text-sm font-bold text-white flex items-center gap-1.5">
@@ -50,7 +50,7 @@
                 <input type="radio" name="is_vertical" value="0" @checked($isVerticalVal == '0')
                        class="sr-only format-radio" id="radio-horizontal" onchange="updateFormatCards()">
                 <div class="w-10 h-10 rounded-lg bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-xl shrink-0">
-                    🎬
+                    
                 </div>
                 <div class="flex flex-col">
                     <span class="text-sm font-bold text-white flex items-center gap-1.5">
@@ -87,7 +87,6 @@
                placeholder="https://... (Deixe vazio para buscar automaticamente a capa oficial do vídeo)"
                class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
         <p class="text-[11px] text-zinc-500 flex items-center gap-1.5">
-            <span>💡</span>
             <span>{{ __('Se deixar em branco, o sistema extrai e utiliza a capa em alta definição do próprio vídeo (YouTube/Vimeo) automaticamente.') }}</span>
         </p>
     </div>
@@ -126,7 +125,7 @@
         <label class="flex items-center gap-2 text-xs font-bold text-zinc-300 cursor-pointer">
             <input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $showcaseVideo->is_featured ?? false))
                    class="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-orange-600 focus:ring-orange-500">
-            <span>⭐ {{ __('Destaque Especial') }}</span>
+            <span>{{ __('Destaque Especial') }}</span>
         </label>
     </div>
 </div>
@@ -155,14 +154,14 @@
             document.getElementById('radio-vertical').checked = true;
             updateFormatCards();
             if (badge) {
-                badge.innerText = '⚡ Detectado: Vertical (Shorts/Reels)';
+                badge.innerText = 'Detectado: Vertical (Shorts/Reels)';
                 badge.classList.remove('hidden');
             }
         } else if (lowerUrl.includes('watch?v=') || lowerUrl.includes('vimeo.com')) {
             document.getElementById('radio-horizontal').checked = true;
             updateFormatCards();
             if (badge) {
-                badge.innerText = '🎬 Detectado: Horizontal (Widescreen)';
+                badge.innerText = 'Detectado: Horizontal (Widescreen)';
                 badge.classList.remove('hidden');
             }
         }

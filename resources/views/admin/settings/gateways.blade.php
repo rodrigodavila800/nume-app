@@ -25,7 +25,6 @@
 
     @if (session('error'))
         <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold flex items-center gap-2">
-            <span>⚠️</span>
             <span>{{ session('error') }}</span>
         </div>
     @endif
@@ -33,7 +32,6 @@
     @if ($errors->any())
         <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold space-y-1">
             <div class="font-bold flex items-center gap-1.5">
-                <span>⚠️</span>
                 <span>{{ __('Não foi possível salvar as configurações. Verifique os campos:') }}</span>
             </div>
             <ul class="list-disc list-inside pl-1 text-[11px] text-red-300 space-y-0.5">
@@ -48,7 +46,7 @@
     <div class="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-3.5">
             <div class="w-10 h-10 rounded-xl {{ $stripeStatus['connected'] ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20' }} flex items-center justify-center font-bold text-lg shrink-0">
-                {{ $stripeStatus['connected'] ? '✓' : '⚡' }}
+                {{ $stripeStatus['connected'] ? '✓' : '' }}
             </div>
             <div>
                 <div class="flex items-center gap-2">
@@ -80,21 +78,21 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <a href="{{ route('admin.settings.fiscal') }}" class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-orange-500/50 transition flex items-center justify-between group">
                 <div>
-                    <p class="text-xs font-bold text-white group-hover:text-orange-400 transition">⚖️ {{ __('Perfil Fiscal & IVA/IRPF') }}</p>
+                    <p class="text-xs font-bold text-white group-hover:text-orange-400 transition">{{ __('Perfil Fiscal & IVA/IRPF') }}</p>
                     <p class="text-[11px] text-zinc-500 mt-0.5">{{ __('NIF/CIF, série e alíquotas') }}</p>
                 </div>
                 <span class="text-zinc-500 group-hover:text-orange-400 text-xs font-bold">→</span>
             </a>
             <a href="{{ route('admin.settings.redsys') }}" class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-blue-500/50 transition flex items-center justify-between group">
                 <div>
-                    <p class="text-xs font-bold text-white group-hover:text-blue-400 transition">🏦 {{ __('TPV Redsys & Bizum') }}</p>
+                    <p class="text-xs font-bold text-white group-hover:text-blue-400 transition">{{ __('TPV Redsys & Bizum') }}</p>
                     <p class="text-[11px] text-zinc-500 mt-0.5">{{ __('FUC, terminal e chave SHA-256') }}</p>
                 </div>
                 <span class="text-zinc-500 group-hover:text-blue-400 text-xs font-bold">→</span>
             </a>
             <a href="{{ route('admin.settings.bank-transfer') }}" class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-emerald-500/50 transition flex items-center justify-between group">
                 <div>
-                    <p class="text-xs font-bold text-white group-hover:text-emerald-400 transition">🏛️ {{ __('Transferência (IBAN)') }}</p>
+                    <p class="text-xs font-bold text-white group-hover:text-emerald-400 transition">{{ __('Transferência (IBAN)') }}</p>
                     <p class="text-[11px] text-zinc-500 mt-0.5">{{ __('Conta bancária SEPA e titular') }}</p>
                 </div>
                 <span class="text-zinc-500 group-hover:text-emerald-400 text-xs font-bold">→</span>
@@ -111,7 +109,7 @@
             <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
                 <div>
                     <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                        <span>🌐</span> {{ __('Gateway Stripe (Global / Apple Pay / Cards)') }}
+{{ __('Gateway Stripe (Global / Apple Pay / Cards)') }}
                     </h2>
                     <p class="text-xs text-zinc-400 mt-0.5">
                         {{ __('Ativa ou desativa o recebimento via Stripe nos portais e vitrines da plataforma.') }}
@@ -168,7 +166,7 @@
                         {{ __('Stripe Secret Key (Chave Secreta)') }}
                     </label>
                     @if(!empty($stripeSecret))
-                        <span class="text-[11px] font-bold text-emerald-400">🔒 {{ __('Chave configurada') }}</span>
+                        <span class="text-[11px] font-bold text-emerald-400">{{ __('Chave configurada') }}</span>
                     @endif
                 </div>
                 <div class="relative">
@@ -177,7 +175,7 @@
                            class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
                     <button type="button" onclick="togglePasswordVisibility('stripe_secret')"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
-                        👁️
+                        
                     </button>
                 </div>
                 <p class="text-[11px] text-zinc-500">{{ __('Deixe em branco caso deseje manter a chave atual.') }}</p>
@@ -190,7 +188,7 @@
                         {{ __('Stripe Webhook Signing Secret') }}
                     </label>
                     @if(!empty($stripeWebhook))
-                        <span class="text-[11px] font-bold text-emerald-400">🔒 {{ __('Secret configurado') }}</span>
+                        <span class="text-[11px] font-bold text-emerald-400">{{ __('Secret configurado') }}</span>
                     @endif
                 </div>
                 <div class="relative">
@@ -199,7 +197,7 @@
                            class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
                     <button type="button" onclick="togglePasswordVisibility('stripe_webhook_secret')"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
-                        👁️
+                        
                     </button>
                 </div>
                 <p class="text-[11px] text-zinc-500">{{ __('URL do Webhook:') }} <code class="text-orange-400 bg-zinc-950 px-1.5 py-0.5 rounded font-mono">{{ url('/stripe/webhook') }}</code></p>
@@ -254,7 +252,7 @@
             <!-- URIs para cadastrar no Google Cloud Console -->
             <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-400 space-y-2">
                 <div class="font-bold text-zinc-300 uppercase tracking-wider text-[10px]">
-                    📋 {{ __('Dados para cadastrar no Google Cloud Console (APIs & Services > Credentials)') }}:
+                    {{ __('Dados para cadastrar no Google Cloud Console (APIs & Services > Credentials)') }}:
                 </div>
                 <div class="space-y-1 font-mono text-[11px]">
                     <div>
@@ -295,7 +293,7 @@
                                class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition placeholder:text-zinc-600">
                         <button type="button" onclick="togglePasswordVisibility('google_client_secret')"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs">
-                            👁️
+                            
                         </button>
                     </div>
                     <p class="text-[11px] text-zinc-500">{{ __('Criptografado com AES-256 no banco de dados.') }}</p>
@@ -306,11 +304,10 @@
         <!-- Botão Salvar Configurações -->
         <div class="flex items-center justify-between pt-6 border-t border-zinc-800">
             <span class="text-xs text-zinc-500">
-                🔒 {{ __('Todas as credenciais são salvas de forma criptografada com AES-256.') }}
+                {{ __('Todas as credenciais são salvas de forma criptografada com AES-256.') }}
             </span>
             <button type="submit"
                     class="bg-orange-600 hover:bg-orange-500 active:scale-[0.98] text-white font-extrabold text-xs uppercase tracking-wider px-6 py-3 rounded-xl shadow-lg shadow-orange-900/20 transition-all flex items-center gap-2 cursor-pointer">
-                <span>💾</span>
                 <span>{{ __('Salvar Configurações') }}</span>
             </button>
         </div>

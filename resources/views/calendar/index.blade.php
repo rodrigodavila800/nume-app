@@ -20,7 +20,7 @@
                 <span class="text-orange-400">{{ __('Calendário Geral') }}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-white tracking-tight flex items-center gap-3">
-                <span>🗓️ {{ __('Planejamento Audiovisual & Social') }}</span>
+                <span>{{ __('Planejamento Audiovisual & Social') }}</span>
                 <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">
                     Modo Criador PRO
                 </span>
@@ -207,7 +207,7 @@
                                                 </div>
                                                 <div class="flex items-center gap-1 text-[9px] text-zinc-400 mt-0.5">
                                                     @if($event['scheduled_at'])
-                                                        <span class="font-bold text-purple-300">⏰ {{ $event['scheduled_at'] }}</span>
+                                                        <span class="font-bold text-purple-300">{{ $event['scheduled_at'] }}</span>
                                                     @endif
                                                     <span class="truncate">{{ $event['company'] ?: $event['cliente'] }}</span>
                                                 </div>
@@ -239,7 +239,6 @@
                                        class="block rounded-lg p-1.5 bg-blue-950/30 border border-blue-500/30 hover:border-blue-400 transition-all text-left">
                                         <div class="flex items-center justify-between">
                                             <span class="text-[9px] font-extrabold uppercase tracking-wider text-blue-400 flex items-center gap-1">
-                                                <span>🎬</span>
                                                 <span>{{ __('Entrega') }}</span>
                                             </span>
                                             <span class="text-[8px] font-bold px-1 rounded bg-blue-500/20 text-blue-300">

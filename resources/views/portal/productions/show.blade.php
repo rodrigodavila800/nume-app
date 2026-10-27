@@ -77,7 +77,7 @@
                     <div class="flex items-center justify-between gap-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-sm border border-orange-100">
-                                📝
+                                
                             </div>
                             <div>
                                 <h3 class="text-sm font-bold text-zinc-900 group-hover:text-orange-600 transition">
@@ -98,13 +98,13 @@
                                     'bg-rose-100 text-rose-800 border border-rose-200' => $roteiro->status === 'rejected',
                                 ])">
                                 @if($roteiro->status === 'submitted')
-                                    ⚠️ Aguarda Sua Aprovação
+                                    Aguarda Sua Aprovação
                                 @elseif($roteiro->status === 'approved')
-                                    ✅ Roteiro Aprovado
+                                    Roteiro Aprovado
                                 @elseif($roteiro->status === 'in_production')
-                                    🎬 Em Gravação / Edição
+                                    Em Gravação / Edição
                                 @elseif($roteiro->status === 'rejected')
-                                    🔄 Ajustes Solicitados
+                                    Ajustes Solicitados
                                 @else
                                     {{ $roteiro->status }}
                                 @endif
@@ -139,7 +139,7 @@
                             <h3 class="text-base font-bold text-zinc-900">{{ $video->title }}</h3>
                             <div class="flex items-center gap-2 text-xs text-zinc-500">
                                 @if($video->duration_seconds)
-                                    <span>⏱️ {{ gmdate("i:s", $video->duration_seconds) }}</span>
+                                    <span>{{ gmdate("i:s", $video->duration_seconds) }}</span>
                                     <span>·</span>
                                 @endif
                                 <span>Entregue em: {{ $video->published_at?->format('d/m/Y') ?? 'Disponível' }}</span>
@@ -167,7 +167,7 @@
 
                             @if($isLocked)
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
-                                    🔒 {{ __('Custódia Ativa (Saldo Pendente)') }}
+                                    {{ __('Custódia Ativa (Saldo Pendente)') }}
                                 </span>
                             @else
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -184,23 +184,21 @@
                             @if($video->delivery_url && ! $isLocked)
                                 <a href="{{ $video->delivery_url }}" target="_blank" rel="noopener noreferrer"
                                     class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition">
-                                    📁 {{ __('Arquivo final (Drive)') }} ↗
+                                    {{ __('Arquivo final (Drive)') }} ↗
                                 </a>
                             @endif
 
                             @if($isLocked)
                                 <button type="button" onclick="openApproveModal({{ $video->id }})"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm transition active:scale-95">
-                                    <span>🚀</span>
                                     <span>{{ __('Aprovar Corte & Liberar (:amount :curr)', ['amount' => number_format($balanceDue, 2, ',', '.'), 'curr' => $currencySymbol]) }}</span>
                                 </button>
                                 <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed" title="{{ __('Liberação após aprovação do corte final') }}">
-                                    <span>🔒 {{ __('Download Bloqueado') }}</span>
+                                    <span>{{ __('Download Bloqueado') }}</span>
                                 </span>
                             @elseif($video->hasPlayableSource())
                                 <button type="button" onclick="openDistributeModal({{ $video->id }})" 
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition active:scale-95">
-                                    <span>🚀</span>
                                     <span>{{ __('Publicar nas Redes') }}</span>
                                 </button>
                                 @if($video->hasSourceFile())
@@ -250,7 +248,7 @@
                                 <!-- Marca d'água de proteção de ativo (Asset Escrow) -->
                                 <div class="absolute inset-0 pointer-events-none flex items-center justify-center bg-black/25">
                                     <div class="px-4 py-2 rounded-xl bg-zinc-950/80 border border-orange-500/40 text-orange-400 font-extrabold text-xs tracking-wider uppercase backdrop-blur-xs shadow-xl">
-                                        🔒 {{ __('Prévia de Aprovação — NUME Custódia') }}
+                                        {{ __('Prévia de Aprovação — NUME Custódia') }}
                                     </div>
                                 </div>
                             @endif
@@ -261,7 +259,7 @@
                     <div class="bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-zinc-50 rounded-xl p-5 border border-orange-200/60 space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span class="text-base">✨</span>
+                                <span class="text-base"></span>
                                 <div>
                                     <h4 class="text-xs font-bold uppercase tracking-wider text-orange-950">
                                         {{ __('Sofi SEO Pack: Estratégia de Postagem Recomendada') }}
@@ -273,7 +271,6 @@
                             </div>
                             <button type="button" onclick="copySeoPack({{ $video->id }})" 
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-sm transition active:scale-95">
-                                <span>📋</span>
                                 <span id="copy-btn-{{ $video->id }}">{{ __('Copiar Tudo') }}</span>
                             </button>
                         </div>
@@ -384,7 +381,7 @@
             <div class="bg-white rounded-2xl max-w-lg w-full p-6 border border-zinc-200 shadow-xl space-y-5 animate-in fade-in zoom-in-95">
                 <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
                     <div class="flex items-center gap-2">
-                        <span class="text-xl">🚀</span>
+                        <span class="text-xl"></span>
                         <h3 class="text-base font-extrabold text-zinc-900">
                             {{ __('Publicar Vídeo nas Redes') }}
                         </h3>
@@ -397,7 +394,7 @@
                 @if(! $hasSocialConnection)
                     <div class="space-y-4 text-center py-4">
                         <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-2xl mx-auto border border-amber-100 shadow-xs">
-                            🔗
+                            
                         </div>
                         <div class="space-y-1">
                             <h4 class="text-sm font-bold text-zinc-800">{{ __('Nenhuma Rede Social Conectada') }}</h4>
@@ -413,7 +410,7 @@
                 @elseif(! $portalCliente->canDistributeSocial())
                     <div class="space-y-4 text-center py-4">
                         <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-2xl mx-auto border border-purple-100 shadow-xs">
-                            ⚡
+                            
                         </div>
                         <div class="space-y-1">
                             <h4 class="text-sm font-bold text-zinc-800">{{ __('Limite de Publicações Atingido') }}</h4>
@@ -471,7 +468,7 @@
                         </div>
 
                         <div class="bg-orange-50/60 rounded-xl p-3 border border-orange-100 text-[11px] text-zinc-600 space-y-1">
-                            <span class="font-bold text-orange-900 block">✨ Otimização Sofi:</span>
+                            <span class="font-bold text-orange-900 block">Otimização Sofi:</span>
                             <p>{{ __('O arquivo original será enviado sem perdas para os algoritmos parceiros, ativando as tags de SEO pré-configuradas.') }}</p>
                         </div>
 
@@ -482,7 +479,6 @@
                             </button>
                             <button type="submit" 
                                 class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-sm transition active:scale-95">
-                                <span>🚀</span>
                                 <span>{{ __('Confirmar Publicação ou Agendamento') }}</span>
                             </button>
                         </div>
@@ -505,7 +501,7 @@
             <div class="bg-white rounded-2xl max-w-lg w-full p-6 border border-zinc-200 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
                 <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
                     <div class="flex items-center gap-2">
-                        <span class="text-xl">🚀</span>
+                        <span class="text-xl"></span>
                         <h3 class="text-base font-extrabold text-zinc-900">
                             {{ __('Aprovar Corte Final & Liberar Ativos') }}
                         </h3>
@@ -557,7 +553,6 @@
                     </button>
                     <button type="submit" 
                         class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md shadow-emerald-600/20 transition active:scale-95">
-                        <span>🚀</span>
                         <span>{{ __('Confirmar Aprovação & Liquidar Saldo (:amount :curr)', ['amount' => number_format($balanceDue, 2, ',', '.'), 'curr' => $currencySymbol]) }}</span>
                     </button>
                 </form>
@@ -570,7 +565,7 @@
 <div class="mt-8 p-6 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-orange-950/40 border border-orange-500/30 text-white space-y-4 shadow-xl">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-start gap-3">
-            <span class="text-2xl">✨</span>
+            <span class="text-2xl"></span>
             <div>
                 <h3 class="text-sm sm:text-base font-extrabold text-white">
                     {{ __('Mantenha a Constância da sua Marca com a Sofi') }}

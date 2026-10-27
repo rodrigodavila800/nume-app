@@ -16,13 +16,11 @@
     <!-- Feedback Alerts -->
     @if (session('success'))
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3.5 rounded-xl text-sm font-semibold flex items-center gap-2">
-            <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
     @if (session('error'))
         <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3.5 rounded-xl text-sm font-semibold flex items-center gap-2">
-            <span>⚠️</span>
             <span>{{ session('error') }}</span>
         </div>
     @endif
@@ -49,13 +47,13 @@
                     'bg-rose-100 text-rose-800 border border-rose-200' => $roteiro->status === 'rejected',
                 ])">
                 @if($roteiro->status === 'submitted')
-                    ⚠️ Aguardando Sua Aprovação
+                    Aguardando Sua Aprovação
                 @elseif($roteiro->status === 'approved')
-                    ✅ Roteiro Aprovado
+                    Roteiro Aprovado
                 @elseif($roteiro->status === 'in_production')
-                    🎬 Em Produção
+                    Em Produção
                 @elseif($roteiro->status === 'rejected')
-                    🔄 Ajustes Solicitados
+                    Ajustes Solicitados
                 @else
                     {{ $roteiro->status }}
                 @endif
@@ -100,7 +98,7 @@
                         @csrf
                         <button type="submit" 
                                 class="w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 shadow-md shadow-orange-900/20 transition-all transform active:scale-95">
-                            Aprovar Roteiro & Liberar Produção ✅
+                            Aprovar Roteiro & Liberar Produção 
                         </button>
                     </form>
                 </div>

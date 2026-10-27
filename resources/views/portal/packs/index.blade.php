@@ -8,7 +8,7 @@
     <!-- Hero / Headline de Produções Pontuais -->
     <div class="text-center max-w-3xl mx-auto space-y-3">
         <span class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200">
-            📦 {{ __('Produção Pontual & Projetos Fechados') }}
+            {{ __('Produção Pontual & Projetos Fechados') }}
         </span>
         <h1 class="text-3xl sm:text-4xl font-extrabold text-zinc-900 tracking-tight">
             {{ __('Pacotes Avulsos para Campanhas & Lançamentos') }}
@@ -20,7 +20,6 @@
 
     @if (session('error'))
         <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3.5 rounded-xl text-sm font-semibold max-w-2xl mx-auto flex items-center gap-2">
-            <span>⚠️</span>
             <span>{{ session('error') }}</span>
         </div>
     @endif
@@ -35,15 +34,15 @@
     <div class="bg-gradient-to-r from-zinc-100 via-zinc-50 to-zinc-100 border border-zinc-200/80 rounded-2xl p-4 sm:p-6 text-center max-w-4xl mx-auto">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-semibold text-zinc-800">
             <div class="flex items-center justify-center gap-2">
-                <span class="text-base text-zinc-700">🎯</span>
+                <span class="text-base text-zinc-700"></span>
                 <span>{{ __('Escopo e Quantidade de Vídeos Fechados') }}</span>
             </div>
             <div class="flex items-center justify-center gap-2">
-                <span class="text-base text-zinc-700">🛡️</span>
+                <span class="text-base text-zinc-700"></span>
                 <span>{{ __('Pagamento Único Sem Renovação Automática') }}</span>
             </div>
             <div class="flex items-center justify-center gap-2">
-                <span class="text-base text-zinc-700">📄</span>
+                <span class="text-base text-zinc-700"></span>
                 <span>{{ __('Fatura Oficial com Desglose de Impostos') }}</span>
             </div>
         </div>
@@ -59,7 +58,7 @@
                 
                 <div class="space-y-4">
                     <div class="flex items-center justify-between gap-2">
-                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-700">📦 {{ __('Produção Pontual') }}</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-700">{{ __('Produção Pontual') }}</span>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
                             {{ __('Pagamento Único') }}
                         </span>
@@ -81,10 +80,10 @@
                             <span class="text-xs font-semibold text-zinc-400">{{ __('(único)') }}</span>
                         </div>
                         <p class="text-xs font-semibold text-zinc-700 mt-1">
-                            📦 {{ __('Cota fechada:') }} {{ $pack->video_quantity }} {{ __('vídeos') }}
+                            {{ __('Cota fechada:') }} {{ $pack->video_quantity }} {{ __('vídeos') }}
                         </p>
                         <p class="text-[10px] text-zinc-500 font-medium mt-1">
-                            🛡️ {{ __('Sem cobranças futuras ou renovação automática') }}
+                            {{ __('Sem cobranças futuras ou renovação automática') }}
                         </p>
                     </div>
 
@@ -113,7 +112,6 @@
                             <button type="button" 
                                     onclick="openVideoModal('{{ $pack->showcaseVideo->video_url }}', '{{ addslashes($pack->showcaseVideo->title) }}', {{ $pack->showcaseVideo->is_vertical ? 'true' : 'false' }}, '{{ $pack->showcaseVideo->embed_url }}')"
                                     class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-zinc-700 hover:text-white bg-zinc-100 hover:bg-zinc-800 border border-zinc-200 transition-all shadow-2xs cursor-pointer">
-                                <span>🎬</span>
                                 <span>{{ __('Ver Padrão de Entrega (4K)') }}</span>
                             </button>
                         </div>
@@ -180,7 +178,6 @@
                         </div>
                         @if($isAutonomo)
                             <p class="text-[10px] text-zinc-600 font-medium pt-1 flex items-center gap-1">
-                                <span>⚖️</span>
                                 <span>{{ __('Dedução IRPF 15% disponível para empresas/autônomos espanhóis.') }}</span>
                             </p>
                         @endif
@@ -190,7 +187,6 @@
                     <button type="button"
                             onclick="openPortalCheckoutModal('{{ $pack->id }}', '{{ addslashes($pack->name) }}', {{ (float) $pack->price }}, '{{ route('portal.packs.checkout', $pack) }}', '{{ $currencySymbol }}', this, 'one_time', 1, 'month')"
                             class="w-full py-3.5 px-4 rounded-xl text-xs font-extrabold tracking-wider uppercase bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                        <span>📦</span>
                         <span>{{ __('Contratar Produção Avulsa') }}</span>
                         <span>→</span>
                     </button>
@@ -200,7 +196,7 @@
         @empty
             <div class="col-span-full bg-white rounded-2xl p-12 text-center border border-dashed border-zinc-300">
                 <div class="mx-auto w-12 h-12 rounded-full bg-zinc-100 text-zinc-600 flex items-center justify-center text-xl mb-3">
-                    📦
+                    
                 </div>
                 <h3 class="text-base font-bold text-zinc-900">{{ __('Nenhuma produção avulsa cadastrada no momento') }}</h3>
                 <p class="mt-1 text-xs text-zinc-500 max-w-sm mx-auto">
@@ -208,7 +204,7 @@
                 </p>
                 <a href="{{ route('portal.plans.index') }}"
                    class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-500 text-white transition">
-                    <span>🔄 {{ __('Ver Planos de Continuidade') }}</span>
+                    <span>{{ __('Ver Planos de Continuidade') }}</span>
                 </a>
             </div>
         @endforelse
@@ -220,7 +216,7 @@
     <div class="relative w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         <div class="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-950/70">
             <div class="flex items-center gap-2">
-                <span id="portal-modal-format" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-700 text-zinc-200 border border-zinc-600">📱 9:16</span>
+                <span id="portal-modal-format" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-700 text-zinc-200 border border-zinc-600">9:16</span>
                 <h3 id="portal-modal-title" class="text-sm font-bold text-white truncate max-w-md"></h3>
             </div>
             <button type="button" onclick="closePortalVideoModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition text-sm cursor-pointer" aria-label="Fechar">✕</button>
@@ -248,8 +244,8 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <span id="modal-pack-type-badge" class="text-[10px] font-extrabold uppercase tracking-widest text-orange-400">{{ __('Contratação Oficial de Produção') }}</span>
-                        <span id="modal-pack-commitment-badge" class="hidden px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">🔄 {{ __('Contrato Recorrente') }}</span>
-                        <span class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700">🔒 {{ __('SSL 256-Bit') }}</span>
+                        <span id="modal-pack-commitment-badge" class="hidden px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">{{ __('Contrato Recorrente') }}</span>
+                        <span class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-zinc-800 text-zinc-300 border border-zinc-700">{{ __('SSL 256-Bit') }}</span>
                     </div>
                     <h3 id="modal-pack-title" class="text-base sm:text-lg font-black text-white mt-0.5"></h3>
                     <p id="modal-pack-subtitle-hint" class="text-xs text-zinc-400 font-medium"></p>
@@ -297,7 +293,6 @@
                         <div class="lg:col-span-7 space-y-4">
                             <div class="border-b border-zinc-100 pb-2">
                                 <h4 class="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                                    <span>🏢</span>
                                     <span>{{ __('Identificação Fiscal para Factura Oficial (AEAT / Receita)') }}</span>
                                 </h4>
                                 <p class="text-xs text-zinc-500 mt-0.5">
@@ -334,12 +329,12 @@
                                     <label class="block text-xs font-bold text-zinc-700 mb-1">{{ __('País de Residência Fiscal') }} *</label>
                                     <select name="tax_country" id="modal-cust-country" onchange="recalculateModalFiscal()"
                                             class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-orange-500">
-                                        <option value="ES" selected>🇪🇸 España (IVA 21% / IRPF)</option>
-                                        <option value="BR">🇧🇷 Brasil (B2B)</option>
-                                        <option value="FR">🇫🇷 France (EU VAT)</option>
-                                        <option value="DE">🇩🇪 Deutschland (EU VAT)</option>
-                                        <option value="PT">🇵🇹 Portugal (EU VAT)</option>
-                                        <option value="OTHER">🌐 Outro País / Exportação</option>
+                                        <option value="ES" selected>España (IVA 21% / IRPF)</option>
+                                        <option value="BR">Brasil (B2B)</option>
+                                        <option value="FR">France (EU VAT)</option>
+                                        <option value="DE">Deutschland (EU VAT)</option>
+                                        <option value="PT">Portugal (EU VAT)</option>
+                                        <option value="OTHER">Outro País / Exportação</option>
                                     </select>
                                 </div>
                             </div>
@@ -362,7 +357,6 @@
                             <!-- Seleção de Tipo de Contratante Espanhol para IRPF -->
                             <div class="p-3 rounded-xl bg-zinc-100 border border-zinc-200 space-y-2">
                                 <span class="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
-                                    <span>⚖️</span>
                                     <span>{{ __('Natureza da Entidade (Regra Fiscal Espanhola)') }}</span>
                                 </span>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -421,7 +415,6 @@
 
                                 <div id="modal-summary-commitment-note" class="hidden p-2.5 rounded-xl bg-zinc-100 border border-zinc-200 text-[11px] text-zinc-700 space-y-1">
                                     <div class="font-bold flex items-center gap-1">
-                                        <span>🛡️</span>
                                         <span>{{ __('Projeto Fechado') }}</span>
                                     </div>
                                     <p id="modal-summary-commitment-text" class="leading-relaxed">
@@ -430,8 +423,8 @@
                                 </div>
 
                                 <div class="text-[11px] text-zinc-400 space-y-1 pt-1">
-                                    <p>🛡️ {{ __('A fatura em PDF será gerada com os dados acima.') }}</p>
-                                    <p>📦 {{ __('Entrega da cota conforme o cronograma combinado na esteira.') }}</p>
+                                    <p>{{ __('A fatura em PDF será gerada com os dados acima.') }}</p>
+                                    <p>{{ __('Entrega da cota conforme o cronograma combinado na esteira.') }}</p>
                                 </div>
                             </div>
 
@@ -528,7 +521,6 @@
 
                             <button type="submit" id="portal-modal-submit-btn"
                                     class="portal-checkout-submit-btn flex-1 py-3.5 px-6 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/20 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
-                                <span>🔒</span>
                                 <span id="portal-modal-submit-label">{{ __('Carregar Checkout Seguro') }}</span>
                                 <span>→</span>
                             </button>
@@ -546,7 +538,6 @@
                                 ← {{ __('Trocar Método') }}
                             </button>
                             <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                                <span>🔒</span>
                                 <span>Stripe Embedded Checkout (256-Bit SSL)</span>
                             </span>
                         </div>
@@ -956,7 +947,7 @@
 
         iframe.src = embedUrl;
         titleEl.textContent = title || 'Vídeo de Exemplo';
-        formatBadge.textContent = isVertical ? '📱 9:16' : '🖥️ 16:9';
+        formatBadge.textContent = isVertical ? '9:16' : '16:9';
 
         modal.classList.remove('hidden');
     }

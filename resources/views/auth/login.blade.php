@@ -15,8 +15,8 @@
 
     <!-- Language Switcher — Fixed top-right -->
     <div class="fixed top-4 right-4 z-50 flex items-center gap-2 bg-zinc-900/80 backdrop-blur border border-zinc-800 px-3 py-1.5 rounded-full">
-        <a href="{{ route('lang.switch', 'pt_BR') }}" class="text-lg px-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Português">🇧🇷</a>
-        <a href="{{ route('lang.switch', 'es') }}" class="text-lg px-1 rounded transition {{ session('locale') === 'es' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Español">🇪🇸</a>
+        <a href="{{ route('lang.switch', 'pt_BR') }}" class="text-lg px-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Português"></a>
+        <a href="{{ route('lang.switch', 'es') }}" class="text-lg px-1 rounded transition {{ session('locale') === 'es' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Español"></a>
     </div>
 
     <div class="h-screen flex">

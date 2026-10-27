@@ -181,7 +181,7 @@
                                 <div class="space-y-1">
                                     <div class="flex items-center gap-2">
                                         <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                            🔄 {{ __('Contrato Ativo') }}
+                                            {{ __('Contrato Ativo') }}
                                         </span>
                                         <span class="text-[11px] font-mono font-bold text-zinc-400">
                                             {{ __('Ciclo :curr de :total', ['curr' => $sub->subscription_cycle_current, 'total' => $sub->subscription_cycles_total]) }}
@@ -241,13 +241,13 @@
 
                         <div class="mt-4 pt-3.5 border-t border-zinc-800/80 flex items-center justify-between text-xs relative z-10">
                             <span class="text-[11px] text-zinc-400 flex items-center gap-1.5">
-                                <span>💳</span> {{ ucfirst($sub->payment_gateway) }} · {{ __('Fatura oficial AEAT') }}
+{{ ucfirst($sub->payment_gateway) }} · {{ __('Fatura oficial AEAT') }}
                             </span>
                             <div class="flex items-center gap-2">
                                 @if ($sub->isPaid())
                                     <a href="{{ route('portal.purchases.invoice', $sub) }}" target="_blank"
                                        class="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 transition">
-                                        {{ __('Ver Factura') }} 📄
+                                        {{ __('Ver Factura') }} 
                                     </a>
                                 @endif
                             </div>
@@ -430,7 +430,6 @@
                         </a>
                         <a href="{{ route('portal.marketing-plan.index') }}"
                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 transition">
-                            <span>📅</span>
                             <span>{{ __('Ver Grade Editorial Sofi') }}</span>
                         </a>
                     </div>
@@ -467,11 +466,11 @@
                                         <span class="font-bold text-zinc-900 block">{{ __($purchase->pack?->name ?? 'Pacote Personalizado') }}</span>
                                         @if ($purchase->isSubscription())
                                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                                🔄 {{ __('Contrato') }} ({{ __('Ciclo :curr/:total', ['curr' => $purchase->subscription_cycle_current, 'total' => $purchase->subscription_cycles_total]) }})
+                                                {{ __('Contrato') }} ({{ __('Ciclo :curr/:total', ['curr' => $purchase->subscription_cycle_current, 'total' => $purchase->subscription_cycles_total]) }})
                                             </span>
                                         @else
                                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-100 text-zinc-600 border border-zinc-200">
-                                                📦 {{ __('Avulso') }}
+                                                {{ __('Avulso') }}
                                             </span>
                                         @endif
                                     </div>
@@ -532,7 +531,6 @@
                                            target="_blank"
                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-100 hover:bg-orange-50 text-zinc-700 hover:text-orange-700 border border-zinc-200 hover:border-orange-300 transition"
                                            title="{{ __('Descargar Factura Oficial AEAT') }}">
-                                            <span>📄</span>
                                             <span>PDF</span>
                                             @if($purchase->invoice_number)
                                                 <span class="text-[10px] text-zinc-400 font-mono">#{{ $purchase->invoice_number }}</span>

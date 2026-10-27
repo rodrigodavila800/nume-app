@@ -79,7 +79,7 @@
                             @endif
                         </div>
                         <span class="text-xs font-bold text-orange-400 bg-orange-500/10 px-2 py-1 rounded-md border border-orange-500/20">
-                            📦 {{ $pack->video_quantity }} {{ $pack->video_quantity == 1 ? __('vídeo') : __('vídeos') }}
+                            {{ $pack->video_quantity }} {{ $pack->video_quantity == 1 ? __('vídeo') : __('vídeos') }}
                         </span>
                     </div>
 
@@ -136,7 +136,6 @@
                     @can('update', $pack)
                         <a href="{{ route('packs.edit', $pack) }}"
                            class="flex-1 text-center py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-bold text-xs transition flex items-center justify-center gap-1">
-                            <span>✏️</span>
                             <span>{{ __('Editar & Add-ons') }}</span>
                         </a>
                     @endcan

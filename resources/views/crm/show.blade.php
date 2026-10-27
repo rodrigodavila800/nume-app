@@ -28,7 +28,7 @@
             @if($lead->anonymized_at)
                 <p class="text-xs text-amber-300 mt-1">{{ __('Dados pessoais anonimizados em :date (RGPD).', ['date' => $lead->anonymized_at->format('d/m/Y')]) }}</p>
             @elseif($lead->isStale())
-                <p class="text-xs font-bold text-amber-400 mt-1">⏰ {{ __('Sem contato há mais de :days dias', ['days' => \App\Models\Lead::STALE_DAYS]) }}</p>
+                <p class="text-xs font-bold text-amber-400 mt-1">{{ __('Sem contato há mais de :days dias', ['days' => \App\Models\Lead::STALE_DAYS]) }}</p>
             @endif
         </div>
         <div class="flex flex-wrap gap-2">

@@ -89,12 +89,12 @@
                     <a href="{{ route('locale.change', 'pt_BR') }}" 
                        class="px-2 py-1 rounded-lg text-xs font-bold transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white' }}"
                        title="Português (Brasil)">
-                        🇧🇷
+                        
                     </a>
                     <a href="{{ route('locale.change', 'es') }}" 
                        class="px-2 py-1 rounded-lg text-xs font-bold transition {{ session('locale') === 'es' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white' }}"
                        title="Español (España)">
-                        🇪🇸
+                        
                     </a>
                 </div>
 
@@ -145,7 +145,7 @@
                 <div class="absolute -inset-1 rounded-3xl bg-gradient-to-r from-orange-600 to-amber-600 opacity-20 blur-xl"></div>
                 <div class="relative rounded-3xl border border-zinc-800 bg-zinc-900/90 p-8 shadow-2xl space-y-6">
                     <div class="w-12 h-12 rounded-2xl bg-orange-600/20 border border-orange-500/30 text-orange-400 flex items-center justify-center text-2xl font-bold">
-                        🎬
+                        
                     </div>
                     <div class="space-y-2">
                         <p class="text-xs font-bold uppercase tracking-widest text-orange-400">{{ __('Método NUME Creative') }}</p>
@@ -160,7 +160,7 @@
                             <p class="text-[11px] text-zinc-500 mt-0.5">{{ __('Aprovações no portal') }}</p>
                         </div>
                         <div class="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-                            <span class="text-orange-400 font-bold">⚡ Alta Escala</span>
+                            <span class="text-orange-400 font-bold">Alta Escala</span>
                             <p class="text-[11px] text-zinc-500 mt-0.5">{{ __('Entrega ágil de lotes') }}</p>
                         </div>
                     </div>
@@ -179,7 +179,6 @@
                     <!-- Header da Seção -->
                     <div class="text-center max-w-2xl mx-auto space-y-3">
                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400 border border-orange-500/20 shadow-lg shadow-orange-950/20">
-                            <span>🎬</span>
                             <span>{{ __('Portfólio em Destaque') }}</span>
                         </div>
                         <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
@@ -220,7 +219,6 @@
                                             <img src="{{ $thumb }}" alt="{{ $video->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                                         @else
                                             <div class="w-full h-full bg-zinc-950 flex flex-col items-center justify-center text-5xl text-orange-500">
-                                                <span>🎬</span>
                                             </div>
                                         @endif
 
@@ -233,7 +231,7 @@
                                                 {{ $video->category_name }}
                                             </span>
                                             <span class="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-black/60 text-zinc-300 border border-zinc-700/50 backdrop-blur-md">
-                                                {{ $isVertical ? '📱 9:16' : '🎬 16:9' }}
+                                                {{ $isVertical ? '9:16' : '16:9' }}
                                             </span>
                                         </div>
 
@@ -247,7 +245,7 @@
                                         <!-- Textos e Badges Sobrepostos na Base do Card -->
                                         <div class="absolute bottom-0 inset-x-0 p-6 space-y-2 text-left pointer-events-none">
                                             <span class="text-[10px] font-extrabold uppercase tracking-widest text-orange-400 block drop-shadow">
-                                                ⚡ {{ $isVertical ? 'Retenção: 84% (0-3s)' : 'Autoridade B2B' }}
+                                                {{ $isVertical ? 'Retenção: 84% (0-3s)' : 'Autoridade B2B' }}
                                             </span>
                                             <h3 class="text-lg sm:text-xl font-black text-white leading-snug drop-shadow-md line-clamp-2">
                                                 {{ $video->title }}
@@ -298,7 +296,7 @@
                         <div class="text-center pt-6 max-w-md mx-auto">
                             <button type="button" onclick="scrollToPackagesAndHighlight('reels')"
                                     class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-orange-600/15 hover:bg-orange-600 border border-orange-500/30 text-orange-400 hover:text-white text-xs font-extrabold uppercase tracking-wider shadow-lg transition-all active:scale-95">
-                                <span>⚡ {{ __('Quero um Vídeo com este Padrão para Minha Marca') }}</span>
+                                <span>{{ __('Quero um Vídeo com este Padrão para Minha Marca') }}</span>
                                 <span>→</span>
                             </button>
                         </div>
@@ -351,7 +349,7 @@
                                         {{ $pack->category_name }}
                                     </span>
                                     <span class="text-[10px] font-bold text-zinc-500">
-                                        📦 {{ $pack->video_quantity }} {{ $pack->video_quantity === 1 ? __('vídeo') : __('vídeos') }}
+                                        {{ $pack->video_quantity }} {{ $pack->video_quantity === 1 ? __('vídeo') : __('vídeos') }}
                                     </span>
                                 </div>
 
@@ -437,15 +435,15 @@
                                     <div class="flex items-center justify-between text-[11px] px-2.5 py-2 rounded-xl bg-zinc-950/50 border border-zinc-800/60">
                                         <span class="text-[10px] text-zinc-500 font-semibold">{{ __('Meios aceitos:') }}</span>
                                         <div class="flex items-center gap-2 text-[10px] font-bold">
-                                            <span class="text-blue-400 flex items-center gap-1" title="Bizum BBVA">⚡ Bizum</span>
+                                            <span class="text-blue-400 flex items-center gap-1" title="Bizum BBVA">Bizum</span>
                                             <span class="text-zinc-600">·</span>
-                                            <span class="text-zinc-300 flex items-center gap-1" title="Cartão de Crédito/Débito BBVA">💳 Tarjeta</span>
+                                            <span class="text-zinc-300 flex items-center gap-1" title="Cartão de Crédito/Débito BBVA">Tarjeta</span>
                                             <span class="text-zinc-600">·</span>
                                             <span class="text-indigo-400" title="Apple Pay / Stripe">Stripe</span>
                                         </div>
                                     </div>
                                     <p class="text-[9px] text-zinc-500 text-center">
-                                        🔒 {{ __('Pagamento seguro com Fatura Oficial (IVA 21% dedutível).') }}
+                                        {{ __('Pagamento seguro com Fatura Oficial (IVA 21% dedutível).') }}
                                     </p>
                                 </div>
                             </div>
@@ -621,7 +619,7 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div class="space-y-1 max-w-3xl">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm">🍪</span>
+                    <span class="text-sm"></span>
                     <h3 class="text-xs font-bold uppercase tracking-wider text-white">Privacidade & Uso de Cookies</h3>
                 </div>
                 <p class="text-xs text-zinc-400 leading-relaxed">
@@ -689,12 +687,12 @@
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <button type="button" onclick="ctaFromModalToPackages()"
                             class="flex-1 sm:flex-initial py-2.5 px-4 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs shadow-lg shadow-orange-950/40 transition active:scale-95 flex items-center justify-center gap-1.5">
-                        <span>⚡ {{ __('Contratar Formato') }}</span>
+                        <span>{{ __('Contratar Formato') }}</span>
                         <span>→</span>
                     </button>
                     <a id="modal-wa-link" href="#" target="_blank" rel="noopener noreferrer"
                        class="flex-1 sm:flex-initial py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-950/40 transition active:scale-95 flex items-center justify-center gap-1.5">
-                        <span>💬 {{ __('WhatsApp') }}</span>
+                        <span>{{ __('WhatsApp') }}</span>
                     </a>
                 </div>
             </div>

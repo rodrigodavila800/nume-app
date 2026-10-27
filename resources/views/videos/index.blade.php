@@ -24,7 +24,7 @@
                 </a>
             @else
                 <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-500">
-                    ⚠️ {{ __('Requer 1 roteiro aprovado') }}
+                    {{ __('Requer 1 roteiro aprovado') }}
                 </span>
             @endif
         </div>
@@ -40,7 +40,7 @@
     @if ($videos->isEmpty())
         <div class="p-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-center space-y-3">
             <div class="w-12 h-12 rounded-2xl bg-orange-600/20 border border-orange-500/30 text-orange-400 flex items-center justify-center text-2xl font-bold mx-auto">
-                🎬
+                
             </div>
             <p class="text-sm font-bold text-white">{{ __('Nenhum vídeo cadastrado nesta produção ainda.') }}</p>
             <p class="text-xs text-zinc-500 max-w-md mx-auto">{{ __('Assim que o roteiro for aprovado e as peças forem gravadas, cadastre os links do YouTube, Shorts ou MP4 aqui.') }}</p>
@@ -95,7 +95,7 @@
 
                             <div class="flex items-center gap-3 text-[11px] text-zinc-500 pt-1">
                                 @if ($video->duration_seconds)
-                                    <span>⏱️ {{ floor($video->duration_seconds / 60) }}:{{ str_pad($video->duration_seconds % 60, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span>{{ floor($video->duration_seconds / 60) }}:{{ str_pad($video->duration_seconds % 60, 2, '0', STR_PAD_LEFT) }}</span>
                                     <span>·</span>
                                 @endif
                                 <span>{{ $video->created_at->format('d/m/Y') }}</span>

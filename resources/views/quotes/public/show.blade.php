@@ -112,7 +112,7 @@
 
                 @if($quote->isAds() && ($quote->calculation['verba_total_info'] ?? 0) > 0)
                     <p class="mt-4 text-xs text-zinc-300 bg-zinc-950/60 border border-zinc-800 rounded-xl p-4">
-                        📣 {{ __('Inversión publicitaria prevista: € :amount. La pagas directamente a la plataforma de anuncios; no está incluida en este importe.', ['amount' => number_format($quote->calculation['verba_total_info'], 2, ',', '.')]) }}
+                        {{ __('Inversión publicitaria prevista: € :amount. La pagas directamente a la plataforma de anuncios; no está incluida en este importe.', ['amount' => number_format($quote->calculation['verba_total_info'], 2, ',', '.')]) }}
                     </p>
                 @endif
             </section>

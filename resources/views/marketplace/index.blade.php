@@ -23,8 +23,8 @@
                 
                 <!-- Language Switcher -->
                 <div class="flex items-center gap-2 border-l border-zinc-800 pl-5 ml-1 text-base">
-                    <a href="{{ route('lang.switch', 'pt_BR') }}" class="px-2 py-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'bg-orange-500/20 border border-orange-500/30 grayscale-0' : 'grayscale hover:grayscale-0 hover:bg-zinc-800' }}" title="Português">🇧🇷</a>
-                    <a href="{{ route('lang.switch', 'es') }}" class="px-2 py-1 rounded transition {{ session('locale') === 'es' ? 'bg-orange-500/20 border border-orange-500/30 grayscale-0' : 'grayscale hover:grayscale-0 hover:bg-zinc-800' }}" title="Español">🇪🇸</a>
+                    <a href="{{ route('lang.switch', 'pt_BR') }}" class="px-2 py-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'bg-orange-500/20 border border-orange-500/30 grayscale-0' : 'grayscale hover:grayscale-0 hover:bg-zinc-800' }}" title="Português"></a>
+                    <a href="{{ route('lang.switch', 'es') }}" class="px-2 py-1 rounded transition {{ session('locale') === 'es' ? 'bg-orange-500/20 border border-orange-500/30 grayscale-0' : 'grayscale hover:grayscale-0 hover:bg-zinc-800' }}" title="Español"></a>
                 </div>
 
                 <a href="#pacotes" class="rounded-xl bg-orange-600 px-5 py-2.5 text-white hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition ml-2">{{ __('Começar projeto') }}</a>
@@ -121,7 +121,7 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div class="space-y-1 max-w-3xl">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm">🍪</span>
+                    <span class="text-sm"></span>
                     <h3 class="text-xs font-bold uppercase tracking-wider text-white">Privacidade & Uso de Cookies</h3>
                 </div>
                 <p class="text-xs text-zinc-400 leading-relaxed">

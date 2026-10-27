@@ -34,7 +34,7 @@
         <!-- Feedback Alerts -->
         @if(session('success'))
             <div class="rounded-2xl bg-emerald-950/40 border border-emerald-500/40 p-4 text-emerald-300 text-xs font-semibold flex items-start gap-3">
-                <span class="text-lg">🎉</span>
+                <span class="text-lg"></span>
                 <div>
                     <p class="font-bold text-emerald-200">{{ __('Vídeo Aprovado!') }}</p>
                     <p class="mt-0.5">{{ session('success') }}</p>
@@ -53,11 +53,11 @@
                     </span>
                     @if($video->status === 'ready' || $video->status === 'published')
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            ✅ {{ __('Vídeo Final Aprovado') }}
+                            {{ __('Vídeo Final Aprovado') }}
                         </span>
                     @else
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
-                            ⏳ {{ __('Aguardando Sua Aprovação') }}
+                            {{ __('Aguardando Sua Aprovação') }}
                         </span>
                     @endif
                 </div>
@@ -90,7 +90,7 @@
                            class="w-full h-full object-contain"></video>
                 @else
                     <div class="text-center p-6 text-zinc-500">
-                        <span class="text-3xl block mb-2">🎬</span>
+                        <span class="text-3xl block mb-2"></span>
                         <p class="text-xs font-semibold">{{ __('Vídeo em processamento de renderização.') }}</p>
                     </div>
                 @endif
@@ -128,7 +128,6 @@
             @else
                 <div class="border-t border-zinc-800 pt-4 text-center">
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold">
-                        <span>✨</span>
                         <span>{{ __('Vídeo Final já Aprovado! Pronto para distribuição.') }}</span>
                     </div>
                 </div>

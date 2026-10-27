@@ -10,7 +10,7 @@
         <div>
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                    🏛️ {{ __('Agencia Tributaria (AEAT)') }}
+                    {{ __('Agencia Tributaria (AEAT)') }}
                 </span>
                 <span class="text-xs text-zinc-500 font-mono">Real Decreto 1619/2012</span>
             </div>
@@ -123,7 +123,7 @@
                 </label>
                 <select name="billing_mode" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:bg-zinc-900 focus:border-orange-500 focus:outline-none transition">
                     <option value="">{{ __('Todas las modalidades') }}</option>
-                    <option value="pending_escrow" @selected(($filters['billing_mode'] ?? '') === 'pending_escrow')>🔒 Saldo Pendiente (Custodia)</option>
+                    <option value="pending_escrow" @selected(($filters['billing_mode'] ?? '') === 'pending_escrow')>Saldo Pendiente (Custodia)</option>
                     <option value="paid_escrow" @selected(($filters['billing_mode'] ?? '') === 'paid_escrow')>✓ 50/50 Quitado</option>
                     <option value="split_50_50" @selected(($filters['billing_mode'] ?? '') === 'split_50_50')>50/50 Split (Todos)</option>
                     <option value="full_upfront" @selected(($filters['billing_mode'] ?? '') === 'full_upfront')>100% Anticipado</option>
@@ -152,9 +152,9 @@
                 </label>
                 <select name="gateway" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:bg-zinc-900 focus:border-orange-500 focus:outline-none transition">
                     <option value="">{{ __('Todas las pasarelas') }}</option>
-                    <option value="bizum" @selected($filters['gateway'] === 'bizum')>⚡ Bizum (BBVA)</option>
-                    <option value="redsys_card" @selected($filters['gateway'] === 'redsys_card')>💳 Tarjeta (BBVA)</option>
-                    <option value="stripe" @selected($filters['gateway'] === 'stripe')>🌐 Stripe</option>
+                    <option value="bizum" @selected($filters['gateway'] === 'bizum')>Bizum (BBVA)</option>
+                    <option value="redsys_card" @selected($filters['gateway'] === 'redsys_card')>Tarjeta (BBVA)</option>
+                    <option value="stripe" @selected($filters['gateway'] === 'stripe')>Stripe</option>
                 </select>
             </div>
 
@@ -255,7 +255,7 @@
                                         </span>
                                         @if($invoice->balance_status === 'pending')
                                             <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-orange-500/15 text-orange-300 border border-orange-500/30">
-                                                🔒 {{ __('Saldo Pendente: € :amount', ['amount' => number_format($invoice->balance_amount, 2, ',', '.')]) }}
+                                                {{ __('Saldo Pendente: € :amount', ['amount' => number_format($invoice->balance_amount, 2, ',', '.')]) }}
                                             </span>
                                         @elseif($invoice->balance_status === 'paid')
                                             <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -307,19 +307,19 @@
                                 @endphp
                                 @if($gateway === 'bizum')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                                        ⚡ Bizum
+                                        Bizum
                                     </span>
                                 @elseif($gateway === 'redsys_card')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                        💳 BBVA
+                                        BBVA
                                     </span>
                                 @elseif($gateway === 'bank_transfer')
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                        🏛️ Transferencia
+                                        Transferencia
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                        🌐 Stripe
+                                        Stripe
                                     </span>
                                 @endif
 
@@ -371,7 +371,7 @@
                     @empty
                         <tr>
                             <td colspan="8" class="px-5 py-12 text-center text-zinc-500">
-                                <div class="text-3xl mb-2">🧾</div>
+                                <div class="text-3xl mb-2"></div>
                                 <h3 class="text-sm font-bold text-white">{{ __('No se encontraron facturas emitidas') }}</h3>
                                 <p class="text-xs text-zinc-400 max-w-sm mx-auto mt-1">
                                     {{ __('A medida que sus clientes contraten paquetes de vídeos a través de Bizum, Tarjeta o Stripe, las facturas se generarán automáticamente aquí.') }}

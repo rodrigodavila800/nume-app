@@ -22,7 +22,6 @@
                 <a href="{{ route('portal.purchases.invoice', $purchase) }}"
                    target="_blank"
                    class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-zinc-900 hover:bg-zinc-800 text-white shadow-md transition-all transform active:scale-95 gap-2">
-                    <span>📄</span>
                     <span>{{ __('Descargar Factura Oficial (PDF)') }}</span>
                 </a>
             @endif

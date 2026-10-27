@@ -20,7 +20,6 @@
 
         <button type="button" id="btn-sofi-seo" onclick="generateSofiSeo()"
             class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-orange-900/20 active:scale-95 transition">
-            <span>✨</span>
             <span id="btn-sofi-text">{{ __('Sofi: Gerar SEO com Olhar CEO') }}</span>
         </button>
     </div>
@@ -33,7 +32,6 @@
     @endif
 
     <div id="sofi-alert" class="hidden p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-300 text-xs font-semibold flex items-center gap-2">
-        <span>✨</span>
         <span id="sofi-alert-msg"></span>
     </div>
 
@@ -47,7 +45,6 @@
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5">
             <div class="border-b border-zinc-800/80 pb-4">
                 <h2 class="text-base font-bold text-white flex items-center gap-2">
-                    <span>🌐</span>
                     <span>{{ __('Canais & Redes Sociais Oficiais') }}</span>
                 </h2>
                 <p class="text-xs text-zinc-400 mt-1">
@@ -141,7 +138,6 @@
             <div class="border-b border-zinc-800/80 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
                     <h2 class="text-base font-bold text-white flex items-center gap-2">
-                        <span>🔐</span>
                         <span>{{ __('Nume Social Engine — Credenciais OAuth das Redes') }}</span>
                     </h2>
                     <p class="text-xs text-zinc-400 mt-1">
@@ -149,7 +145,7 @@
                     </p>
                 </div>
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
-                    🔒 AES-256 Encrypted
+                    AES-256 Encrypted
                 </span>
             </div>
 
@@ -229,7 +225,6 @@
             <div class="border-b border-zinc-800/80 pb-4 flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-bold text-white flex items-center gap-2">
-                        <span>🎯</span>
                         <span>{{ __('Meta Tags SEO & Compartilhamento Social') }}</span>
                     </h2>
                     <p class="text-xs text-zinc-400 mt-1">

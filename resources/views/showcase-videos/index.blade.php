@@ -37,7 +37,6 @@
     <div class="flex items-center gap-2 border-b border-zinc-800/80 pb-3 overflow-x-auto no-scrollbar">
         <a href="{{ route('showcase-videos.index', ['format' => 'vertical']) }}"
            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all duration-200 shrink-0 {{ $currentFormat === 'vertical' ? 'bg-orange-600 text-white border-orange-500 shadow-lg shadow-orange-950/40' : 'bg-zinc-900/90 text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-800' }}">
-            <span>📱</span>
             <span>{{ __('Verticais (9:16)') }}</span>
             <span class="px-2 py-0.5 text-[10px] font-black rounded-full {{ $currentFormat === 'vertical' ? 'bg-white/20 text-white' : 'bg-zinc-800 text-zinc-400' }}">
                 {{ $verticalCount }}
@@ -46,7 +45,6 @@
 
         <a href="{{ route('showcase-videos.index', ['format' => 'horizontal']) }}"
            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all duration-200 shrink-0 {{ $currentFormat === 'horizontal' ? 'bg-orange-600 text-white border-orange-500 shadow-lg shadow-orange-950/40' : 'bg-zinc-900/90 text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-800' }}">
-            <span>🎬</span>
             <span>{{ __('Horizontais (16:9)') }}</span>
             <span class="px-2 py-0.5 text-[10px] font-black rounded-full {{ $currentFormat === 'horizontal' ? 'bg-white/20 text-white' : 'bg-zinc-800 text-zinc-400' }}">
                 {{ $horizontalCount }}
@@ -55,7 +53,6 @@
 
         <a href="{{ route('showcase-videos.index') }}"
            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all duration-200 shrink-0 {{ empty($currentFormat) ? 'bg-orange-600 text-white border-orange-500 shadow-lg shadow-orange-950/40' : 'bg-zinc-900/90 text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-800' }}">
-            <span>🌐</span>
             <span>{{ __('Todos os Vídeos') }}</span>
             <span class="px-2 py-0.5 text-[10px] font-black rounded-full {{ empty($currentFormat) ? 'bg-white/20 text-white' : 'bg-zinc-800 text-zinc-400' }}">
                 {{ $totalCount }}
@@ -82,7 +79,7 @@
                                     <img src="{{ $thumb }}" alt="{{ $video->title }}" class="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300">
                                 @else
                                     <div class="w-full h-full bg-zinc-950 flex flex-col items-center justify-center text-zinc-600">
-                                        <span class="text-3xl">{{ $isVertical ? '📱' : '🎬' }}</span>
+                                        <span class="text-3xl">{{ $isVertical ? '' : '' }}</span>
                                         <span class="text-[11px] mt-1">{{ __('Carregar Vídeo') }}</span>
                                     </div>
                                 @endif
@@ -93,12 +90,10 @@
                                 </div>
                                 @if($isVertical)
                                     <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-orange-600/95 text-white shadow flex items-center gap-1">
-                                        <span>📱</span>
                                         <span>9:16</span>
                                     </span>
                                 @else
                                     <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-zinc-900/90 text-zinc-300 border border-zinc-700/60 shadow flex items-center gap-1">
-                                        <span>🎬</span>
                                         <span>16:9</span>
                                     </span>
                                 @endif
@@ -135,7 +130,7 @@
                     @endif
 
                     <div class="flex items-center justify-between text-[11px] text-zinc-500 pt-1">
-                        <span class="font-medium text-orange-400/90 truncate max-w-[120px]">🏷️ {{ $video->category_name }}</span>
+                        <span class="font-medium text-orange-400/90 truncate max-w-[120px]">{{ $video->category_name }}</span>
                         <span>{{ __('Ordem:') }} {{ $video->sort_order }}</span>
                     </div>
                 </div>

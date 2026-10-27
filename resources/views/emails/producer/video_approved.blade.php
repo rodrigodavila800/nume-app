@@ -148,7 +148,7 @@
         <!-- Header -->
         <div class="header">
             <h1 class="header-title">{{ $tenant?->name ?? 'NUME Creative' }}</h1>
-            <p class="header-tag">✨ Entrega Audiovisual Concluída com Sucesso</p>
+            <p class="header-tag">Entrega Audiovisual Concluída com Sucesso</p>
         </div>
 
         <!-- Conteúdo Principal -->
@@ -163,7 +163,7 @@
 
             <!-- Box de Métricas e Liquidação Financeira -->
             <div class="success-box">
-                <div class="success-box-title">💰 Status Financeiro & Liquidação</div>
+                <div class="success-box-title">Status Financeiro & Liquidação</div>
                 <div class="metric-row">
                     <span class="metric-label">Vídeo Aprovado:</span>
                     <span class="metric-value">{{ $video->title ?: $production->title }}</span>
@@ -186,7 +186,7 @@
 
             <!-- Detalhes da Produção -->
             <div class="details-card">
-                <div class="details-title">📋 Informações da Demanda</div>
+                <div class="details-title">Informações da Demanda</div>
                 <p class="details-item"><strong>Produção:</strong> {{ $production->title }}</p>
                 <p class="details-item"><strong>Cliente:</strong> {{ $cliente?->name }} ({{ $cliente?->email }})</p>
                 @if($cliente?->phone)
@@ -200,7 +200,7 @@
             <!-- Botão de Ação -->
             <div class="cta-section">
                 <a href="{{ $productionUrl }}" class="cta-button">
-                    🚀 Abrir Produção no Painel da Produtora
+                    Abrir Produção no Painel da Produtora
                 </a>
                 <p class="cta-hint">
                     Acompanhe o disparo das redes sociais ou faça o download dos arquivos master.

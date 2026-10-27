@@ -17,7 +17,7 @@
         </div>
         <div class="flex items-center gap-2">
             <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700">
-                🏢 {{ $tenant->name }}
+                {{ $tenant->name }}
             </span>
         </div>
     </div>
@@ -26,14 +26,13 @@
 
     @if (session('status'))
         <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2">
-            <span>✅</span>
             <span>{{ session('status') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
         <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold space-y-1">
-            <p class="font-bold">⚠️ {{ __('Corrija os erros abaixo para salvar:') }}</p>
+            <p class="font-bold">{{ __('Corrija os erros abaixo para salvar:') }}</p>
             <ul class="list-disc pl-5 space-y-0.5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -48,7 +47,7 @@
         <div class="pb-4 border-b border-zinc-800">
             <div class="flex items-center gap-2">
                 <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                    <span>🏛️</span> {{ __('Regime Tributário & Retenções (Espanha / UE)') }}
+{{ __('Regime Tributário & Retenções (Espanha / UE)') }}
                 </h2>
                 <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     {{ __('Oficial da Produtora') }}
@@ -70,7 +69,7 @@
                            class="text-emerald-600 focus:ring-emerald-500 mt-1">
                     <div>
                         <p class="text-xs font-extrabold text-white flex items-center gap-1.5">
-                            <span>👤</span> {{ __('Autónomo Profissional (Persona Física)') }}
+{{ __('Autónomo Profissional (Persona Física)') }}
                         </p>
                         <p class="text-[11px] text-zinc-400 mt-0.5">
                             {{ __('Aplica retenção de IRPF automaticamente quando o comprador for Empresa ou outro Autônomo espanhol.') }}
@@ -82,7 +81,7 @@
                            class="text-emerald-600 focus:ring-emerald-500 mt-1">
                     <div>
                         <p class="text-xs font-extrabold text-white flex items-center gap-1.5">
-                            <span>🏢</span> {{ __('Sociedad Mercantil (S.L. / S.A.)') }}
+{{ __('Sociedad Mercantil (S.L. / S.A.)') }}
                         </p>
                         <p class="text-[11px] text-zinc-400 mt-0.5">
                             {{ __('Sem retenção na fonte de IRPF nas faturas emitidas pela sociedade.') }}
@@ -197,7 +196,7 @@
         <div class="pt-6 border-t border-zinc-800 flex justify-end">
             <button type="submit"
                     class="px-6 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20 active:scale-95 transition-all cursor-pointer">
-                💾 {{ __('Salvar Dados Fiscais da Produtora') }}
+                {{ __('Salvar Dados Fiscais da Produtora') }}
             </button>
         </div>
     </form>

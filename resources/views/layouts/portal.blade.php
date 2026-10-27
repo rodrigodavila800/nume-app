@@ -93,7 +93,7 @@
                     </a>
                     <a href="{{ route('portal.support.index') }}"
                        class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.support*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <span class="hidden 2xl:inline">🛟</span> {{ __('Suporte') }}
+                        <span class="hidden 2xl:inline"></span> {{ __('Suporte') }}
                     </a>
                 </nav>
 
@@ -195,7 +195,7 @@
                 </a>
                 <a href="{{ route('portal.support.index') }}"
                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('portal.support*') ? 'bg-orange-50 text-orange-700' : 'text-zinc-700 hover:bg-zinc-100' }}">
-                    🛟 {{ __('Suporte') }}
+                    {{ __('Suporte') }}
                 </a>
                 
                 <div class="pt-3 mt-2 border-t border-zinc-100 flex items-center justify-between px-3.5">
@@ -220,7 +220,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 mb-6">
                 @if (session('warning'))
                     <div class="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold shadow-xs">
-                        <span class="text-base">⚠️</span>
+                        <span class="text-base"></span>
                         <div class="flex-1">{{ session('warning') }}</div>
                     </div>
                 @endif

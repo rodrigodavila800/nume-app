@@ -28,7 +28,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800">
             <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-xl bg-orange-600/20 border border-orange-500/30 text-orange-400 flex items-center justify-center text-base">
-                    ✍️
+                    
                 </div>
                 <div>
                     <h2 class="text-sm font-bold text-white flex items-center gap-1.5">
@@ -46,39 +46,39 @@
             <div class="space-y-1">
                 <label for="sofiFramework" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">{{ __('Estrutura / Framework') }}</label>
                 <select id="sofiFramework" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-orange-500 transition">
-                    <option value="pattern_interrupt">⚡ {{ __('Padrão de Interrupção (0-3s)') }}</option>
-                    <option value="authority_interview">🎙️ {{ __('Autoridade Executiva / B2B') }}</option>
-                    <option value="direct_offer">🔥 {{ __('Oferta Direta (Tráfego Pago)') }}</option>
-                    <option value="storytelling_case">📖 {{ __('Storytelling & Case de Sucesso') }}</option>
+                    <option value="pattern_interrupt">{{ __('Padrão de Interrupção (0-3s)') }}</option>
+                    <option value="authority_interview">{{ __('Autoridade Executiva / B2B') }}</option>
+                    <option value="direct_offer">{{ __('Oferta Direta (Tráfego Pago)') }}</option>
+                    <option value="storytelling_case">{{ __('Storytelling & Case de Sucesso') }}</option>
                 </select>
             </div>
 
             <div class="space-y-1">
                 <label for="sofiTone" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">{{ __('Tom de Voz') }}</label>
                 <select id="sofiTone" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-orange-500 transition">
-                    <option value="persuasive">🎯 {{ __('Persuasivo & Enérgico') }}</option>
-                    <option value="executive">👔 {{ __('Corporativo & Autoritário') }}</option>
-                    <option value="empathic">🤝 {{ __('Didático & Empático') }}</option>
+                    <option value="persuasive">{{ __('Persuasivo & Enérgico') }}</option>
+                    <option value="executive">{{ __('Corporativo & Autoritário') }}</option>
+                    <option value="empathic">{{ __('Didático & Empático') }}</option>
                 </select>
             </div>
 
             <div class="space-y-1">
                 <label for="sofiLanguage" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">{{ __('Idioma do Roteiro') }}</label>
                 <select id="sofiLanguage" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-orange-500 transition">
-                    <option value="pt_BR" {{ session('locale') === 'pt_BR' ? 'selected' : '' }}>🇧🇷 {{ __('Português (Brasil)') }}</option>
-                    <option value="es" {{ session('locale') === 'es' ? 'selected' : '' }}>🇪🇸 {{ __('Español (España / Zaragoza)') }}</option>
+                    <option value="pt_BR" {{ session('locale') === 'pt_BR' ? 'selected' : '' }}>{{ __('Português (Brasil)') }}</option>
+                    <option value="es" {{ session('locale') === 'es' ? 'selected' : '' }}>{{ __('Español (España / Zaragoza)') }}</option>
                 </select>
             </div>
         </div>
 
         <div class="pt-1 flex items-center justify-between">
             <p class="text-[11px] text-zinc-500">
-                💡 {{ __('A Sofi utilizará o título e briefing desta produção para estruturar o script.') }}
+                {{ __('A Sofi utilizará o título e briefing desta produção para estruturar o script.') }}
             </p>
             <button type="button" id="btnGenerateSofi" onclick="generateSofiScript()"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 active:scale-95 text-white text-xs font-extrabold uppercase tracking-wider shadow-md shadow-orange-900/20 transition-all">
-                <span id="sofiSpinner" class="hidden animate-spin">🔄</span>
-                <span id="sofiBtnText">✨ {{ __('Gerar Roteiro com IA') }}</span>
+                <span id="sofiSpinner" class="hidden animate-spin"></span>
+                <span id="sofiBtnText">{{ __('Gerar Roteiro com IA') }}</span>
             </button>
         </div>
     </div>
@@ -176,7 +176,7 @@
         } finally {
             btn.disabled = false;
             spinner.classList.add('hidden');
-            btnText.textContent = "✨ {{ __('Gerar Roteiro com IA') }}";
+            btnText.textContent = "{{ __('Gerar Roteiro com IA') }}";
         }
     }
 </script>

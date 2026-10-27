@@ -49,10 +49,10 @@
             </p>
             <p class="text-xs font-semibold text-zinc-700 mt-2 flex flex-wrap gap-2">
                 <span class="px-2.5 py-1 rounded-lg bg-zinc-100 border border-zinc-200">
-                    📲 {{ __('Redes: :connected de :limit', ['connected' => $limits['networks_connected'], 'limit' => $limits['networks_limit'] ?? __('ilimitadas')]) }}
+                    {{ __('Redes: :connected de :limit', ['connected' => $limits['networks_connected'], 'limit' => $limits['networks_limit'] ?? __('ilimitadas')]) }}
                 </span>
                 <span class="px-2.5 py-1 rounded-lg bg-zinc-100 border border-zinc-200">
-                    🚀 {{ __('Envios no mês: :used de :limit', ['used' => $limits['sends_this_month'], 'limit' => $limits['monthly_limit'] ?? __('ilimitados')]) }}
+                    {{ __('Envios no mês: :used de :limit', ['used' => $limits['sends_this_month'], 'limit' => $limits['monthly_limit'] ?? __('ilimitados')]) }}
                 </span>
             </p>
         </div>
@@ -85,7 +85,7 @@
     <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-xl border border-orange-100 shadow-xs">
-                🌐
+                
             </div>
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Status Geral') }}</span>
@@ -100,7 +100,7 @@
 
         <div class="flex items-center gap-4 border-t sm:border-t-0 sm:border-l border-zinc-100 sm:pl-6">
             <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl border border-blue-100 shadow-xs">
-                📊
+                
             </div>
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Redes Vinculadas') }}</span>
@@ -112,7 +112,7 @@
 
         <div class="flex items-center gap-4 border-t lg:border-t-0 lg:border-l border-zinc-100 lg:pl-6">
             <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xl border border-purple-100 shadow-xs">
-                ⚡
+                
             </div>
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Cota de Publicações') }}</span>
@@ -135,7 +135,7 @@
 
         <div class="flex items-center gap-4 border-t lg:border-t-0 lg:border-l border-zinc-100 lg:pl-6">
             <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl border border-amber-100 shadow-xs">
-                🛡️
+                
             </div>
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Privacidade') }}</span>
@@ -259,7 +259,7 @@
     <!-- Dica da Sofi sobre Distribuição de Alta Retenção -->
     <div class="bg-gradient-to-br from-orange-50 via-amber-50 to-zinc-50 rounded-2xl p-6 border border-orange-200/70 shadow-xs flex flex-col sm:flex-row items-start gap-4">
         <div class="w-10 h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-            ✨
+            
         </div>
         <div class="space-y-1">
             <h3 class="text-sm font-extrabold text-orange-950 uppercase tracking-wide">
@@ -367,7 +367,7 @@
             @else
                 <div class="p-12 text-center space-y-3">
                     <div class="w-12 h-12 mx-auto rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center text-xl">
-                        🎬
+                        
                     </div>
                     <div class="space-y-1">
                         <h4 class="text-sm font-bold text-zinc-800">{{ __('Nenhuma publicação disparada ainda') }}</h4>

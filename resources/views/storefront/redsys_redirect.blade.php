@@ -13,7 +13,7 @@
         <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
             <div class="absolute inset-0 rounded-full border-4 border-blue-500/20 animate-ping"></div>
             <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30">
-                🔒
+                
             </div>
         </div>
 

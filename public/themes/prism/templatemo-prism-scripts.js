@@ -44,18 +44,18 @@ https://templatemo.com/tm-600-prism-flux
         const skillsData = (window.numeSkillsData && window.numeSkillsData.length > 0)
             ? window.numeSkillsData
             : [
-            { name: 'React.js', icon: '⚛️', level: 95, category: 'frontend' },
-            { name: 'Node.js', icon: '🟢', level: 90, category: 'backend' },
-            { name: 'TypeScript', icon: '📘', level: 88, category: 'frontend' },
-            { name: 'AWS', icon: '☁️', level: 92, category: 'cloud' },
-            { name: 'Docker', icon: '🐳', level: 85, category: 'cloud' },
-            { name: 'Python', icon: '🐍', level: 93, category: 'backend' },
-            { name: 'Kubernetes', icon: '☸️', level: 82, category: 'cloud' },
+            { name: 'React.js', icon: '01', level: 95, category: 'frontend' },
+            { name: 'Node.js', icon: '02', level: 90, category: 'backend' },
+            { name: 'TypeScript', icon: '03', level: 88, category: 'frontend' },
+            { name: 'AWS', icon: '04', level: 92, category: 'cloud' },
+            { name: 'Docker', icon: '05', level: 85, category: 'cloud' },
+            { name: 'Python', icon: '06', level: 93, category: 'backend' },
+            { name: 'Kubernetes', icon: '07', level: 82, category: 'cloud' },
             { name: 'GraphQL', icon: '◈', level: 87, category: 'backend' },
-            { name: 'TensorFlow', icon: '🤖', level: 78, category: 'emerging' },
-            { name: 'Blockchain', icon: '🔗', level: 75, category: 'emerging' },
-            { name: 'Vue.js', icon: '💚', level: 85, category: 'frontend' },
-            { name: 'MongoDB', icon: '🍃', level: 90, category: 'backend' }
+            { name: 'TensorFlow', icon: '08', level: 78, category: 'emerging' },
+            { name: 'Blockchain', icon: '09', level: 75, category: 'emerging' },
+            { name: 'Vue.js', icon: '10', level: 85, category: 'frontend' },
+            { name: 'MongoDB', icon: '11', level: 90, category: 'backend' }
         ];
 
         // Scroll to section function
@@ -147,7 +147,7 @@ https://templatemo.com/tm-600-prism-flux
             const videoUrl = data.video_url || '#';
             const embedUrl = data.embed_url || '';
             const numStr = String(index + 1).padStart(2, '0');
-            const formatBadge = isVertical ? '📱 9:16 SHORTS' : '🎬 16:9 WIDE';
+            const formatBadge = isVertical ? '9:16 SHORTS' : '16:9 WIDE';
             const categoryName = (data.tech && data.tech[1]) || 'NUME 4K';
 
             panel.innerHTML = `
@@ -192,7 +192,7 @@ https://templatemo.com/tm-600-prism-flux
                 carousel.style.transform = 'none';
                 carousel.innerHTML = `
                     <div class="orbital-empty-state">
-                        ${(window.__ ? window.__('no_videos_found', '⚡ Nenhum vídeo encontrado para este formato no momento.') : '⚡ Nenhum vídeo encontrado para este formato no momento.')}
+                        ${(window.__ ? window.__('no_videos_found', 'Nenhum vídeo encontrado para este formato no momento.') : 'Nenhum vídeo encontrado para este formato no momento.')}
                     </div>
                 `;
                 return;

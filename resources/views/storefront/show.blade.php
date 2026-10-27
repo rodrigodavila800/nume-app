@@ -57,7 +57,7 @@
                 embed_url: @json($v->embed_url),
                 is_vertical: {{ $v->is_vertical ? 'true' : 'false' }},
                 tech: [
-                    '{{ $v->is_vertical ? "📱 9:16" : "🎬 16:9" }}',
+                    '{{ $v->is_vertical ? "9:16" : "16:9" }}',
                     '{{ $v->category?->name ?? "Showcase" }}',
                     '{{ __("Retenção: 94%") }}'
                 ]
@@ -71,7 +71,7 @@
                 video_url: 'https://youtube.com/shorts/Ovla_x3EAgc',
                 embed_url: 'https://www.youtube-nocookie.com/embed/Ovla_x3EAgc?autoplay=1&playsinline=1&rel=0&enablejsapi=1',
                 is_vertical: true,
-                tech: ['📱 9:16', '{{ __("Reels Virais") }}', '4K HDR']
+                tech: ['9:16', '{{ __("Reels Virais") }}', '4K HDR']
             },
             {
                 id: 2,
@@ -81,20 +81,20 @@
                 video_url: 'https://youtube.com/shorts/Ovla_x3EAgc',
                 embed_url: 'https://www.youtube-nocookie.com/embed/Ovla_x3EAgc?autoplay=1&playsinline=1&rel=0&enablejsapi=1',
                 is_vertical: true,
-                tech: ['📱 9:16', 'B2B', 'Sofi IA']
+                tech: ['9:16', 'B2B', 'Sofi IA']
             }
             @endforelse
         ];
 
         window.numeSkillsData = [
-            { name: 'Reels & TikTok', icon: '⚡', level: 98, category: 'frontend' },
-            { name: 'Roteiros Sofi IA', icon: '🤖', level: 95, category: 'backend' },
-            { name: 'Captação 4K HDR', icon: '🎥', level: 99, category: 'cloud' },
-            { name: 'Edição Dinâmica', icon: '✂️', level: 96, category: 'frontend' },
-            { name: 'Sound Design 3D', icon: '🎧', level: 92, category: 'backend' },
-            { name: 'Color Grading', icon: '🎨', level: 94, category: 'cloud' },
-            { name: 'Copywriting VSL', icon: '📝', level: 95, category: 'emerging' },
-            { name: 'Retenção 0-3s', icon: '🎯', level: 97, category: 'emerging' }
+            { name: 'Reels & TikTok', icon: '01', level: 98, category: 'frontend' },
+            { name: 'Roteiros Sofi IA', icon: '02', level: 95, category: 'backend' },
+            { name: 'Captação 4K HDR', icon: '03', level: 99, category: 'cloud' },
+            { name: 'Edição Dinâmica', icon: '04', level: 96, category: 'frontend' },
+            { name: 'Sound Design 3D', icon: '05', level: 92, category: 'backend' },
+            { name: 'Color Grading', icon: '06', level: 94, category: 'cloud' },
+            { name: 'Copywriting VSL', icon: '07', level: 95, category: 'emerging' },
+            { name: 'Retenção 0-3s', icon: '08', level: 97, category: 'emerging' }
         ];
     </script>
 
@@ -103,7 +103,7 @@
         <!-- Header Text (Perfeitamente posicionado acima do carrossel) -->
         <div class="hero-header-content">
             <div class="hero-badge">
-                ⚡ {{ __('Vídeo com Direção Estratégica & Sofi IA') }}
+                {{ __('Vídeo com Direção Estratégica & Sofi IA') }}
             </div>
             <h1 class="hero-title">
                 {{ __('Sua marca merece ser impossível de ignorar.') }}
@@ -116,17 +116,14 @@
         <!-- Filtros de Formato do Portfólio (Pill Tabs Glassmorphic) -->
         <div class="portfolio-format-tabs" id="portfolio">
             <button type="button" class="portfolio-tab-btn active" data-filter="all" onclick="if(window.filterPortfolio) window.filterPortfolio('all', this)">
-                <span>🌐</span>
                 <span>{{ __('Todos os Formatos') }}</span>
             </button>
 
             <button type="button" class="portfolio-tab-btn" data-filter="vertical" onclick="if(window.filterPortfolio) window.filterPortfolio('vertical', this)">
-                <span>📱</span>
                 <span>{{ __('Shorts & Reels (9:16)') }}</span>
             </button>
 
             <button type="button" class="portfolio-tab-btn" data-filter="horizontal" onclick="if(window.filterPortfolio) window.filterPortfolio('horizontal', this)">
-                <span>🎬</span>
                 <span>{{ __('Vídeos Horizontais (16:9)') }}</span>
             </button>
         </div>
@@ -174,7 +171,7 @@
         <!-- Conversão Imediata (Abaixo do Carrossel) -->
         <div class="hero-cta-wrapper">
             <a href="#pacotes" class="contract-btn hero-cta-btn">
-                <span>⚡ {{ __('Quero um Vídeo Neste Padrão') }}</span>
+                <span>{{ __('Quero um Vídeo Neste Padrão') }}</span>
                 <span class="hero-cta-arrow">→</span>
             </a>
         </div>
@@ -196,7 +193,6 @@
             
             <div class="philosophy-pillars">
                 <div class="pillar">
-                    <div class="pillar-icon">💎</div>
                     <h3 class="pillar-title">01. {{ __('DNA & Posicionamento') }}</h3>
                     <p class="pillar-description">
                         {{ __('Calibramos o público-alvo, oferta e diferenciais no portal para alimentar a Sofi IA com o tom de voz perfeito da sua marca.') }}
@@ -204,7 +200,6 @@
                 </div>
                 
                 <div class="pillar">
-                    <div class="pillar-icon">🤖</div>
                     <h3 class="pillar-title">02. {{ __('Roteiro Sofi Copilot') }}</h3>
                     <p class="pillar-description">
                         {{ __('Geração automática de ganchos visuais e roteiros persuasivos de alta retenção (0-3s), aprovados com 1 clique no seu celular.') }}
@@ -212,7 +207,6 @@
                 </div>
                 
                 <div class="pillar">
-                    <div class="pillar-icon">🎥</div>
                     <h3 class="pillar-title">03. {{ __('Captação 4K & Escala') }}</h3>
                     <p class="pillar-description">
                         {{ __('Captação cinematográfica 4K HDR, cortes dinâmicos, legendas magnéticas e sound design imersivo prontos para publicação.') }}
@@ -235,28 +229,24 @@
         
         <div class="stats-grid">
             <div class="stat-card stat-card-custom">
-                <div class="stat-icon stat-icon-custom">🚀</div>
                 <div class="stat-number stat-number-bright-orange" data-target="150">0</div>
                 <div class="stat-label">{{ __('Vídeos Entregues') }}</div>
                 <p class="stat-description">{{ __('Produções de alta retenção rodando no feed com 100% de pontualidade na entrega.') }}</p>
             </div>
             
             <div class="stat-card stat-card-custom">
-                <div class="stat-icon stat-icon-custom">⚡</div>
                 <div class="stat-number stat-number-orange" data-target="94">0</div>
                 <div class="stat-label">{{ __('Retenção Média 0-3s (%)') }}</div>
                 <p class="stat-description">{{ __('Ganchos visuais e quebras de padrão estruturados pela inteligência da Sofi IA.') }}</p>
             </div>
             
             <div class="stat-card stat-card-custom">
-                <div class="stat-icon stat-icon-custom">🏆</div>
                 <div class="stat-number stat-number-yellow" data-target="100">0</div>
                 <div class="stat-label">{{ __('Aprovação Ágil no Portal (%)') }}</div>
                 <p class="stat-description">{{ __('Feedback e aprovação centralizados na esteira exclusiva do cliente sem ruídos.') }}</p>
             </div>
             
             <div class="stat-card stat-card-custom">
-                <div class="stat-icon stat-icon-custom">💎</div>
                 <div class="stat-number stat-number-green" data-target="4">0</div>
                 <div class="stat-label">{{ __('Qualidade 4K HDR (Cinema)') }}</div>
                 <p class="stat-description">{{ __('Câmeras profissionais, iluminação calibrada e gradação de cores de alto padrão.') }}</p>
@@ -309,10 +299,10 @@
                                 {{ $pack->category_name }}
                             </span>
                             <span class="pack-subscription-badge">
-                                🔄 {{ __('Contrato · :months Meses', ['months' => $pack->commitment_months ?: 3]) }}
+                                {{ __('Contrato · :months Meses', ['months' => $pack->commitment_months ?: 3]) }}
                             </span>
                             <span class="pack-video-qty">
-                                📦 {{ $pack->video_quantity }} {{ __('vídeos/mês') }}
+                                {{ $pack->video_quantity }} {{ __('vídeos/mês') }}
                             </span>
                         </div>
 
@@ -328,7 +318,6 @@
                                 <button type="button" 
                                         onclick="openVideoModal('{{ $pack->showcaseVideo->video_url }}', '{{ addslashes($pack->showcaseVideo->title) }}', {{ $pack->showcaseVideo->is_vertical ? 'true' : 'false' }}, '{{ $pack->showcaseVideo->embed_url }}')"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-orange-400 hover:text-white bg-orange-950/40 hover:bg-orange-600 border border-orange-500/30 transition-all shadow-sm cursor-pointer">
-                                    <span>🎬</span>
                                     <span>{{ __('Ver Vídeo de Exemplo (4K)') }}</span>
                                 </button>
                             </div>
@@ -345,7 +334,6 @@
                                 <span class="pack-price-vat-tag">+ IVA (21%)</span>
                             </div>
                             <div class="pack-subscription-period-note">
-                                <span>🔄</span>
                                 <span>{{ __('Contrato de :months meses · :videos vídeos renovados a cada 30 dias', ['months' => $pack->commitment_months ?: 3, 'videos' => $pack->video_quantity]) }}</span>
                             </div>
                             <div class="pack-addons-summary">
@@ -420,15 +408,15 @@
                         <div class="pack-trust-badges">
                             @php
                                 $badgeList = [];
-                                if (!empty($activePaymentMethods['bizum'])) $badgeList[] = '⚡ Bizum BBVA';
-                                if (!empty($activePaymentMethods['redsys_card'])) $badgeList[] = '💳 Tarjeta Redsys';
-                                if (!empty($activePaymentMethods['stripe'])) $badgeList[] = '🌐 Stripe';
+                                if (!empty($activePaymentMethods['bizum'])) $badgeList[] = 'Bizum BBVA';
+                                if (!empty($activePaymentMethods['redsys_card'])) $badgeList[] = 'Tarjeta Redsys';
+                                if (!empty($activePaymentMethods['stripe'])) $badgeList[] = 'Stripe';
                             @endphp
-                            {{ !empty($badgeList) ? implode(' · ', $badgeList) : '🔒 ' . __('Pagamento Seguro') }}
+                            {{ !empty($badgeList) ? implode(' · ', $badgeList) : '' . __('Pagamento Seguro') }}
                         </div>
 
                         <div class="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-xs font-medium text-amber-300">
-                            🔒 {{ __('Novas assinaturas temporariamente indisponíveis') }}
+                            {{ __('Novas assinaturas temporariamente indisponíveis') }}
                         </div>
                     </div>
                 </div>
@@ -444,7 +432,7 @@
     <section class="contact-section pricing-section-wrapper" id="pacotes">
         <div class="section-header">
             <span class="pricing-badge-label">
-                📦 {{ __('Produção Pontual & Avulsa') }}
+                {{ __('Produção Pontual & Avulsa') }}
             </span>
             <h2 class="section-title">{{ __('Pacotes de Vídeos Estratégicos') }}</h2>
             <p class="section-subtitle">
@@ -463,10 +451,10 @@
                                 {{ $pack->category_name }}
                             </span>
                             <span class="pack-subscription-badge">
-                                📦 {{ __('Pagamento Único') }}
+                                {{ __('Pagamento Único') }}
                             </span>
                             <span class="pack-video-qty">
-                                📦 {{ $pack->video_quantity }} {{ __('vídeos') }}
+                                {{ $pack->video_quantity }} {{ __('vídeos') }}
                             </span>
                         </div>
 
@@ -482,7 +470,6 @@
                                 <button type="button" 
                                         onclick="openVideoModal('{{ $pack->showcaseVideo->video_url }}', '{{ addslashes($pack->showcaseVideo->title) }}', {{ $pack->showcaseVideo->is_vertical ? 'true' : 'false' }}, '{{ $pack->showcaseVideo->embed_url }}')"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-orange-400 hover:text-white bg-orange-950/40 hover:bg-orange-600 border border-orange-500/30 transition-all shadow-sm cursor-pointer">
-                                    <span>🎬</span>
                                     <span>{{ __('Ver Vídeo de Exemplo (4K)') }}</span>
                                 </button>
                             </div>
@@ -498,7 +485,6 @@
                                 <span class="pack-price-vat-tag">+ IVA (21%)</span>
                             </div>
                             <div class="pack-subscription-period-note">
-                                <span>🛡️</span>
                                 <span>{{ __('Projeto fechado sem cobranças futuras ou mensalidades recorrentes') }}</span>
                             </div>
                             <div class="pack-addons-summary">
@@ -573,17 +559,16 @@
                         <div class="pack-trust-badges">
                             @php
                                 $badgeList = [];
-                                if (!empty($activePaymentMethods['bizum'])) $badgeList[] = '⚡ Bizum BBVA';
-                                if (!empty($activePaymentMethods['redsys_card'])) $badgeList[] = '💳 Tarjeta Redsys';
-                                if (!empty($activePaymentMethods['stripe'])) $badgeList[] = '🌐 Stripe';
+                                if (!empty($activePaymentMethods['bizum'])) $badgeList[] = 'Bizum BBVA';
+                                if (!empty($activePaymentMethods['redsys_card'])) $badgeList[] = 'Tarjeta Redsys';
+                                if (!empty($activePaymentMethods['stripe'])) $badgeList[] = 'Stripe';
                             @endphp
-                            {{ !empty($badgeList) ? implode(' · ', $badgeList) : '🔒 ' . __('Pagamento Seguro') }}
+                            {{ !empty($badgeList) ? implode(' · ', $badgeList) : '' . __('Pagamento Seguro') }}
                         </div>
 
                         <button type="button" 
                                 onclick="openStorefrontCheckout({{ $pack->id }}, '{{ addslashes($pack->name) }}', {{ (float) $pack->price }}, '{{ route('storefront.checkout', ['tenant' => $tenant->slug, 'pack' => $pack->slug]) }}', 'one_time', 1, 'month')"
                                 class="contract-btn pack-cta-link pack-cta-btn-block cursor-pointer">
-                            <span>📦</span>
                             <span class="pack-btn-text">{{ __('Contratar Produção Avulsa') }}</span>
                             <span>→</span>
                         </button>
@@ -602,7 +587,7 @@
         <div id="storefront-modal-card" class="storefront-modal-card-box">
             <div class="storefront-modal-header-row">
                 <div class="storefront-modal-title-group">
-                    <span id="storefront-modal-format-badge" class="storefront-modal-format-pill">📱 9:16</span>
+                    <span id="storefront-modal-format-badge" class="storefront-modal-format-pill">9:16</span>
                     <h3 id="storefront-modal-title" class="storefront-modal-title-heading"></h3>
                 </div>
                 <button type="button" onclick="closeVideoModal()" class="storefront-modal-close-btn" aria-label="Fechar">✕</button>
@@ -614,7 +599,7 @@
 
             <div class="storefront-modal-cta-wrapper">
                 <a href="#pacotes" onclick="closeVideoModal()" class="contract-btn storefront-modal-cta-btn">
-                    <span>⚡ {{ __('Quero um Vídeo Neste Padrão') }}</span>
+                    <span>{{ __('Quero um Vídeo Neste Padrão') }}</span>
                     <span>→</span>
                 </a>
             </div>
@@ -626,7 +611,7 @@
         <div class="storefront-checkout-card">
             <div class="storefront-checkout-header">
                 <div class="storefront-modal-title-group">
-                    <span class="storefront-modal-format-pill">⚡ CHECKOUT</span>
+                    <span class="storefront-modal-format-pill">CHECKOUT</span>
                     <span id="checkout-modal-subscription-badge" class="pack-subscription-badge hidden"></span>
                     <div>
                         <h3 class="storefront-modal-title-heading">{{ __('Finalizar Contratação de Vídeos') }}</h3>
@@ -668,7 +653,6 @@
 
                     @if($currentCliente)
                         <div class="storefront-checkout-user-badge">
-                            <span>👤</span>
                             <div>
                                 <span class="badge-sub-label">{{ __('Autenticado como:') }}</span>
                                 <span class="badge-user-name">{{ $currentCliente->name }} ({{ $currentCliente->email }})</span>
@@ -678,10 +662,10 @@
                         <!-- Abas de Autenticação Rápida -->
                         <div class="storefront-checkout-auth-tabs">
                             <button type="button" class="storefront-checkout-auth-tab active" id="tab-btn-register" onclick="switchCheckoutAuthTab('register')">
-                                <span>✨</span> {{ __('Novo Cliente') }}
+{{ __('Novo Cliente') }}
                             </button>
                             <button type="button" class="storefront-checkout-auth-tab" id="tab-btn-login" onclick="switchCheckoutAuthTab('login')">
-                                <span>👤</span> {{ __('Já sou Cliente') }}
+{{ __('Já sou Cliente') }}
                             </button>
                         </div>
 
@@ -718,7 +702,7 @@
                     <!-- Dados Fiscais de Faturamento Opcionais -->
                     <details class="storefront-checkout-fiscal-details">
                         <summary class="storefront-checkout-fiscal-summary">
-                            <span>📋 {{ __('¿Deseas Factura Oficial con NIF / CIF?') }}</span>
+                            <span>{{ __('¿Deseas Factura Oficial con NIF / CIF?') }}</span>
                             <span class="fiscal-chevron">▾</span>
                         </summary>
                         <div class="fiscal-content-box">
@@ -754,8 +738,7 @@
                                 @if (!empty($activePaymentMethods['bizum']))
                                     <label class="storefront-checkout-payment-option method-bizum {{ $storefrontFirstActiveMethod === 'bizum' ? 'selected' : '' }}" data-method="bizum">
                                         <input type="radio" name="payment_method" value="bizum" {{ $storefrontFirstActiveMethod === 'bizum' ? 'checked' : '' }} class="sr-only">
-                                        <span class="payment-badge badge-bizum">⚡ {{ __('Mais Rápido') }}</span>
-                                        <span class="payment-icon">⚡</span>
+                                        <span class="payment-badge badge-bizum">{{ __('Mais Rápido') }}</span>
                                         <span class="payment-method-name">Bizum</span>
                                         <span class="payment-gateway-sub">BBVA</span>
                                     </label>
@@ -763,8 +746,7 @@
                                 @if (!empty($activePaymentMethods['redsys_card']))
                                     <label class="storefront-checkout-payment-option method-card {{ $storefrontFirstActiveMethod === 'redsys_card' ? 'selected' : '' }}" data-method="redsys_card">
                                         <input type="radio" name="payment_method" value="redsys_card" {{ $storefrontFirstActiveMethod === 'redsys_card' ? 'checked' : '' }} class="sr-only">
-                                        <span class="payment-badge badge-card">💳 {{ __('3D Secure') }}</span>
-                                        <span class="payment-icon">💳</span>
+                                        <span class="payment-badge badge-card">{{ __('3D Secure') }}</span>
                                         <span class="payment-method-name">{{ __('Tarjeta') }}</span>
                                         <span class="payment-gateway-sub">BBVA Redsys</span>
                                     </label>
@@ -772,8 +754,7 @@
                                 @if (!empty($activePaymentMethods['stripe']))
                                     <label class="storefront-checkout-payment-option method-stripe {{ $storefrontFirstActiveMethod === 'stripe' ? 'selected' : '' }}" data-method="stripe">
                                         <input type="radio" name="payment_method" value="stripe" {{ $storefrontFirstActiveMethod === 'stripe' ? 'checked' : '' }} class="sr-only">
-                                        <span class="payment-badge badge-stripe">🌐 {{ __('Global') }}</span>
-                                        <span class="payment-icon">🌐</span>
+                                        <span class="payment-badge badge-stripe">{{ __('Global') }}</span>
                                         <span class="payment-method-name">Stripe</span>
                                         <span class="payment-gateway-sub">Apple / Cartões</span>
                                     </label>
@@ -782,7 +763,7 @@
 
                             <!-- Caixa de Instrução Contextual Dinâmica -->
                             <div id="storefront-checkout-payment-hint" class="storefront-checkout-payment-hint hint-bizum">
-                                <span id="hint-icon">⚡</span>
+                                <span id="hint-icon"></span>
                                 <span id="hint-text">
                                     <strong>Bizum (BBVA):</strong> {{ __('Pagamento instantâneo via celular espanhol. Na próxima tela oficial do banco você informará seu número e confirmará a notificação no app com total segurança.') }}
                                 </span>
@@ -790,19 +771,18 @@
                         </div>
 
                         <button type="submit" id="storefront-checkout-submit-btn" class="storefront-checkout-submit-btn btn-bizum">
-                            <span id="submit-btn-icon">⚡</span>
+                            <span id="submit-btn-icon"></span>
                             <span id="submit-btn-text">{{ __('Pagar com Bizum (BBVA)') }}</span>
                             <span id="submit-btn-arrow">→</span>
                         </button>
                     @else
                         <div class="storefront-checkout-field">
                             <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
-                                ⚠️ {{ __('Nenhum método de pagamento disponível no momento. Entre em contato com a produtora.') }}
+                                {{ __('Nenhum método de pagamento disponível no momento. Entre em contato com a produtora.') }}
                             </div>
                         </div>
 
                         <button type="button" disabled class="storefront-checkout-submit-btn opacity-50 cursor-not-allowed">
-                            <span>🔒</span>
                             <span>{{ __('Pagamentos Indisponíveis') }}</span>
                         </button>
                     @endif
@@ -844,7 +824,7 @@
             if (subBadge) {
                 if (isSubscription) {
                     subBadge.classList.remove('hidden');
-                    subBadge.textContent = `🔄 Contrato de ${months} Meses · Recorrente`;
+                    subBadge.textContent = `Contrato de ${months} Meses · Recorrente`;
                 } else {
                     subBadge.classList.add('hidden');
                 }
@@ -1007,22 +987,22 @@
 
             if (method === 'bizum') {
                 hintBox.classList.add('hint-bizum');
-                if (hintIcon) hintIcon.textContent = '⚡';
+                if (hintIcon) hintIcon.textContent = '';
                 if (hintText) hintText.innerHTML = '<strong>Bizum (BBVA):</strong> {{ __("Pagamento instantâneo via celular espanhol. Na próxima tela oficial você informará seu número e confirmará a notificação no app com total segurança.") }}';
                 submitBtn.classList.add('btn-bizum');
-                submitBtn.innerHTML = `<span>⚡</span> <span>{{ __("Pagar") }} ${totalStr} {{ __("com Bizum (BBVA)") }}</span> <span>→</span>`;
+                submitBtn.innerHTML = `<span>{{ __("Pagar") }} ${totalStr} {{ __("com Bizum (BBVA)") }}</span> <span>→</span>`;
             } else if (method === 'redsys_card') {
                 hintBox.classList.add('hint-card');
-                if (hintIcon) hintIcon.textContent = '💳';
+                if (hintIcon) hintIcon.textContent = '';
                 if (hintText) hintText.innerHTML = '<strong>Tarjeta (BBVA Redsys):</strong> {{ __("Ambiente bancário com 3D Secure 2.2. Aceita cartões de crédito e débito com autenticação biométrica ou SMS oficial.") }}';
                 submitBtn.classList.add('btn-card');
-                submitBtn.innerHTML = `<span>💳</span> <span>{{ __("Pagar") }} ${totalStr} {{ __("com Tarjeta Segura") }}</span> <span>→</span>`;
+                submitBtn.innerHTML = `<span>{{ __("Pagar") }} ${totalStr} {{ __("com Tarjeta Segura") }}</span> <span>→</span>`;
             } else if (method === 'stripe') {
                 hintBox.classList.add('hint-stripe');
-                if (hintIcon) hintIcon.textContent = '🌐';
+                if (hintIcon) hintIcon.textContent = '';
                 if (hintText) hintText.innerHTML = '<strong>Stripe Internacional:</strong> {{ __("Checkout universal com conversão automática. Pague com 1 clique via Apple Pay, Google Pay ou cartões globais.") }}';
                 submitBtn.classList.add('btn-stripe');
-                submitBtn.innerHTML = `<span>🌐</span> <span>{{ __("Pagar") }} ${totalStr} {{ __("via Stripe Global") }}</span> <span>→</span>`;
+                submitBtn.innerHTML = `<span>{{ __("Pagar") }} ${totalStr} {{ __("via Stripe Global") }}</span> <span>→</span>`;
             }
         }
 
@@ -1126,7 +1106,7 @@
                     iframeBox.style.maxHeight = '56vh';
                 }
                 if (badgeEl) {
-                    badgeEl.textContent = '📱 9:16 SHORTS';
+                    badgeEl.textContent = '9:16 SHORTS';
                     badgeEl.style.background = '#ea580c';
                 }
             } else {
@@ -1143,7 +1123,7 @@
                     iframeBox.style.maxHeight = '56vh';
                 }
                 if (badgeEl) {
-                    badgeEl.textContent = '🎬 16:9 CINEMA';
+                    badgeEl.textContent = '16:9 CINEMA';
                     badgeEl.style.background = '#27272a';
                 }
             }

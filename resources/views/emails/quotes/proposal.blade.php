@@ -138,7 +138,7 @@ Un cordial saludo,
             @endif
 
             <div class="attachment-box">
-                📄 <strong>Presupuesto oficial en PDF adjunto:</strong> <code>Presupuesto_{{ $quote->number }}.pdf</code>
+                <strong>Presupuesto oficial en PDF adjunto:</strong> <code>Presupuesto_{{ $quote->number }}.pdf</code>
             </div>
 
             @if(!empty($quote->approval_token))

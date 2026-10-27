@@ -17,7 +17,7 @@
         </div>
         <div class="flex items-center gap-2">
             <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700">
-                🏢 {{ $tenant->name }}
+                {{ $tenant->name }}
             </span>
         </div>
     </div>
@@ -26,14 +26,13 @@
 
     @if (session('status'))
         <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2">
-            <span>✅</span>
             <span>{{ session('status') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
         <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold space-y-1">
-            <p class="font-bold">⚠️ {{ __('Corrija os erros abaixo para salvar:') }}</p>
+            <p class="font-bold">{{ __('Corrija os erros abaixo para salvar:') }}</p>
             <ul class="list-disc pl-5 space-y-0.5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -48,7 +47,7 @@
         <div class="pb-4 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                    <span>🏦</span> {{ __('Terminal Virtual da Produtora') }}
+{{ __('Terminal Virtual da Produtora') }}
                 </h2>
                 <p class="text-xs text-zinc-400 mt-0.5">
                     {{ __('As transações aprovadas creditam diretamente na conta bancária vinculada ao seu TPV.') }}
@@ -129,10 +128,10 @@
                         id="redsys_environment"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="test" {{ old('redsys_environment', $environment) === 'test' ? 'selected' : '' }}>
-                        🧪 {{ __('Testes / Sandbox (sis-t.redsys.es)') }}
+                        {{ __('Testes / Sandbox (sis-t.redsys.es)') }}
                     </option>
                     <option value="live" {{ old('redsys_environment', $environment) === 'live' ? 'selected' : '' }}>
-                        🚀 {{ __('Produção Real (sis.redsys.es)') }}
+                        {{ __('Produção Real (sis.redsys.es)') }}
                     </option>
                 </select>
                 <p class="text-[11px] text-zinc-500 mt-1">{{ __('Alterne para Produção quando o banco homologar.') }}</p>
@@ -157,7 +156,7 @@
         </div>
 
         <div class="p-4 rounded-xl bg-blue-500/5 border border-blue-500/15 text-xs text-zinc-300 space-y-1">
-            <p class="font-bold text-blue-400">ℹ️ {{ __('Configuração de Notificação Online no Painel do Banco:') }}</p>
+            <p class="font-bold text-blue-400">{{ __('Configuração de Notificação Online no Painel do Banco:') }}</p>
             <p class="text-[11px] text-zinc-400">
                 {{ __('No painel administrativo Redsys da sua produtora, configure a URL de Notificação Online HTTP como:') }}
                 <code class="px-2 py-0.5 rounded bg-zinc-950 text-blue-300 border border-zinc-800 font-mono">{{ url('/webhooks/redsys') }}</code>
@@ -167,7 +166,6 @@
         <div class="pt-4 border-t border-zinc-800 flex items-center justify-end">
             <button type="submit"
                     class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer">
-                <span>💾</span>
                 <span>{{ __('Salvar Credenciais do TPV') }}</span>
             </button>
         </div>

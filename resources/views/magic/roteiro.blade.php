@@ -34,7 +34,7 @@
         <!-- Feedback Alerts -->
         @if(session('success'))
             <div class="rounded-2xl bg-emerald-950/40 border border-emerald-500/40 p-4 text-emerald-300 text-xs font-semibold flex items-start gap-3">
-                <span class="text-lg">🎉</span>
+                <span class="text-lg"></span>
                 <div>
                     <p class="font-bold text-emerald-200">{{ __('Ação Registrada com Sucesso!') }}</p>
                     <p class="mt-0.5">{{ session('success') }}</p>
@@ -44,7 +44,7 @@
 
         @if(session('info'))
             <div class="rounded-2xl bg-purple-950/40 border border-purple-500/40 p-4 text-purple-300 text-xs font-semibold flex items-start gap-3">
-                <span class="text-lg">ℹ️</span>
+                <span class="text-lg"></span>
                 <div>
                     <p class="font-bold text-purple-200">{{ __('Aviso') }}</p>
                     <p class="mt-0.5">{{ session('info') }}</p>
@@ -74,15 +74,15 @@
                     </span>
                     @if($roteiro->status === 'submitted')
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
-                            ⏳ {{ __('Aguardando Sua Aprovação') }}
+                            {{ __('Aguardando Sua Aprovação') }}
                         </span>
                     @elseif($roteiro->status === 'approved')
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            ✅ {{ __('Roteiro Aprovado') }}
+                            {{ __('Roteiro Aprovado') }}
                         </span>
                     @elseif($roteiro->status === 'rejected')
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                            ✏️ {{ __('Ajustes Solicitados') }}
+                            {{ __('Ajustes Solicitados') }}
                         </span>
                     @else
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-zinc-800 text-zinc-300">
@@ -105,7 +105,6 @@
             <div class="border-t border-zinc-800 pt-4">
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="text-xs font-extrabold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
-                        <span>📝</span>
                         <span>{{ __('Roteiro Audiovisual & Copy') }}</span>
                     </h2>
                     <span class="text-[10px] text-zinc-500 font-medium">
@@ -147,7 +146,6 @@
                     <details class="group bg-zinc-950/40 border border-zinc-800 rounded-2xl p-3 transition">
                         <summary class="flex items-center justify-between text-xs font-bold text-zinc-400 hover:text-zinc-200 cursor-pointer list-none">
                             <span class="flex items-center gap-1.5">
-                                <span>✏️</span>
                                 <span>{{ __('Precisa de ajustes ou alterações?') }}</span>
                             </span>
                             <span class="group-open:rotate-180 transition-transform">▼</span>
@@ -173,7 +171,6 @@
             @elseif($roteiro->status === 'approved')
                 <div class="border-t border-zinc-800 pt-4 text-center">
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold">
-                        <span>✨</span>
                         <span>{{ __('Roteiro já Aprovado! Produção em andamento.') }}</span>
                     </div>
                 </div>

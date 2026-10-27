@@ -20,8 +20,8 @@
         window.NUME_I18N = {
             'watch_shorts': {!! json_encode(__('Assistir Shorts'), JSON_UNESCAPED_UNICODE) !!},
             'watch_video': {!! json_encode(__('Assistir Vídeo'), JSON_UNESCAPED_UNICODE) !!},
-            'retention_badge': {!! json_encode(__('⚡ 94% Retenção'), JSON_UNESCAPED_UNICODE) !!},
-            'no_videos_found': {!! json_encode(__('⚡ Nenhum vídeo encontrado para este formato no momento.'), JSON_UNESCAPED_UNICODE) !!},
+            'retention_badge': {!! json_encode(__('94% Retenção'), JSON_UNESCAPED_UNICODE) !!},
+            'no_videos_found': {!! json_encode(__('Nenhum vídeo encontrado para este formato no momento.'), JSON_UNESCAPED_UNICODE) !!},
             'total': {!! json_encode(__('Total'), JSON_UNESCAPED_UNICODE) !!},
             'from_price': {!! json_encode(__('Desde'), JSON_UNESCAPED_UNICODE) !!},
             'optional_singular': {!! json_encode(__('opcional'), JSON_UNESCAPED_UNICODE) !!},
@@ -70,19 +70,19 @@
 
                 <!-- Language Switcher -->
                 <li class="nav-lang-item">
-                    <a href="{{ route('lang.switch', 'pt_BR') }}" class="lang-link {{ session('locale', 'pt_BR') === 'pt_BR' ? 'opacity-100' : 'opacity-40' }}" title="Português">🇧🇷</a>
+                    <a href="{{ route('lang.switch', 'pt_BR') }}" class="lang-link {{ session('locale', 'pt_BR') === 'pt_BR' ? 'opacity-100' : 'opacity-40' }}" title="Português">BR</a>
                     <span class="nav-lang-divider">|</span>
-                    <a href="{{ route('lang.switch', 'es') }}" class="lang-link {{ session('locale') === 'es' ? 'opacity-100' : 'opacity-40' }}" title="Español">🇪🇸</a>
+                    <a href="{{ route('lang.switch', 'es') }}" class="lang-link {{ session('locale') === 'es' ? 'opacity-100' : 'opacity-40' }}" title="Español">ES</a>
                 </li>
 
                 <!-- Portal do Cliente / Login -->
                 @if(auth('cliente')->check())
-                    <li><a href="{{ route('portal.dashboard') }}" class="portal-btn">👤 {{ __('Portal do Cliente') }}</a></li>
+                    <li><a href="{{ route('portal.dashboard') }}" class="portal-btn">{{ __('Portal do Cliente') }}</a></li>
                 @elseif(auth('web')->check())
-                    <li><a href="{{ route('productions.index') }}" class="portal-btn">⚡ {{ __('Área da Produtora') }}</a></li>
-                    <li><a href="{{ route('portal.login') }}" class="portal-btn">👤 {{ __('Portal do Cliente') }}</a></li>
+                    <li><a href="{{ route('productions.index') }}" class="portal-btn">{{ __('Área da Produtora') }}</a></li>
+                    <li><a href="{{ route('portal.login') }}" class="portal-btn">{{ __('Portal do Cliente') }}</a></li>
                 @else
-                    <li><a href="{{ route('portal.login') }}" class="portal-btn">👤 {{ __('Portal do Cliente') }}</a></li>
+                    <li><a href="{{ route('portal.login') }}" class="portal-btn">{{ __('Portal do Cliente') }}</a></li>
                 @endif
 
                 <li><a href="#planos" class="contract-btn">{{ __('Ver Planos') }}</a></li>
@@ -110,7 +110,7 @@
                     {{ __('Transformando estratégia, ganchos visuais e produção 4K em vídeos de alta retenção no feed. Inteligência audiovisual com Sofi Copilot.') }}
                 </p>
                 <div class="footer-social footer-trust-note">
-                    ⚡ {{ __('Pagamentos via Bizum BBVA, Tarjeta Redsys e Stripe') }}
+                    {{ __('Pagamentos via Bizum BBVA, Tarjeta Redsys e Stripe') }}
                 </div>
             </div>
             

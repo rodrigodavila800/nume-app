@@ -105,11 +105,9 @@
         </div>
         <div class="flex items-center gap-2 shrink-0">
             <a href="{{ route('api.v1.integrations.make') }}" class="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition">
-                <span>🟣</span>
                 <span>{{ __('Blueprint Make.com') }}</span>
             </a>
             <a href="{{ route('api.v1.integrations.n8n') }}" class="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition">
-                <span>🟠</span>
                 <span>{{ __('Workflow n8n') }}</span>
             </a>
         </div>
@@ -190,7 +188,7 @@
     <div class="bg-zinc-900 border border-purple-500/30 rounded-2xl p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-center gap-3">
-                <span class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-lg">🤖</span>
+                <span class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-lg"></span>
                 <div>
                     <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
                         <span>{{ __('Conector ChatGPT Custom GPT & Claude (Sofi Ops)') }}</span>

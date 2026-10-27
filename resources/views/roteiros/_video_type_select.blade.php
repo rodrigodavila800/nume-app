@@ -4,7 +4,7 @@
     <select id="sofiVideoType" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-orange-500 transition">
         @foreach($videoTypes as $videoType)
             <option value="{{ $videoType->id }}" data-blocks="{{ collect($videoType->blocks)->map(fn ($b) => $b['name'].' '.$b['start'].'–'.$b['end'].'s')->implode(' · ') }}" @selected((int) $selectedVideoType === $videoType->id)>
-                🎬 {{ $videoType->name }}
+                {{ $videoType->name }}
             </option>
         @endforeach
         <option value="" @selected(! $selectedVideoType)>{{ __('Sem tipo (framework clássico)') }}</option>

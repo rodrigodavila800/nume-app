@@ -25,7 +25,7 @@
         @if($quote->exists)
             <div class="flex flex-wrap items-center gap-2">
                 <span class="uppercase text-xs font-bold text-orange-400">{{ $quote->status }}</span>
-                <a href="{{ route('quotes.pdf', $quote) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition border border-zinc-700">📄 {{ __('Baixar PDF') }}</a>
+                <a href="{{ route('quotes.pdf', $quote) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition border border-zinc-700">{{ __('Baixar PDF') }}</a>
             </div>
         @endif
     </div>

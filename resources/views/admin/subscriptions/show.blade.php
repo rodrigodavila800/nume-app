@@ -46,7 +46,6 @@
                 <form action="{{ route('admin.subscriptions.renew', $subscription) }}" method="POST" onsubmit="return confirm('Confirmar avanço de ciclo e liberação de nova cota de vídeos?');">
                     @csrf
                     <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-emerald-600 text-zinc-200 hover:text-white border border-zinc-700 hover:border-emerald-500 transition cursor-pointer">
-                        <span>🔄</span>
                         <span>{{ __('Avançar Ciclo / Renovar Cota') }}</span>
                     </button>
                 </form>
@@ -68,7 +67,6 @@
         {{-- Coluna 1: Dados do Cliente e Faturamento --}}
         <div class="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-6 shadow-xl">
             <h2 class="text-sm font-extrabold uppercase tracking-wider text-orange-400 flex items-center gap-2">
-                <span>👤</span>
                 <span>{{ __('Dados do Cliente') }}</span>
             </h2>
 
@@ -113,7 +111,6 @@
                     <div class="pt-2">
                         <a href="{{ route('admin.invoices.download', $subscription) }}"
                            class="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-orange-600 text-zinc-300 hover:text-white text-xs font-bold transition">
-                            <span>📄</span>
                             <span>{{ __('Baixar Factura Oficial AEAT') }}</span>
                         </a>
                     </div>
@@ -129,7 +126,6 @@
                 <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
                     <div>
                         <h2 class="text-sm font-extrabold text-white flex items-center gap-2">
-                            <span>🎬</span>
                             <span>{{ __('Consumo de Cota de Vídeos — Ciclo ') }}{{ $subscription->subscription_cycle_current ?? 1 }} / {{ $subscription->subscription_cycles_total ?? $subscription->commitment_months ?? 1 }}</span>
                         </h2>
                         <p class="text-xs text-zinc-400 mt-0.5">{{ __('Vídeos que o cliente tem direito de produzir e publicar durante o ciclo vigente.') }}</p>
@@ -158,7 +154,6 @@
             <div class="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4 shadow-xl">
                 <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
                     <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-                        <span>📁</span>
                         <span>{{ __('Produções Vinculadas a Este Contrato') }}</span>
                     </h3>
                     <a href="{{ route('productions.create', ['cliente_id' => $subscription->cliente_id, 'pack_purchase_id' => $subscription->id]) }}"

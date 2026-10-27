@@ -10,7 +10,7 @@
         <div>
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                    🔄 {{ __('Gestão de Assinaturas') }}
+                    {{ __('Gestão de Assinaturas') }}
                 </span>
                 <span class="text-xs text-zinc-500 font-mono">Receita Recorrente & Cotas</span>
             </div>
@@ -25,7 +25,6 @@
         <div class="flex items-center gap-3">
             <a href="{{ route('admin.plans.index') }}"
                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 transition active:scale-95">
-                <span>🔁</span>
                 <span>{{ __('Gerenciar Catálogo de Planos') }}</span>
             </a>
         </div>
@@ -63,7 +62,7 @@
         <div class="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 shadow-xl">
             <div class="flex items-center justify-between text-zinc-400 text-xs font-bold uppercase tracking-wider">
                 <span>{{ __('Cota de Vídeos / Ciclo') }}</span>
-                <span class="text-orange-400 font-mono text-xs">🎬</span>
+                <span class="text-orange-400 font-mono text-xs"></span>
             </div>
             <div class="mt-3 flex items-baseline gap-1">
                 <span class="text-3xl font-extrabold text-white">{{ $kpis['total_quota'] }}</span>
@@ -111,10 +110,10 @@
                 </label>
                 <select name="status" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-200 focus:bg-zinc-900 focus:border-orange-500 focus:outline-none transition">
                     <option value="all">{{ __('Todos os Contratos') }}</option>
-                    <option value="active" @selected(request('status') === 'active')>🟢 {{ __('Ativas (Em vigor)') }}</option>
-                    <option value="past_due" @selected(request('status') === 'past_due')>🟡 {{ __('Pagamento Pendente') }}</option>
-                    <option value="canceled" @selected(request('status') === 'canceled')>🔴 {{ __('Canceladas / Rescindidas') }}</option>
-                    <option value="completed" @selected(request('status') === 'completed')>⚪ {{ __('Finalizadas (Ciclos Concluídos)') }}</option>
+                    <option value="active" @selected(request('status') === 'active')>{{ __('Ativas (Em vigor)') }}</option>
+                    <option value="past_due" @selected(request('status') === 'past_due')>{{ __('Pagamento Pendente') }}</option>
+                    <option value="canceled" @selected(request('status') === 'canceled')>{{ __('Canceladas / Rescindidas') }}</option>
+                    <option value="completed" @selected(request('status') === 'completed')>{{ __('Finalizadas (Ciclos Concluídos)') }}</option>
                 </select>
             </div>
 
@@ -170,7 +169,7 @@
                             <td class="px-5 py-4">
                                 <span class="font-bold text-white block">{{ $sub->pack?->name ?? 'Plano Customizado' }}</span>
                                 <span class="inline-flex items-center gap-1 text-[10px] text-zinc-400 font-mono mt-0.5">
-                                    🔁 {{ $sub->subscription_interval === 'quarter' ? __('Trimestral') : __('Mensal') }}
+                                    {{ $sub->subscription_interval === 'quarter' ? __('Trimestral') : __('Mensal') }}
                                     · {{ $sub->commitment_months ?? 1 }}m {{ __('fidelidade') }}
                                 </span>
                             </td>
@@ -215,7 +214,6 @@
                             <td class="px-5 py-4 font-mono text-[11px]">
                                 @if($sub->subscription_renews_at)
                                     <span class="text-zinc-300 flex items-center gap-1">
-                                        <span>📅</span>
                                         <span>{{ $sub->subscription_renews_at->format('d/m/Y') }}</span>
                                     </span>
                                 @else
@@ -256,7 +254,6 @@
                                     <a href="{{ route('admin.subscriptions.show', $sub) }}"
                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-zinc-300 bg-zinc-800 hover:bg-orange-600 hover:text-white border border-zinc-700 transition"
                                        title="{{ __('Visualizar Contrato') }}">
-                                        <span>👁️</span>
                                         <span>{{ __('Contrato') }}</span>
                                     </a>
                                 </div>
@@ -265,7 +262,7 @@
                     @empty
                         <tr>
                             <td colspan="8" class="px-5 py-12 text-center text-zinc-500">
-                                <div class="text-3xl mb-2">🔄</div>
+                                <div class="text-3xl mb-2"></div>
                                 <h3 class="text-sm font-bold text-white">{{ __('Nenhuma assinatura ativa encontrada') }}</h3>
                                 <p class="text-xs text-zinc-400 max-w-sm mx-auto mt-1">
                                     {{ __('Quando seus clientes contratarem Planos de Vídeo Recorrentes na vitrine ou portal, os contratos aparecerão detalhados aqui.') }}

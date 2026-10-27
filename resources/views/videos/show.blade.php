@@ -35,19 +35,19 @@
             @if ($video->hasSourceFile())
                 <a href="{{ $video->downloadUrl() }}"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-extrabold shadow-lg shadow-orange-600/20 transition">
-                    ⬇️ {{ __('Baixar arquivo do vídeo') }}
+                    {{ __('Baixar arquivo do vídeo') }}
                 </a>
             @elseif ($video->video_url)
                 <a href="{{ $video->video_url }}" target="_blank" rel="noopener noreferrer"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold shadow-lg shadow-red-600/20 transition">
                     @if ($video->video_type === 'youtube' && $video->is_vertical)
-                        ▶️ {{ __('Assistir no YouTube Shorts') }} ↗
+                        ▶ {{ __('Assistir no YouTube Shorts') }} ↗
                     @elseif ($video->video_type === 'youtube')
-                        ▶️ {{ __('Assistir no YouTube') }} ↗
+                        ▶ {{ __('Assistir no YouTube') }} ↗
                     @elseif ($video->video_type === 'vimeo')
-                        ▶️ {{ __('Assistir no Vimeo') }} ↗
+                        ▶ {{ __('Assistir no Vimeo') }} ↗
                     @else
-                        ▶️ {{ __('Abrir Vídeo na Web') }} ↗
+                        ▶ {{ __('Abrir Vídeo na Web') }} ↗
                     @endif
                 </a>
             @endif
@@ -55,21 +55,21 @@
             @can('update', $video)
                 <a href="{{ route('videos.edit', ['production' => $production, 'video' => $video]) }}"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition">
-                    ✏️ {{ __('Editar') }}
+                    {{ __('Editar') }}
                 </a>
 
                 @if ($video->status === 'processing')
                     <form action="{{ route('videos.mark-ready', ['production' => $production, 'video' => $video]) }}" method="POST" class="inline">
                         @csrf
                         <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
-                            ⚡ {{ __('Marcar como Pronto') }}
+                            {{ __('Marcar como Pronto') }}
                         </button>
                     </form>
                 @elseif ($video->status === 'ready')
                     <form action="{{ route('videos.publish', ['production' => $production, 'video' => $video]) }}" method="POST" class="inline">
                         @csrf
                         <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
-                            🚀 {{ __('Publicar Vídeo') }}
+                            {{ __('Publicar Vídeo') }}
                         </button>
                     </form>
                 @endif
@@ -79,7 +79,7 @@
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-950 hover:bg-rose-900 text-rose-300 text-xs font-bold transition">
-                            🗑️ {{ __('Excluir') }}
+                            {{ __('Excluir') }}
                         </button>
                     </form>
                 @endif
@@ -96,7 +96,6 @@
 
     @if (session('error'))
         <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold flex items-center gap-2">
-            <span>⚠️</span>
             <span>{{ session('error') }}</span>
         </div>
     @endif
@@ -107,7 +106,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white font-extrabold shadow-md shadow-orange-900/30">
-                        ✨
+                        
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -116,7 +115,7 @@
                             </h3>
                             @if ($video->isAssetLocked())
                                 <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                    🔒 {{ __('Custódia 50/50 Ativa') }}
+                                    {{ __('Custódia 50/50 Ativa') }}
                                 </span>
                             @else
                                 <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -140,7 +139,6 @@
                         <input type="hidden" name="channel" value="email">
                         <button type="submit" 
                             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 shadow-md shadow-orange-950/40 transition active:scale-95 cursor-pointer">
-                            <span>✉️</span>
                             <span>{{ __('Enviar E-mail de Aprovação') }}</span>
                         </button>
                     </form>
@@ -148,14 +146,12 @@
                     <!-- Abertura Direta do WhatsApp -->
                     <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer"
                         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-950/40 transition active:scale-95">
-                        <span>📲</span>
                         <span>{{ __('Abrir WhatsApp') }}</span>
                     </a>
 
                     <!-- Botão Copiar Texto Sofi -->
                     <button type="button" onclick="copySofiWhatsAppText()" id="btn-copy-whatsapp"
                         class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition active:scale-95 cursor-pointer">
-                        <span>📋</span>
                         <span id="label-copy-whatsapp">{{ __('Copiar Mensagem') }}</span>
                     </button>
                 </div>
@@ -204,11 +200,11 @@
                 <div class="flex items-center gap-1 bg-zinc-950 border border-zinc-800 p-1 rounded-xl text-[11px] font-bold">
                     <button type="button" onclick="setPlayerAspect('vertical')" id="btn-aspect-vertical"
                             class="px-2.5 py-1 rounded-lg transition {{ $isVertical ? 'bg-orange-600 text-white' : 'text-zinc-400 hover:text-white' }}">
-                        📱 9:16 (Vertical)
+                        9:16 (Vertical)
                     </button>
                     <button type="button" onclick="setPlayerAspect('horizontal')" id="btn-aspect-horizontal"
                             class="px-2.5 py-1 rounded-lg transition {{ !$isVertical ? 'bg-orange-600 text-white' : 'text-zinc-400 hover:text-white' }}">
-                        🖥️ 16:9 (Horizontal)
+                        16:9 (Horizontal)
                     </button>
                 </div>
 
@@ -275,7 +271,7 @@
             <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Duração') }}</p>
             <p class="text-sm font-bold text-white mt-1">
                 @if ($video->duration_seconds)
-                    ⏱️ {{ floor($video->duration_seconds / 60) }}:{{ str_pad($video->duration_seconds % 60, 2, '0', STR_PAD_LEFT) }}
+                    {{ floor($video->duration_seconds / 60) }}:{{ str_pad($video->duration_seconds % 60, 2, '0', STR_PAD_LEFT) }}
                 @else
                     {{ __('Não informada') }}
                 @endif
@@ -339,7 +335,7 @@
         <div class="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-orange-950/20 border border-orange-500/20 space-y-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="text-lg">✨</span>
+                    <span class="text-lg"></span>
                     <div>
                         <h3 class="text-sm font-extrabold text-white">{{ __('Sofi SEO Pack: Estratégia de Postagem') }}</h3>
                         <p class="text-[11px] text-zinc-400">{{ __('Metadados otimizados para indexação orgânica e retenção de público.') }}</p>
@@ -400,7 +396,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800 pb-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="text-xl">📡</span>
+                    <span class="text-xl"></span>
                     <h2 class="text-base sm:text-lg font-extrabold text-white">{{ __('Fluxo de Entrega & Distribuição Social Multiplataforma') }}</h2>
                 </div>
                 <p class="text-xs text-zinc-400 mt-1">
@@ -423,7 +419,7 @@
                         @if ($video->isPublished())
                             <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">✓ {{ __('Entregue') }}</span>
                         @else
-                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">⏳ {{ ucfirst($video->status) }}</span>
+                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">{{ ucfirst($video->status) }}</span>
                         @endif
                     </div>
                     <p class="text-xs font-bold text-white">{{ __('Corte & Aprovação no SaaS') }}</p>
@@ -439,7 +435,7 @@
                     <div class="mt-3 pt-3 border-t border-zinc-900 flex items-center justify-between">
                         <span class="text-[10px] text-zinc-500">{{ __('Destino do Arquivo:') }}</span>
                         <a href="{{ $video->downloadUrl() }}" class="text-[11px] font-bold text-orange-400 hover:text-orange-300 transition flex items-center gap-1">
-                            <span>{{ __('Arquivo hospedado na NUME') }}</span> ⬇️
+                            <span>{{ __('Arquivo hospedado na NUME') }}</span> 
                         </a>
                     </div>
                 @elseif ($video->video_url)
@@ -458,9 +454,9 @@
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">2. {{ __('Otimização Sofi AI') }}</span>
                         @if ($video->sofi_seo_generated_at)
-                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/30">✨ {{ __('Otimizado') }}</span>
+                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/30">{{ __('Otimizado') }}</span>
                         @else
-                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-zinc-800 text-zinc-400">⏳ {{ __('Pendente') }}</span>
+                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-zinc-800 text-zinc-400">{{ __('Pendente') }}</span>
                         @endif
                     </div>
                     <p class="text-xs font-bold text-white">{{ __('Estratégia de SEO Orgânico') }}</p>
@@ -491,7 +487,7 @@
                         <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">3. {{ __('Disparo Multi-Redes') }}</span>
                         @if ($hasPublications)
                             <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                                🚀 {{ ucfirst($latestPub->status) }}
+                                {{ ucfirst($latestPub->status) }}
                             </span>
                         @else
                             <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-zinc-800 text-zinc-400">{{ __('Não Disparado') }}</span>
@@ -519,7 +515,7 @@
         <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-orange-600/10 border border-orange-500/20 flex items-center justify-center text-orange-400 font-extrabold text-sm">
-                    👤
+                    
                 </div>
                 <div>
                     <p class="text-xs font-bold text-white">
@@ -594,7 +590,7 @@
 
                                 @if ($pub->isScheduled() && $pub->scheduled_at)
                                     <p class="text-[11px] text-blue-400">
-                                        ⏰ {{ __('Agendado para:') }} {{ $pub->scheduled_at->format('d/m/Y H:i') }}
+                                        {{ __('Agendado para:') }} {{ $pub->scheduled_at->format('d/m/Y H:i') }}
                                     </p>
                                 @endif
                             </div>
@@ -614,7 +610,7 @@
                                     @csrf
                                     <button type="submit" title="{{ __('Atualizar status junto à API social') }}"
                                             class="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition">
-                                        🔄
+                                        
                                     </button>
                                 </form>
                             </div>
@@ -624,7 +620,7 @@
             </div>
         @else
             <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-start gap-3">
-                <span class="text-lg">ℹ️</span>
+                <span class="text-lg"></span>
                 <div>
                     <p class="text-xs font-bold text-white">{{ __('Nenhum disparo social direto registrado para este vídeo ainda') }}</p>
                     <p class="text-[11px] text-zinc-400 mt-0.5">
@@ -640,7 +636,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h3 class="text-xs font-extrabold uppercase tracking-wider text-orange-400">
-                            🚀 {{ __('Disparo Direto para as Redes do Cliente') }}
+                            {{ __('Disparo Direto para as Redes do Cliente') }}
                         </h3>
                         <p class="text-[11px] text-zinc-400 mt-0.5">
                             {{ __('Dispare imediatamente ou agende a postagem deste vídeo utilizando as credenciais e DNA de marca do cliente.') }}
@@ -713,11 +709,10 @@
                     <!-- Aviso de Metadados Injetados -->
                     <div class="p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-[11px] text-zinc-300 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-2">
-                            <span>✨</span>
                             <span>{{ __('A Sofi injetará automaticamente o título (:title), a legenda completa e as hashtags calibradas.', ['title' => Str::limit($video->sofi_seo_title ?: $video->title, 45)]) }}</span>
                         </div>
                         <button type="submit" class="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-extrabold shadow-lg shadow-orange-600/30 transition shrink-0">
-                            🚀 {{ __('Disparar Postagem Agora') }}
+                            {{ __('Disparar Postagem Agora') }}
                         </button>
                     </div>
                 </form>

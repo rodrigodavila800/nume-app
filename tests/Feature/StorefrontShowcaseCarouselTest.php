@@ -33,10 +33,12 @@ class StorefrontShowcaseCarouselTest extends TestCase
         $response = $this->get('/vitrine/nume-test');
 
         $response->assertStatus(200);
-        $response->assertSee('swiper-3d-portfolio');
-        $response->assertSee('swiper-3d-prev');
-        $response->assertSee('swiper-3d-next');
-        $response->assertSee('swiper-3d-pagination');
+        $response->assertSee('orbital-carousel-wrapper');
+        $response->assertSee('id="orbitalStage"', false);
+        $response->assertSee('id="carousel"', false);
+        $response->assertSee('id="visualsSwitch"', false);
+        $response->assertSee('id="zoomSwitch"', false);
+        $response->assertSee('orbital-spacing-step');
         $response->assertSee('portfolio-format-tabs');
         $response->assertSee('Todos os Formatos');
         $response->assertSee('Shorts & Reels (9:16)');

@@ -53,7 +53,7 @@
                             @endif
                         </div>
                         @if($lead->isStale())
-                            <p class="text-[10px] font-bold text-amber-400">⏰ {{ __('Sem contato há mais de :days dias', ['days' => \App\Models\Lead::STALE_DAYS]) }}</p>
+                            <p class="text-[10px] font-bold text-amber-400">{{ __('Sem contato há mais de :days dias', ['days' => \App\Models\Lead::STALE_DAYS]) }}</p>
                         @endif
                     </a>
                 @empty

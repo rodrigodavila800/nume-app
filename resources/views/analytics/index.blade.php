@@ -51,7 +51,7 @@
             <div class="flex items-center justify-between text-zinc-400 mb-3">
                 <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Ticket Médio (AOV)') }}</span>
                 <div class="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center font-bold text-sm">
-                    🎯
+                    
                 </div>
             </div>
             <div>
@@ -69,7 +69,7 @@
             <div class="flex items-center justify-between text-zinc-400 mb-3">
                 <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Eficiência de Roteiros') }}</span>
                 <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm">
-                    ⚡
+                    
                 </div>
             </div>
             <div>
@@ -86,7 +86,7 @@
             <div class="flex items-center justify-between text-zinc-400 mb-3">
                 <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Base de Clientes') }}</span>
                 <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-sm">
-                    👥
+                    
                 </div>
             </div>
             <div>
@@ -106,7 +106,6 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div>
                     <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                        <span>💳</span>
                         <span>{{ __('Mix de Meios de Pagamento & Liquidação') }}</span>
                     </h3>
                     <p class="text-[11px] text-zinc-500 mt-0.5">
@@ -124,7 +123,7 @@
                 <!-- Bizum -->
                 <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <span class="text-lg">⚡</span>
+                        <span class="text-lg"></span>
                         <div>
                             <div class="text-xs font-bold text-white">Bizum (BBVA)</div>
                             <div class="text-[10px] text-zinc-500">{{ $gatewaysBreakdown['bizum']['count'] }} {{ __('vendas') }}</div>
@@ -138,7 +137,7 @@
                 <!-- Tarjeta Redsys -->
                 <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <span class="text-lg">💳</span>
+                        <span class="text-lg"></span>
                         <div>
                             <div class="text-xs font-bold text-white">Tarjeta (BBVA)</div>
                             <div class="text-[10px] text-zinc-500">{{ $gatewaysBreakdown['redsys_card']['count'] }} {{ __('vendas') }}</div>
@@ -152,7 +151,7 @@
                 <!-- Stripe -->
                 <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <span class="text-lg">🌐</span>
+                        <span class="text-lg"></span>
                         <div>
                             <div class="text-xs font-bold text-white">Stripe / Global</div>
                             <div class="text-[10px] text-zinc-500">{{ $gatewaysBreakdown['stripe']['count'] }} {{ __('vendas') }}</div>
@@ -171,7 +170,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-800/80">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-2xl bg-orange-600/20 border border-orange-500/30 text-orange-400 flex items-center justify-center text-xl shrink-0">
-                    🤖
+                    
                 </div>
                 <div>
                     <h2 class="text-base font-extrabold text-white flex items-center gap-2">

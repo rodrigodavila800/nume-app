@@ -17,7 +17,7 @@
         </div>
         <div class="flex items-center gap-2">
             <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 border border-zinc-700">
-                🏢 {{ $tenant->name }}
+                {{ $tenant->name }}
             </span>
         </div>
     </div>
@@ -26,14 +26,13 @@
 
     @if (session('status'))
         <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2">
-            <span>✅</span>
             <span>{{ session('status') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
         <div class="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold space-y-1">
-            <p class="font-bold">⚠️ {{ __('Corrija os erros abaixo para salvar:') }}</p>
+            <p class="font-bold">{{ __('Corrija os erros abaixo para salvar:') }}</p>
             <ul class="list-disc pl-5 space-y-0.5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -48,7 +47,7 @@
         <div class="pb-4 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                    <span>🏛️</span> {{ __('Conta Bancária de Depósito') }}
+{{ __('Conta Bancária de Depósito') }}
                 </h2>
                 <p class="text-xs text-zinc-400 mt-0.5">
                     {{ __('Estes dados serão apresentados ao cliente na vitrine e portal após a escolha de pagamento por transferência.') }}
@@ -130,7 +129,6 @@
 
         <div class="p-4 rounded-xl bg-zinc-950/70 border border-zinc-800 text-zinc-400 text-xs space-y-2">
             <div class="flex items-center gap-2 font-bold text-zinc-200">
-                <span>🛡️</span>
                 <span>{{ __('Fluxo de Confirmação & Faturamento') }}</span>
             </div>
             <ul class="list-disc pl-5 space-y-1 text-zinc-400 text-[11px]">
@@ -143,7 +141,7 @@
 
         <div class="flex justify-end pt-4 border-t border-zinc-800">
             <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-sm transition-all focus:ring-2 focus:ring-emerald-500/50">
-                💾 {{ __('Salvar Dados Bancários') }}
+                {{ __('Salvar Dados Bancários') }}
             </button>
         </div>
     </form>

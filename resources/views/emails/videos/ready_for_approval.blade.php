@@ -166,7 +166,7 @@
 
             <!-- Card de Detalhes do Vídeo -->
             <div class="video-card">
-                <h3 class="video-title">🎬 {{ $video->title ?: $production->title }}</h3>
+                <h3 class="video-title">{{ $video->title ?: $production->title }}</h3>
                 <p class="video-production">
                     Produção: <strong>{{ $production->title }}</strong>
                     @if($video->duration_seconds)
@@ -178,7 +178,7 @@
             @if($isLocked)
                 <!-- Aviso de Custódia & 50/50 -->
                 <div class="escrow-alert">
-                    <p class="escrow-alert-title">🔒 Prévia de Aprovação Disponível</p>
+                    <p class="escrow-alert-title">Prévia de Aprovação Disponível</p>
                     <p class="escrow-alert-desc">
                         Você pode assistir à prévia completa agora mesmo no portal. Ao confirmar a aprovação, o saldo restante de <strong>{{ number_format($balanceAmount, 2, ',', '.') }} {{ $currency }}</strong> será liquidado e os arquivos originais em 4K e o disparo direto para suas redes serão liberados instantaneamente.
                     </p>
@@ -188,7 +188,7 @@
             <!-- Botão de Ação com Link Mágico -->
             <div class="cta-section">
                 <a href="{{ $magicUrl }}" class="cta-button">
-                    🚀 Assistir Corte & Aprovar Vídeo
+                    Assistir Corte & Aprovar Vídeo
                 </a>
                 <p class="cta-hint">
                     Link seguro de 1 toque. Não é necessário digitar senha.

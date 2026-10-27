@@ -10,7 +10,7 @@
         <div>
             <div class="flex items-center gap-2">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                    🔁 {{ __('Modo Criador & Retainers') }}
+                    {{ __('Modo Criador & Retainers') }}
                 </span>
                 <span class="text-xs text-zinc-500 font-mono">Receita Recorrente (MRR)</span>
             </div>
@@ -50,7 +50,7 @@
         <div class="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 shadow-xl">
             <div class="flex items-center justify-between text-zinc-400 text-xs font-bold uppercase tracking-wider">
                 <span>{{ __('Cota Média de Vídeos / Mês') }}</span>
-                <span class="text-orange-400 font-mono text-xs">🎬</span>
+                <span class="text-orange-400 font-mono text-xs"></span>
             </div>
             <div class="mt-3 flex items-baseline gap-1">
                 <span class="text-3xl font-extrabold text-white">{{ $stats['avg_monthly_quota'] }}</span>
@@ -88,7 +88,7 @@
                         </span>
 
                         <span class="inline-flex items-center gap-1 text-[11px] font-mono text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md font-bold">
-                            🔁 {{ $plan->billing_interval === 'quarter' ? __('Trimestral') : __('Mensal') }}
+                            {{ $plan->billing_interval === 'quarter' ? __('Trimestral') : __('Mensal') }}
                         </span>
                     </div>
 
@@ -112,7 +112,6 @@
 
                     {{-- Compromisso / Fidelidade --}}
                     <div class="flex items-center gap-2 text-xs text-zinc-400">
-                        <span>🛡️</span>
                         <span>{{ __('Fidelidade Contratual:') }} <strong class="text-zinc-200">{{ $plan->commitment_months }} {{ __('meses') }}</strong></span>
                     </div>
 
@@ -143,7 +142,7 @@
                 <div class="pt-5 mt-5 border-t border-zinc-800 flex items-center justify-between gap-2">
                     <a href="{{ route('admin.plans.edit', $plan) }}"
                        class="flex-1 py-2 px-3 rounded-xl text-center text-xs font-bold text-zinc-200 bg-zinc-800 hover:bg-orange-600 hover:text-white transition shadow-sm">
-                        ✏️ {{ __('Editar Plano') }}
+                        {{ __('Editar Plano') }}
                     </a>
 
                     <form action="{{ route('admin.plans.destroy', $plan) }}" method="POST" onsubmit="return confirm('Deseja realmente remover este plano do catálogo?');" class="inline">
@@ -160,7 +159,7 @@
         @empty
             <div class="col-span-full bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center space-y-4 shadow-xl">
                 <div class="w-16 h-16 mx-auto rounded-2xl bg-zinc-800 text-zinc-400 flex items-center justify-center text-3xl">
-                    🔁
+                    
                 </div>
                 <h3 class="text-base font-bold text-white">{{ __('Nenhum Plano de Assinatura Recorrente Cadastrado') }}</h3>
                 <p class="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">

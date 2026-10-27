@@ -66,12 +66,12 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-zinc-800 border border-zinc-700 text-zinc-300">
-                                    🎬 {{ $category->showcase_videos_count }}
+                                    {{ $category->showcase_videos_count }}
                                 </span>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-zinc-800 border border-zinc-700 text-zinc-300">
-                                    📦 {{ $category->packs_count }}
+                                    {{ $category->packs_count }}
                                 </span>
                             </td>
                             <td class="px-6 py-4">

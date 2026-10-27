@@ -7,7 +7,7 @@
     <div class="bg-white rounded-2xl p-6 sm:p-8 border border-zinc-200/80 shadow-xl space-y-6">
         <div class="text-center space-y-2">
             <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mx-auto shadow-sm">
-                ⏳
+                
             </div>
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-amber-50 text-amber-700 border border-amber-200">
                 {{ __('Aguardando Pagamento') }}
@@ -43,7 +43,7 @@
         {{-- Dados Bancários --}}
         <div class="p-4 sm:p-5 rounded-xl bg-zinc-50 border border-zinc-200 space-y-3.5 text-xs text-zinc-700">
             <h2 class="font-bold text-zinc-900 flex items-center gap-2 text-sm border-b border-zinc-200 pb-2">
-                <span>🏛️</span> {{ __('Dados da Conta da Produtora') }}
+{{ __('Dados da Conta da Produtora') }}
             </h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -90,7 +90,7 @@
                 <span class="text-zinc-500 text-[11px] block">{{ __('Pacote Solicitado') }}</span>
                 <span class="font-bold text-zinc-900">{{ $purchase->pack?->name ?? ($purchase->quote?->project_title ?? __('Pacote Audiovisual')) }}</span>
             </div>
-            <span class="text-orange-600 font-bold">📦 {{ $purchase->video_quantity }} {{ __('vídeos') }}</span>
+            <span class="text-orange-600 font-bold">{{ $purchase->video_quantity }} {{ __('vídeos') }}</span>
         </div>
 
         <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

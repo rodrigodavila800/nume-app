@@ -125,7 +125,7 @@ Accept: application/json</code></pre>
                     <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 flex flex-col justify-between">
                         <div class="space-y-2">
                             <div class="flex items-center space-x-2">
-                                <span class="text-lg">🟣</span>
+                                <span class="text-lg"></span>
                                 <h3 class="text-base font-bold text-white">Make.com (Integromat)</h3>
                             </div>
                             <p class="text-xs text-slate-400">
@@ -144,7 +144,7 @@ Accept: application/json</code></pre>
                     <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 flex flex-col justify-between">
                         <div class="space-y-2">
                             <div class="flex items-center space-x-2">
-                                <span class="text-lg">🟠</span>
+                                <span class="text-lg"></span>
                                 <h3 class="text-base font-bold text-white">n8n (Self-hosted / Cloud)</h3>
                             </div>
                             <p class="text-xs text-slate-400">

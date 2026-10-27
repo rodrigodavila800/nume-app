@@ -158,7 +158,7 @@
 
             <!-- Nota de Anexo -->
             <div class="attachment-note">
-                📄 <strong>Factura Oficial Adjunta:</strong> <code>Factura-{{ $invoiceNumber }}.pdf</code>
+                <strong>Factura Oficial Adjunta:</strong> <code>Factura-{{ $invoiceNumber }}.pdf</code>
             </div>
 
             <!-- Resumen de Facturación -->

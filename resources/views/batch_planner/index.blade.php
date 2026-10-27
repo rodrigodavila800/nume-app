@@ -14,7 +14,7 @@
                 <span class="text-orange-400">{{ __('Sofi Batch Planner') }}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-white tracking-tight flex items-center gap-3">
-                <span>⚡ {{ __('Planejador Mensal de Conteúdo em Lote') }}</span>
+                <span>{{ __('Planejador Mensal de Conteúdo em Lote') }}</span>
                 <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">
                     Sofi IA Pro
                 </span>
@@ -27,7 +27,6 @@
         <div class="flex items-center gap-3">
             <a href="{{ route('calendar.index') }}"
                class="px-3.5 py-2 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl border border-zinc-700 transition flex items-center gap-2">
-                <span>🗓️</span>
                 <span>{{ __('Ver Calendário Geral') }}</span>
             </a>
         </div>
@@ -36,7 +35,7 @@
     <!-- Feedback Alerts -->
     @if(session('success'))
         <div class="rounded-2xl bg-emerald-950/40 border border-emerald-500/40 p-4 text-emerald-300 text-xs font-semibold flex items-start gap-3">
-            <span class="text-lg">✨</span>
+            <span class="text-lg"></span>
             <div>
                 <p class="font-bold text-emerald-200">{{ __('Sucesso!') }}</p>
                 <p class="mt-0.5">{{ session('success') }}</p>
@@ -119,8 +118,8 @@
                     </label>
                     <select id="language" name="language"
                             class="w-full bg-zinc-950 border border-zinc-700/80 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
-                        <option value="pt_BR" {{ old('language', $planMeta['language'] ?? 'pt_BR') === 'pt_BR' ? 'selected' : '' }}>🇧🇷 Português (Brasil)</option>
-                        <option value="es" {{ old('language', $planMeta['language'] ?? '') === 'es' ? 'selected' : '' }}>🇪🇸 Español (España / Latam)</option>
+                        <option value="pt_BR" {{ old('language', $planMeta['language'] ?? 'pt_BR') === 'pt_BR' ? 'selected' : '' }}>Português (Brasil)</option>
+                        <option value="es" {{ old('language', $planMeta['language'] ?? '') === 'es' ? 'selected' : '' }}>Español (España / Latam)</option>
                     </select>
                 </div>
 
@@ -139,7 +138,6 @@
             <div class="flex justify-end pt-2">
                 <button type="submit"
                         class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs shadow-lg shadow-orange-600/30 hover:scale-[1.01] active:scale-[0.99] transition-all">
-                    <span>✨</span>
                     <span>{{ __('Gerar Plano Mensal Completo com Sofi IA') }}</span>
                 </button>
             </div>
@@ -153,7 +151,6 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-zinc-900 border border-orange-500/30 rounded-2xl">
                 <div>
                     <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                        <span>📋</span>
                         <span>{{ __('Roteiros Estratégicos Gerados') }} ({{ count($generatedPlan) }} {{ __('Vídeos') }})</span>
                     </h2>
                     <p class="text-xs text-zinc-400 mt-0.5">
@@ -188,7 +185,6 @@
 
                     <button type="submit"
                             class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition">
-                        <span>🚀</span>
                         <span>{{ __('Criar Todas as Produções & Agendar no Calendário') }}</span>
                     </button>
                 </form>
@@ -214,9 +210,9 @@
                                             default => 'bg-purple-500/10 text-purple-400 border-purple-500/30',
                                         };
                                         $fIcon = match($fStage) {
-                                            'topo' => '🎯',
-                                            'fundo' => '💰',
-                                            default => '💎',
+                                            'topo' => '',
+                                            'fundo' => '',
+                                            default => '',
                                         };
                                     @endphp
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $fBadgeClass }}">
@@ -224,7 +220,6 @@
                                     </span>
                                 </div>
                                 <span class="text-xs font-bold text-zinc-400 flex items-center gap-1 shrink-0">
-                                    <span>🗓️</span>
                                     <span>{{ \Carbon\Carbon::parse($item['suggested_date'])->format('d/m/Y') }}</span>
                                 </span>
                             </div>
@@ -242,7 +237,7 @@
                             @if(!empty($item['hook']))
                                 <div class="mt-3 p-2.5 bg-orange-950/20 border border-orange-500/30 rounded-xl">
                                     <span class="text-[10px] font-black uppercase tracking-wider text-orange-400 block mb-0.5">
-                                        ⚡ {{ __('Gancho de Retenção (0-3s):') }}
+                                        {{ __('Gancho de Retenção (0-3s):') }}
                                     </span>
                                     <p class="text-xs text-orange-200 font-medium italic">
                                         "{{ $item['hook'] }}"
@@ -253,7 +248,7 @@
                             <!-- Roteiro Estruturado Retrátil -->
                             <details class="mt-3 group bg-zinc-950/60 border border-zinc-800 rounded-xl p-3">
                                 <summary class="flex items-center justify-between text-xs font-bold text-zinc-300 hover:text-white cursor-pointer list-none">
-                                    <span>📝 {{ __('Ver Roteiro Completo') }}</span>
+                                    <span>{{ __('Ver Roteiro Completo') }}</span>
                                     <span class="group-open:rotate-180 transition-transform">▼</span>
                                 </summary>
                                 <div class="mt-3 pt-3 border-t border-zinc-800 text-xs text-zinc-300 font-mono whitespace-pre-line leading-relaxed">

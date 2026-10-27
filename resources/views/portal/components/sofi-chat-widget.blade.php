@@ -25,7 +25,7 @@
         <div class="px-5 py-4 bg-zinc-900 text-white flex items-center justify-between border-b border-zinc-800">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center font-extrabold text-sm shadow-md">
-                    ⚡
+                    
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
@@ -53,7 +53,7 @@
                 </div>
                 <div class="bg-white border border-zinc-200 p-3.5 rounded-2xl rounded-tl-sm text-xs text-zinc-800 shadow-sm leading-relaxed max-w-[85%]">
                     <p>
-                        {{ __('Olá') }} <strong>{{ auth('cliente')->user()?->name ?? 'Cliente' }}</strong>! 👋
+                        {{ __('Olá') }} <strong>{{ auth('cliente')->user()?->name ?? 'Cliente' }}</strong>! 
                     </p>
                     <p class="mt-1">
                         {{ __('Sou a Sofi, do suporte da NUME. Tiro dúvidas sobre o portal, suas produções, faturas e redes. Se precisar da equipe, abro um chamado para você.') }}
@@ -64,13 +64,13 @@
             <!-- Sugestões de Atalhos Rápidos -->
             <div id="sofi-quick-chips" class="pt-2 flex flex-wrap gap-1.5">
                 <button type="button" onclick="sendQuickPrompt('{{ __('Qual o status da minha produção e prazos de entrega?') }}')" class="text-[11px] font-semibold bg-white border border-orange-200 text-orange-800 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg transition">
-                    🎥 {{ __('Status e Prazos') }}
+                    {{ __('Status e Prazos') }}
                 </button>
                 <button type="button" onclick="sendQuickPrompt('{{ __('Tenho uma dúvida sobre fatura ou pagamento.') }}')" class="text-[11px] font-semibold bg-white border border-orange-200 text-orange-800 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg transition">
-                    🧾 {{ __('Faturas') }}
+                    {{ __('Faturas') }}
                 </button>
                 <a href="{{ route('portal.support.create', ['origem' => 'chat']) }}" class="text-[11px] font-semibold bg-orange-600 text-white hover:bg-orange-500 px-2.5 py-1.5 rounded-lg transition">
-                    🛟 {{ __('Abrir chamado') }}
+                    {{ __('Abrir chamado') }}
                 </a>
             </div>
 
@@ -92,7 +92,6 @@
             <button type="submit" 
                     id="sofi-send-btn"
                     class="px-3.5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow transition">
-                <span>➤</span>
             </button>
         </form>
 
@@ -211,14 +210,14 @@
             } else {
                 container.insertAdjacentHTML('beforeend', `
                     <div class="text-xs text-red-600 p-2 bg-red-50 rounded-lg">
-                        ⚠️ ${data.message || 'Não foi possível processar a mensagem.'}
+                        ${data.message || 'Não foi possível processar a mensagem.'}
                     </div>
                 `);
             }
         } catch (err) {
             container.insertAdjacentHTML('beforeend', `
                 <div class="text-xs text-red-600 p-2 bg-red-50 rounded-lg">
-                    ⚠️ Erro de conexão com o servidor.
+                    Erro de conexão com o servidor.
                 </div>
             `);
         } finally {

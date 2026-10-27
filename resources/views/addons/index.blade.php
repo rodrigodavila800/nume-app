@@ -100,7 +100,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-zinc-800 border border-zinc-700 text-zinc-300">
-                                    📦 {{ $addon->packs_count }} {{ $addon->packs_count == 1 ? __('pacote') : __('pacotes') }}
+                                    {{ $addon->packs_count }} {{ $addon->packs_count == 1 ? __('pacote') : __('pacotes') }}
                                 </span>
                             </td>
                             <td class="px-6 py-4">
@@ -225,7 +225,7 @@
     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl">
         <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
             <h3 class="text-base font-extrabold text-white flex items-center gap-2">
-                <span class="text-orange-500">✏️</span>
+                <span class="text-orange-500"></span>
                 {{ __('Editar Add-on') }}
             </h3>
             <button type="button" onclick="closeEditAddonModal()" class="text-zinc-400 hover:text-white text-xs">✕</button>

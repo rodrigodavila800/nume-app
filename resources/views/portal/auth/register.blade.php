@@ -30,8 +30,8 @@
 
     <!-- Language Switcher — Fixed top-right -->
     <div class="fixed top-4 right-4 z-50 flex items-center gap-2 bg-white/80 backdrop-blur border border-zinc-200 shadow-sm px-3 py-1.5 rounded-full">
-        <a href="{{ route('lang.switch', 'pt_BR') }}" class="text-lg px-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Português">🇧🇷</a>
-        <a href="{{ route('lang.switch', 'es') }}" class="text-lg px-1 rounded transition {{ session('locale') === 'es' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Español">🇪🇸</a>
+        <a href="{{ route('lang.switch', 'pt_BR') }}" class="text-lg px-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Português"></a>
+        <a href="{{ route('lang.switch', 'es') }}" class="text-lg px-1 rounded transition {{ session('locale') === 'es' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Español"></a>
     </div>
 
     <div class="min-h-screen flex">
@@ -95,7 +95,7 @@
 
                 @if(isset($intendedPack) && $intendedPack)
                     <div class="p-3.5 rounded-xl bg-orange-50 border border-orange-200 text-xs text-orange-900 space-y-1">
-                        <p class="font-bold text-orange-700 uppercase tracking-wider text-[10px]">📦 {{ __('Contratação em Andamento') }}</p>
+                        <p class="font-bold text-orange-700 uppercase tracking-wider text-[10px]">{{ __('Contratação em Andamento') }}</p>
                         <p class="font-bold text-sm text-zinc-900">{{ $intendedPack->name }}</p>
                         <p class="text-[11px] text-zinc-600">{{ __('Crie sua conta para finalizar o pedido no Stripe.') }}</p>
                     </div>
@@ -170,7 +170,7 @@
                             </div>
                         </div>
                         <p class="text-[10px] text-zinc-500 pt-0.5 leading-normal">
-                            🔒 {{ __('Mínimo de 8 caracteres contendo maiúsculas, minúsculas, números e símbolos (ex: @, #, $, !).') }}
+                            {{ __('Mínimo de 8 caracteres contendo maiúsculas, minúsculas, números e símbolos (ex: @, #, $, !).') }}
                         </p>
                     </div>
 

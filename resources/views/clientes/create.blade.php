@@ -60,7 +60,7 @@
         </div>
 
         <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-400">
-            💡 {{ __('O cliente poderá acessar o portal com o código de acesso do workspace:') }} <strong class="text-orange-400 font-mono">{{ auth()->user()->tenant->slug ?? 'nume' }}</strong>
+            {{ __('O cliente poderá acessar o portal com o código de acesso do workspace:') }} <strong class="text-orange-400 font-mono">{{ auth()->user()->tenant->slug ?? 'nume' }}</strong>
         </div>
 
         <div class="flex items-center gap-3 pt-4 border-t border-zinc-800">
