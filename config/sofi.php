@@ -44,4 +44,10 @@ return [
         'per_hour' => (int) env('SOFI_PORTAL_CHAT_PER_HOUR', 60),
     ],
 
+    // Orçamento mensal de tokens (input + output). Zero = sem limite.
+    'budgets' => [
+        'monthly_tokens_per_tenant' => (int) env('SOFI_MONTHLY_TOKENS_PER_TENANT', 0),
+        'monthly_tokens_per_cliente' => (int) env('SOFI_MONTHLY_TOKENS_PER_CLIENTE', 0),
+    ],
+
 ];

@@ -113,7 +113,7 @@ class SofiCopilotChatService
         $cliente = $conversation->cliente;
 
         try {
-            $options = $sofiProvider->options($cliente->tenant);
+            $options = $sofiProvider->options($cliente->tenant, $cliente->id);
 
             if ($options !== null) {
                 // O histórico vai por messages(); a mensagem atual é o prompt.

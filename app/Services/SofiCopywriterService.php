@@ -153,7 +153,7 @@ class SofiCopywriterService
         $sofiProvider = app(SofiProvider::class);
 
         try {
-            $options = $sofiProvider->options($cliente?->tenant);
+            $options = $sofiProvider->options($cliente?->tenant, $cliente?->id);
             if ($options === null) {
                 return null;
             }

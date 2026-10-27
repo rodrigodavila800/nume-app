@@ -28,6 +28,7 @@ class SofiMarketingPlanAgent implements Agent, HasMiddleware, HasStructuredOutpu
 
     public function __construct(
         public ?int $tenantId = null,
+        public ?int $clienteId = null,
     ) {}
 
     public function instructions(): Stringable|string
@@ -67,6 +68,6 @@ class SofiMarketingPlanAgent implements Agent, HasMiddleware, HasStructuredOutpu
 
     public function middleware(): array
     {
-        return [new RecordAiUsage($this->tenantId, static::class)];
+        return [new RecordAiUsage($this->tenantId, static::class, $this->clienteId)];
     }
 }

@@ -18,6 +18,10 @@ use Laravel\Ai\Ai;
  */
 class SofiProvider
 {
+    public function __construct(
+        protected AiBudget $budget = new AiBudget,
+    ) {}
+
     /**
      * Driver configurado ('gemini', 'anthropic', ...).
      */
@@ -27,12 +31,17 @@ class SofiProvider
     }
 
     /**
-     * Argumentos para Agent::prompt(...$options), ou null quando não há chave configurada.
+     * Argumentos para Agent::prompt(...$options), ou null quando não há chave configurada
+     * ou o limite mensal de tokens (da produtora ou do cliente) foi atingido.
      *
      * @return array{provider: string, model?: string, timeout: int}|null
      */
-    public function options(?Tenant $tenant = null): ?array
+    public function options(?Tenant $tenant = null, ?int $clienteId = null): ?array
     {
+        if (! $this->budget->allows($tenant?->id, $clienteId)) {
+            return null;
+        }
+
         $driver = $this->driver();
         $apiKey = $this->apiKey($driver, $tenant);
 

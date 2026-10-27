@@ -47,7 +47,7 @@ class MarketingPlanGeneratorService
         $indicators = [
             ' de ', ' en ', ' para ', ' con ', ' por ', ' que ', ' los ', ' las ', ' del ', ' y ',
             'líderes', 'personas', 'liderazgo', 'quieren', 'españa', 'zaragoza', 'servicios', 'atención',
-            'inconformistas', 'evolucionar', 'innovación', 'calidad'
+            'inconformistas', 'evolucionar', 'innovación', 'calidad',
         ];
 
         $matches = 0;
@@ -214,12 +214,12 @@ class MarketingPlanGeneratorService
         $sofiProvider = app(SofiProvider::class);
 
         try {
-            $options = $sofiProvider->options($cliente->tenant);
+            $options = $sofiProvider->options($cliente->tenant, $cliente->id);
             if ($options === null) {
                 return null;
             }
 
-            $response = (new SofiMarketingPlanAgent($cliente->tenant_id))
+            $response = (new SofiMarketingPlanAgent($cliente->tenant_id, $cliente->id))
                 ->prompt($this->planPrompt($cliente, $weeks, $isEs, $types, $adjustmentRequest), ...$options);
             $data = $response->structured ?? [];
 
@@ -380,10 +380,10 @@ class MarketingPlanGeneratorService
             if ($seq['stage'] === 'top') {
                 $primaryPain = $pains[0] ?? null;
                 $topic = $primaryPain
-                    ? ($isEs ? "El error en {$niche}: " . mb_substr($primaryPain, 0, 48) : "O erro em {$niche}: " . mb_substr($primaryPain, 0, 48))
+                    ? ($isEs ? "El error en {$niche}: ".mb_substr($primaryPain, 0, 48) : "O erro em {$niche}: ".mb_substr($primaryPain, 0, 48))
                     : ($isEs ? "El mayor error que comete la mayoría en {$niche}" : "O maior erro que a maioria comete em {$niche}");
 
-                $hook = $suggestedHooks[0] ?? ($isEs 
+                $hook = $suggestedHooks[0] ?? ($isEs
                     ? "⚠️ Si todavía estás intentando captar {$audience} sin este método, estás quemando presupuesto todos los días."
                     : "⚠️ Se você ainda tenta atrair {$audience} sem este método, você está jogando orçamento fora todos os dias.");
 
@@ -408,12 +408,12 @@ class MarketingPlanGeneratorService
             } elseif ($seq['stage'] === 'middle') {
                 $topic = $isEs ? "Caso de Éxito: Antes vs. Después en {$niche}" : "Caso de Sucesso: Antes vs. Depois em {$niche}";
                 $hook = $suggestedHooks[2] ?? ($isEs
-                    ? "📈 El resultado real que logramos cuando aplicamos estrategia antes de la cámara."
-                    : "📈 O resultado que acontece quando alinhamos estratégia de vendas antes de ligar a câmera.");
+                    ? '📈 El resultado real que logramos cuando aplicamos estrategia antes de la cámara.'
+                    : '📈 O resultado que acontece quando alinhamos estratégia de vendas antes de ligar a câmera.');
 
                 $caption = $isEs
                     ? "Un cliente llegó buscando visibilidad y salió con un posicionamiento de liderazgo en {$niche}. Mira la transformación. #Resultados #CasosDeExito"
-                    : "Resultados reais não acontecem por acaso. Veja como este cliente transformou autoridade em vendas consistentes. #CaseDeSucesso #Crescimento";
+                    : 'Resultados reais não acontecem por acaso. Veja como este cliente transformou autoridade em vendas consistentes. #CaseDeSucesso #Crescimento';
 
             } else {
                 $closingOffering = $offerings[1] ?? ($offerings[0] ?? null);
@@ -446,5 +446,3 @@ class MarketingPlanGeneratorService
         return $items;
     }
 }
-
-
