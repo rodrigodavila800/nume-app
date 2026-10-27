@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\AiAssistantApiController;
 use App\Http\Controllers\Api\V1\DocumentationController;
 use App\Http\Controllers\Api\V1\SocialApiController;
+use App\Mcp\Servers\NumeOpsServer;
 use Illuminate\Support\Facades\Route;
+use Laravel\Mcp\Facades\Mcp;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,12 +37,17 @@ Route::prefix('v1/social')
 
 // Conector Oficial de IA para ChatGPT / Claude (Sofi Ops Assistant)
 Route::prefix('v1/assistant')->group(function () {
-    Route::get('/openapi.json', [\App\Http\Controllers\Api\AiAssistantApiController::class, 'openApiSchema'])->name('api.assistant.openapi');
-    Route::get('/instructions', [\App\Http\Controllers\Api\AiAssistantApiController::class, 'promptInstructions'])->name('api.assistant.instructions');
+    Route::get('/openapi.json', [AiAssistantApiController::class, 'openApiSchema'])->name('api.assistant.openapi');
+    Route::get('/instructions', [AiAssistantApiController::class, 'promptInstructions'])->name('api.assistant.instructions');
 
     Route::middleware(['auth.api_key'])->group(function () {
-        Route::get('/overview', [\App\Http\Controllers\Api\AiAssistantApiController::class, 'overview'])->name('api.assistant.overview');
-        Route::get('/pending-approvals', [\App\Http\Controllers\Api\AiAssistantApiController::class, 'pendingApprovals'])->name('api.assistant.pending_approvals');
-        Route::get('/schedule', [\App\Http\Controllers\Api\AiAssistantApiController::class, 'schedule'])->name('api.assistant.schedule');
+        Route::get('/overview', [AiAssistantApiController::class, 'overview'])->name('api.assistant.overview');
+        Route::get('/pending-approvals', [AiAssistantApiController::class, 'pendingApprovals'])->name('api.assistant.pending_approvals');
+        Route::get('/schedule', [AiAssistantApiController::class, 'schedule'])->name('api.assistant.schedule');
     });
 });
+
+// Servidor MCP Oficial (somente leitura, autenticado por API Key da produtora)
+Mcp::web('/v1/mcp', NumeOpsServer::class)
+    ->middleware(['auth.api_key'])
+    ->name('api.v1.mcp');

@@ -1088,5 +1088,21 @@
     "Tenho uma dúvida sobre fatura ou pagamento.": "Tengo una duda sobre una factura o un pago.",
     "Faturas": "Facturas",
     "Status e Prazos": "Estado y plazos",
-    "Qual o status da minha produção e prazos de entrega?": "¿Cuál es el estado de mi producción y los plazos de entrega?"
+    "Qual o status da minha produção e prazos de entrega?": "¿Cuál es el estado de mi producción y los plazos de entrega?",
+    "Status Geral": "Estado general",
+    "Canais Prontos": "Canales listos",
+    "Desconectado": "Desconectado",
+    "Redes Vinculadas": "Redes vinculadas",
+    "Cota de Publicações": "Cuota de publicaciones",
+    "restantes": "restantes",
+    "Contratar Ilimitado": "Contratar ilimitado",
+    "OAuth JWT Criptografado": "OAuth 2.0 cifrado",
+    "Plataformas e Redes Integradas": "Plataformas y redes integradas",
+    "Abaixo estão os canais que você pode acionar para publicação automatizada.": "Estos son los canales que puedes activar para la publicación automática.",
+    "Pronto para receber publicações em 1 clique.": "Listo para recibir publicaciones en 1 clic.",
+    "Conexão direta da NUME aguarda configuração das credenciais OAuth desta rede.": "La conexión directa de NUME espera la configuración de credenciales OAuth de esta red.",
+    "OAuth pendente": "OAuth pendiente",
+    "Uso de IA": "Uso de IA",
+    "Uso de IA & Limites Mensais": "Uso de IA y límites mensuales",
+    "Limites mensais de tokens atualizados.": "Límites mensuales de tokens actualizados."
 }

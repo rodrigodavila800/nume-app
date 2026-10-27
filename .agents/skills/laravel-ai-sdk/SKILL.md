@@ -65,6 +65,9 @@ Estudo completo, com riscos e plano em fases: `docs/estudo-laravel-ai-sdk.md`. E
 - Cubra: resposta estruturada válida, falha do provedor → fallback heurístico, isolamento de tenant em Tool.
 - `php artisan test` precisa passar sem chave do Gemini no ambiente.
 
+- **Painel de uso e limites (`AiUsageController`):** em `Configurações > Uso de IA` (`/configuracoes/uso-de-ia`), o admin acompanha o consumo por mês, função (`agent`) e cliente (`cliente_id`), define os tetos mensais em `TenantSetting` (`ai_monthly_token_limit` e `ai_monthly_cliente_token_limit`) e recebe aviso aos 80%.
+- **Servidor MCP (`App\Mcp\Servers\NumeOpsServer`):** publicado em `POST /api/v1/mcp` via `laravel/mcp`, autenticado pelo middleware `auth.api_key` (`ApiKey` presa à produtora) e com 6 ferramentas `#[IsReadOnly]`: `overview`, `pending_approvals`, `schedule`, `quote_requests`, `leads_by_stage` e `open_support_tickets`.
+
 ## Checklist rápido
 
 - [ ] Existe fallback heurístico?

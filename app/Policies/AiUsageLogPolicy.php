@@ -19,3 +19,4 @@ class AiUsageLogPolicy
         return $user->isAdmin();
     }
 }
+

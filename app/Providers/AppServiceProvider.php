@@ -93,6 +93,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Lead::class, LeadPolicy::class);
         Gate::policy(SupportTicket::class, SupportTicketPolicy::class);
         Gate::policy(AiUsageLog::class, AiUsageLogPolicy::class);
+        Gate::policy(\App\Models\AiUsageLog::class, \App\Policies\AiUsageLogPolicy::class);
 
         // Rate limiter para operações de distribuição social
         RateLimiter::for('social', function (Request $request) {
