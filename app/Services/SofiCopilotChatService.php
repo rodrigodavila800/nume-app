@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
+use App\Ai\Agents\SofiSupportChatAgent;
+use App\Ai\SofiProvider;
+use App\Enums\PlataformaAlvo;
 use App\Models\Cliente;
 use App\Models\Production;
-use App\Models\Roteiro;
-use App\Models\Setting;
 use App\Models\SofiConversation;
 use App\Models\SofiMessage;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class SofiCopilotChatService
 {
@@ -35,18 +34,18 @@ class SofiCopilotChatService
         $locale = app()->getLocale() ?: 'pt_BR';
         $isSpanish = str_starts_with($locale, 'es');
 
-        // 2. Monta o Prompt de Sistema com o DNA da Marca e Contexto de Produção
-        $systemPrompt = $this->buildSystemPrompt($cliente, $production, $isSpanish);
+        // 2. Contexto do cliente (dados, não instruções) para o agente de suporte
+        $context = $this->buildContext($cliente, $production);
 
-        // 3. Monta histórico recente de mensagens
+        // 3. Histórico recente (inclui a mensagem que acabou de chegar, a última)
         $recentMessages = $conversation->messages()
             ->latest('id')
             ->take(8)
             ->get()
             ->reverse();
 
-        // 4. Executa chamada ao Gemini ou Fallback
-        $responsePayload = $this->callGemini($systemPrompt, $recentMessages, $userMessageText, $isSpanish);
+        // 4. Agente de suporte (SDK) ou resposta pronta
+        $responsePayload = $this->callAgent($conversation, $context, $recentMessages, $userMessageText, $isSpanish);
 
         // 5. Salva resposta da Sofi
         $sofiMsg = SofiMessage::create([
@@ -71,7 +70,7 @@ class SofiCopilotChatService
         $channels = [];
 
         foreach ($cliente->activeSocialChannels() as $slug => $handle) {
-            $label = \App\Enums\PlataformaAlvo::from($slug)->label();
+            $label = PlataformaAlvo::from($slug)->label();
             $channels[] = $handle ? "{$label} ({$handle})" : $label;
         }
 
@@ -81,107 +80,59 @@ class SofiCopilotChatService
     }
 
     /**
-     * Constrói o prompt de sistema da Sofi com contexto corporativo.
+     * Contexto do cliente para o agente de suporte (empresa, canais e, se houver, a produção da conversa).
      */
-    protected function buildSystemPrompt(Cliente $cliente, ?Production $production, bool $isEs): string
+    protected function buildContext(Cliente $cliente, ?Production $production): string
     {
-        $lang = $isEs ? 'Español (España / Zaragoza)' : 'Português do Brasil';
-        
-        $brandContext = "EMPRESA: " . ($cliente->company_name ?: $cliente->name) . "\n"
-                      . "NICHO: " . ($cliente->brand_niche ?: 'Serviços e Negócios Locais') . "\n"
-                      . "PÚBLICO-ALVO (ICP): " . ($cliente->target_audience ?: 'Clientes qualificados no setor') . "\n"
-                      . "DIFERENCIAIS: " . ($cliente->key_differentials ?: 'Qualidade, atendimento ágil e autoridade') . "\n"
-                      . "WEBSITE: " . ($cliente->website ?: 'Não informado') . "\n"
-                      . "CANAIS ATIVOS: " . $this->describeSocialChannels($cliente);
+        $brandContext = 'EMPRESA: '.($cliente->company_name ?: $cliente->name)."\n"
+                      .'NICHO: '.($cliente->brand_niche ?: 'Serviços e Negócios Locais')."\n"
+                      .'PÚBLICO-ALVO (ICP): '.($cliente->target_audience ?: 'Clientes qualificados no setor')."\n"
+                      .'DIFERENCIAIS: '.($cliente->key_differentials ?: 'Qualidade, atendimento ágil e autoridade')."\n"
+                      .'WEBSITE: '.($cliente->website ?: 'Não informado')."\n"
+                      .'CANAIS ATIVOS: '.$this->describeSocialChannels($cliente);
 
-        $productionContext = "NENHUMA PRODUÇÃO SELECIONADA.";
+        $productionContext = 'NENHUMA PRODUÇÃO SELECIONADA.';
         if ($production) {
             $roteiro = $production->roteiros()->latest('id')->first();
-            $productionContext = "PRODUÇÃO ATUAL: {$production->title} (Status: {$production->status})\n";
+            $productionContext = "PRODUÇÃO ATUAL: {$production->title} (Status: {$production->status})";
             if ($roteiro) {
-                $productionContext .= "ROTEIRO (Status: {$roteiro->status}):\n"
-                                    . "Gancho (0-3s): " . ($roteiro->hook ?: 'N/A') . "\n"
-                                    . "Corpo: " . ($roteiro->content ?: 'N/A') . "\n"
-                                    . "CTA: " . ($roteiro->cta ?: 'N/A');
+                $productionContext .= "\nROTEIRO: status {$roteiro->status}";
             }
         }
 
-        return "Você é a SOFI, a Agente de Inteligência Artificial e Consultora Audiovisual Estratégica da NUME Creative.\n"
-             . "Você conversa diretamente com o cliente corporativo dentro do Portal do Cliente.\n"
-             . "Seu objetivo é ser extremamente acolhedora, empática, ágil, altamente técnica em roteiros, algoritmos de vídeo (Meta, TikTok, YouTube) e vendas B2B.\n"
-             . "Você ajuda o cliente a:\n"
-             . "1. Refinar seu DNA de marca e público-alvo.\n"
-             . "2. Sugerir ideias de roteiros, ganchos visuais nos primeiros 3 segundos e melhorias no conteúdo dos vídeos.\n"
-             . "3. Tirar dúvidas sobre o fluxo de produção, qualidade 4K HDR e prazos da produtora.\n\n"
-             . "DADOS DO CLIENTE:\n{$brandContext}\n\n"
-             . "CONTEXTO DE PRODUÇÃO:\n{$productionContext}\n\n"
-             . "IDIOMA DE RESPOSTA OBRIGATÓRIO: {$lang}.\n"
-             . "Mantenha respostas objetivas (1 a 3 parágrafos curtos) com formatação limpa e profissional.";
+        return "DADOS DO CLIENTE:\n{$brandContext}\n\nCONTEXTO DE PRODUÇÃO:\n{$productionContext}";
     }
 
     /**
-     * Executa chamada à API Gemini com fallback inteligente.
+     * Agente de suporte (Laravel AI SDK, uso registrado por tenant e cliente). Sem provedor, acima do
+     * limite ou em falha: resposta pronta.
      */
-    protected function callGemini(string $systemPrompt, $messages, string $lastUserMsg, bool $isEs): array
+    protected function callAgent(SofiConversation $conversation, string $context, $messages, string $lastUserMsg, bool $isEs): array
     {
-        $apiKey = config('services.gemini.key') 
-            ?: Setting::get('gemini_api_key') 
-            ?: env('GEMINI_API_KEY');
+        $sofiProvider = app(SofiProvider::class);
+        $cliente = $conversation->cliente;
 
-        if ($apiKey) {
-            $primaryModel = config('services.gemini.model') 
-                ?: Setting::get('gemini_model') 
-                ?: env('GEMINI_MODEL', 'gemini-2.5-flash');
-            $fallbackModels = config('services.gemini.fallback_models', ['gemini-2.0-flash', 'gemini-1.5-flash']);
-            $candidateModels = array_unique(array_filter([$primaryModel, ...$fallbackModels]));
+        try {
+            $options = $sofiProvider->options($cliente->tenant);
 
-            $contents = [];
-            // System instruction via contents ou prompt inicial
-            $contents[] = [
-                'role' => 'user',
-                'parts' => [['text' => "[INSTRUÇÃO DE SISTEMA]\n" . $systemPrompt]]
-            ];
-            $contents[] = [
-                'role' => 'model',
-                'parts' => [['text' => $isEs ? 'Entendido. Soy Sofi, tu consultora audiovisual. ¿En qué te ayudo hoy?' : 'Entendido. Sou a Sofi, sua consultora audiovisual. Como posso te ajudar hoje?']]
-            ];
+            if ($options !== null) {
+                // O histórico vai por messages(); a mensagem atual é o prompt.
+                $history = $messages->values()->slice(0, -1)
+                    ->map(fn ($m) => ['sender' => $m->sender, 'content' => (string) $m->content])
+                    ->values()->all();
 
-            foreach ($messages as $msg) {
-                $contents[] = [
-                    'role' => $msg->sender === 'user' ? 'user' : 'model',
-                    'parts' => [['text' => $msg->content]]
-                ];
-            }
+                $agent = new SofiSupportChatAgent($cliente->tenant_id, $cliente->id, $context, $isEs, $history);
+                $output = trim((string) $agent->prompt($lastUserMsg, ...$options));
 
-            foreach ($candidateModels as $model) {
-                try {
-                    $response = Http::timeout(20)->withHeaders(['x-goog-api-key' => $apiKey])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
-                        'contents' => $contents,
-                        'generationConfig' => [
-                            'temperature' => 0.7,
-                            'maxOutputTokens' => 2048,
-                        ]
-                    ]);
-
-                    if ($response->successful()) {
-                        $result = $response->json();
-                        $output = $result['candidates'][0]['content']['parts'][0]['text'] ?? null;
-                        if ($output) {
-                            return [
-                                'content' => trim($output),
-                                'metadata' => ['source' => $model]
-                            ];
-                        }
-                    } else {
-                        Log::warning("SofiCopilotChatService Gemini API response error with model {$model}: " . $response->body());
-                    }
-                } catch (Exception $e) {
-                    Log::warning("SofiCopilotChatService Gemini error with model {$model}: " . get_class($e));
+                if ($output !== '') {
+                    return ['content' => $output, 'metadata' => ['source' => 'sdk:'.$sofiProvider->driver()]];
                 }
             }
+        } catch (\Throwable $e) {
+            // Só o tipo da exceção: a mensagem pode conter URL ou credenciais.
+            Log::warning('SofiCopilotChatService AI SDK falhou ('.$sofiProvider->driver().'): '.get_class($e));
         }
 
-        // Fallback Estratégico Heurístico
         return $this->heuristicReply($lastUserMsg, $isEs);
     }
 
@@ -193,26 +144,31 @@ class SofiCopilotChatService
         $lower = mb_strtolower($msg);
 
         if (str_contains($lower, 'roteiro') || str_contains($lower, 'guion') || str_contains($lower, 'gancho') || str_contains($lower, 'hook')) {
+            // Suporte não escreve roteiro: isso nasce do plano de marketing aprovado.
             $content = $isEs
-                ? "¡Excelente idea! Para este tipo de vídeo, te recomiendo un gancho de patrón de interrupción en los primeros 3 segundos: empezar con una pregunta directa sobre la mayor duda de tus clientes o quebrando un mito común de tu sector. ¿Quieres que prepare una versión de guion de 50 segundos enfocada en tu público objetivo?"
-                : "Excelente ponto! Para esse formato de vídeo, recomendo começarmos com um gancho de quebra de padrão nos primeiros 3 segundos: uma pergunta contra-intuitiva ou quebrando um mito clássico do seu nicho. Quer que eu estruture uma sugestão completa de 50 segundos dividida em 3 atos para você?";
+                ? 'Los guiones los prepara el equipo a partir de tu plan de marketing aprobado. Si quieres cambiar algo de un guion, pide un ajuste al revisarlo en el portal o abre una incidencia y el equipo te ayuda.'
+                : 'Os roteiros são preparados pela equipe a partir do seu plano de marketing aprovado. Se quiser mudar algo em um roteiro, peça ajuste ao revisá-lo aqui no portal ou abra um chamado que a equipe te ajuda.';
+        } elseif (str_contains($lower, 'fatura') || str_contains($lower, 'factura') || str_contains($lower, 'pagamento') || str_contains($lower, 'pago')) {
+            $content = $isEs
+                ? "Tus facturas están en Presupuestos, junto a cada propuesta pagada, y tus datos de facturación en 'Datos de facturación'. Si algo no cuadra, abre una incidencia de Facturación y el equipo lo revisa."
+                : "Suas faturas ficam em Orçamentos, ao lado de cada proposta paga, e os dados de faturação em 'Dados de faturação'. Se algo não bater, abra um chamado de Financeiro que a equipe confere.";
         } elseif (str_contains($lower, 'status') || str_contains($lower, 'prazo') || str_contains($lower, 'entrega') || str_contains($lower, 'quando')) {
             $content = $isEs
-                ? "Tu producción sigue la metodología NUME con 100% de puntualidad. En cuanto el guion esté aprobado en el portal, nuestro equipo inicia la grabación cinematográfica 4K HDR y la edición dinámica. Puedes acompañar cada fase en tu panel."
-                : "Sua produção segue rigorosamente nossa esteira ágil de 4 etapas. Assim que o roteiro for aprovado com 1 clique aqui no portal, a equipe técnica inicia a captação 4K HDR e a montagem das legendas magnéticas. Você pode acompanhar o progresso em tempo real pela sua esteira!";
+                ? 'Tu producción sigue la metodología NUME con 100% de puntualidad. En cuanto el guion esté aprobado en el portal, nuestro equipo inicia la grabación cinematográfica 4K HDR y la edición dinámica. Puedes acompañar cada fase en tu panel.'
+                : 'Sua produção segue rigorosamente nossa esteira ágil de 4 etapas. Assim que o roteiro for aprovado com 1 clique aqui no portal, a equipe técnica inicia a captação 4K HDR e a montagem das legendas magnéticas. Você pode acompanhar o progresso em tempo real pela sua esteira!';
         } elseif (str_contains($lower, 'público') || str_contains($lower, 'audiência') || str_contains($lower, 'nicho') || str_contains($lower, 'marca')) {
             $content = $isEs
                 ? "¡Perfecto! Cuanto más específico sea tu perfil de cliente ideal (ICP), más persuasivos serán los ganchos de tus vídeos. Puedes actualizar los datos en 'Perfil de Marca & Redes' en cualquier momento o decirme aquí los diferenciales que deseas destacar este mes."
                 : "Perfeito! Quanto mais detalhado for o perfil do seu cliente ideal (ICP), mais magnéticos ficam os primeiros 3 segundos dos seus vídeos. Você pode ajustar isso na aba 'Perfil da Marca & Redes' ou me mandar por aqui os principais diferenciais que deseja explorar no próximo lote!";
         } else {
             $content = $isEs
-                ? "¡Hola! Soy Sofi, tu consultora audiovisual estratégica en NUME. Estoy analizando el perfil de tu marca para optimizar tus guiones y plan de publicación. ¿Qué objetivo deseas acelerar con tus próximos vídeos?"
-                : "Olá! Sou a Sofi, sua consultora audiovisual estratégica na NUME. Estou com o DNA da sua marca calibrado para potencializar seus roteiros e retenção no feed. Qual meta você gostaria de acelerar com seus próximos vídeos?";
+                ? "¡Hola! Soy Sofi, del soporte de NUME. Puedo ayudarte con el portal, tus producciones, presupuestos, facturas y redes. Si necesitas al equipo, pulsa 'Abrir incidencia'."
+                : "Olá! Sou a Sofi, do suporte da NUME. Posso ajudar com o portal, suas produções, orçamentos, faturas e redes. Se precisar da equipe, use o botão 'Abrir chamado'.";
         }
 
         return [
             'content' => $content,
-            'metadata' => ['source' => 'sofi-heuristic-copilot']
+            'metadata' => ['source' => 'sofi-heuristic-support'],
         ];
     }
 }

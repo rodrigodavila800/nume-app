@@ -19,6 +19,7 @@ class AiUsageLog extends Model
 
     protected $fillable = [
         'tenant_id',
+        'cliente_id',
         'agent',
         'provider',
         'model',
@@ -33,6 +34,7 @@ class AiUsageLog extends Model
     {
         return [
             'tenant_id' => 'integer',
+            'cliente_id' => 'integer',
             'input_tokens' => 'integer',
             'output_tokens' => 'integer',
             'cache_read_input_tokens' => 'integer',

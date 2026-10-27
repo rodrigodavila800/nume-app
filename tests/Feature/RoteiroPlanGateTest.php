@@ -9,7 +9,6 @@ use App\Models\Roteiro;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -41,7 +40,7 @@ class RoteiroPlanGateTest extends TestCase
             'tenant_id' => $this->tenant->id, 'cliente_id' => $this->cliente->id, 'created_by' => $this->admin->id,
             'title' => 'Vídeo da padaria', 'status' => 'draft',
         ]);
-        Http::fake(['generativelanguage.googleapis.com/*' => Http::response([], 500)]);
+        config(['sofi.keys.gemini' => null, 'services.gemini.key' => null]);
     }
 
     private function approvePlan(): void

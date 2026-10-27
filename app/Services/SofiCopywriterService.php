@@ -2,13 +2,17 @@
 
 namespace App\Services;
 
+use App\Ai\Agents\SofiScriptAgent;
+use App\Ai\Agents\SofiScriptBlocksAgent;
+use App\Ai\SofiProvider;
+use App\Enums\PlataformaAlvo;
 use App\Models\Cliente;
-use App\Models\Setting;
+use App\Models\Tenant;
+use App\Models\Video;
 use App\Models\VideoType;
-use App\Services\SofiMarketIntelligence;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
+use Illuminate\Support\Str;
+use Laravel\Ai\Contracts\Agent;
 
 class SofiCopywriterService
 {
@@ -35,8 +39,8 @@ class SofiCopywriterService
         $audience = $cliente?->target_audience ?: ($isSpanish ? 'clientes potenciales en tu sector' : 'clientes qualificados no seu setor');
         $differentials = $cliente?->key_differentials ?: ($isSpanish ? 'calidad garantizada y atención personalizada' : 'qualidade comprovada e entrega rápida');
         // Conta conectada no ecossistema primeiro; depois o @ digitado no DNA da Marca.
-        $instagramHandle = $cliente?->getEffectiveSocialHandle(\App\Enums\PlataformaAlvo::INSTAGRAM);
-        $instagram = $instagramHandle ? '@' . ltrim($instagramHandle, '@') : ($isSpanish ? 'nuestro perfil' : 'nossa bio');
+        $instagramHandle = $cliente?->getEffectiveSocialHandle(PlataformaAlvo::INSTAGRAM);
+        $instagram = $instagramHandle ? '@'.ltrim($instagramHandle, '@') : ($isSpanish ? 'nuestro perfil' : 'nossa bio');
         $website = $cliente?->website ? preg_replace('#^https?://#', '', $cliente->website) : null;
 
         $clientContext = [
@@ -51,11 +55,11 @@ class SofiCopywriterService
 
         // Tipo de vídeo cadastrado pelo admin: a estrutura vem dos blocos dele, não dos frameworks fixos.
         if ($videoType) {
-            return $this->generateFromVideoType($videoType, $cleanTitle, $cleanDesc, $keywords, $tone, $isSpanish, $clientContext);
+            return $this->generateFromVideoType($videoType, $cleanTitle, $cleanDesc, $keywords, $tone, $isSpanish, $clientContext, $cliente);
         }
 
-        // 1. Tenta geração profunda com Inteligência Artificial Sofi (Gemini 3.5 / 3.8)
-        $aiResult = $this->generateViaAi($cleanTitle, $cleanDesc, $keywords, $framework, $tone, $isSpanish, $clientContext);
+        // 1. Tenta geração profunda com a Sofi (Laravel AI SDK, uso registrado por tenant/cliente)
+        $aiResult = $this->generateViaAi($cleanTitle, $cleanDesc, $keywords, $framework, $tone, $isSpanish, $clientContext, $cliente);
         if ($aiResult) {
             return $aiResult;
         }
@@ -79,15 +83,12 @@ class SofiCopywriterService
         string $framework,
         string $tone,
         bool $isEs,
-        array $ctx
+        array $ctx,
+        ?Cliente $cliente = null
     ): ?array {
-        if (! $this->geminiApiKey()) {
-            return null;
-        }
-
-        $langPrompt = $isEs 
+        $langPrompt = $isEs
             ? "El guión y todos los textos DEBEN estar en Español de España / Zaragoza (ej. 'vídeo', 'móvil', trato cercano y profesional)."
-            : "O roteiro e todos os textos DEVEM estar em Português do Brasil de alto padrão corporativo.";
+            : 'O roteiro e todos os textos DEVEM estar em Português do Brasil de alto padrão corporativo.';
 
         $frameworkNames = [
             'pattern_interrupt' => 'Padrão de Interrupção & Retenção (Gancho de quebra de padrão 0-3s)',
@@ -98,7 +99,7 @@ class SofiCopywriterService
 
         $frameworkDesc = $frameworkNames[$framework] ?? $frameworkNames['pattern_interrupt'];
 
-        $detectedNiche = SofiMarketIntelligence::detectNiche($ctx['niche'] . ' ' . $title . ' ' . $description);
+        $detectedNiche = SofiMarketIntelligence::detectNiche($ctx['niche'].' '.$title.' '.$description);
         $nicheInsight = SofiMarketIntelligence::getNicheInsights($detectedNiche, $isEs);
         $marketTrends = SofiMarketIntelligence::getMarketTrends($isEs);
         $antiPatterns = SofiMarketIntelligence::getAntiPatterns($isEs);
@@ -106,48 +107,34 @@ class SofiCopywriterService
         $studyPrompt = $this->brandStudyPrompt($ctx);
 
         $prompt = "Você é a Sofi, Agente de IA especialista em roteiros cinematográficos de alta retenção (0-3s), SEO e algoritmos de vídeo para TikTok, Reels e YouTube Shorts da NUME Creative.\n"
-                . "Você NUNCA usa clichês amadores, nunca sugere técnicas mortas de marketing e sempre foca em métricas reais e retenção visual.\n\n"
-                . "{$marketTrends}\n\n"
-                . "{$antiPatterns}\n\n"
-                . ($nicheInsight ? "INSIGHTS ESPECÍFICOS DO NICHO:\n{$nicheInsight}\n\n" : "")
-                . ($studyPrompt ? "{$studyPrompt}\n" : "")
-                . "Gere um roteiro profissional completo baseado nos seguintes dados:\n\n"
-                . "- TÍTULO DO PROJETO: {$title}\n"
-                . "- OBJETIVO / DESCRIÇÃO: {$description}\n"
-                . "- PALAVRAS-CHAVE: {$keywords}\n"
-                . "- FRAMEWORK DE RETENÇÃO: {$frameworkDesc}\n"
-                . "- TOM DE VOZ: {$tone}\n"
-                . "- EMPRESA: {$ctx['company']}\n"
-                . "- NICHO: {$ctx['niche']}\n"
-                . "- PÚBLICO-ALVO: {$ctx['audience']}\n"
-                . "- DIFERENCIAIS: {$ctx['differentials']}\n"
-                . "- INSTAGRAM: {$ctx['instagram']}\n"
-                . "- SITE: {$ctx['website']}\n"
-                . "{$langPrompt}\n\n"
-                . "Retorne ESTRITAMENTE um objeto JSON válido (sem blocos de código markdown ou texto explicativo extra) com a seguinte estrutura exata:\n"
-                . "{\n"
-                . '  "framework": "' . addslashes($frameworkDesc) . '",' . "\n"
-                . '  "estimated_time": "50-55s",' . "\n"
-                . '  "client_niche": "' . addslashes($ctx['niche']) . '",' . "\n"
-                . '  "hook": "Cena 1 detalhada com ENQUADRAMENTO, TEXTO NA TELA, B-ROLL e ÁUDIO/FALA (00:00 - 00:03)",' . "\n"
-                . '  "body": "Cena 2 detalhada com ENQUADRAMENTO, B-ROLL SUGERIDO e ÁUDIO/FALA (00:04 - 00:42)",' . "\n"
-                . '  "cta": "Cena 3 detalhada com CHAMADA PARA AÇÃO personalizada (00:43 - 00:55)",' . "\n"
-                . '  "full_script": "Texto completo unificado das 3 cenas formatado para gravação",' . "\n"
-                . '  "seo_title": "Título magnético para o vídeo (max 65 caracteres)",' . "\n"
-                . '  "seo_description": "Descrição envolvente com ganchos e palavras-chave",' . "\n"
-                . '  "seo_hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],' . "\n"
-                . '  "b_roll_suggestions": ["sugestão visual 1", "sugestão visual 2", "sugestão visual 3"]' . "\n"
-                . "}";
+                ."Você NUNCA usa clichês amadores, nunca sugere técnicas mortas de marketing e sempre foca em métricas reais e retenção visual.\n\n"
+                ."{$marketTrends}\n\n"
+                ."{$antiPatterns}\n\n"
+                .($nicheInsight ? "INSIGHTS ESPECÍFICOS DO NICHO:\n{$nicheInsight}\n\n" : '')
+                .($studyPrompt ? "{$studyPrompt}\n" : '')
+                ."FRAMEWORK DE RETENÇÃO: {$frameworkDesc} (duração 50-55 s: cena 1 00:00-00:03, cena 2 00:04-00:42, cena 3 00:43-00:55)\n"
+                ."TOM DE VOZ: {$tone}\n"
+                ."{$langPrompt}\n\n"
+                ."DADOS DO PROJETO E DO CLIENTE:\n<<<\n"
+                ."- TÍTULO DO PROJETO: {$title}\n"
+                ."- OBJETIVO / DESCRIÇÃO: {$description}\n"
+                ."- PALAVRAS-CHAVE: {$keywords}\n"
+                ."- EMPRESA: {$ctx['company']}\n"
+                ."- NICHO: {$ctx['niche']}\n"
+                ."- PÚBLICO-ALVO: {$ctx['audience']}\n"
+                ."- DIFERENCIAIS: {$ctx['differentials']}\n"
+                ."- INSTAGRAM: {$ctx['instagram']}\n"
+                ."- SITE: {$ctx['website']}\n>>>";
 
-        $data = $this->requestGeminiJson($prompt, fn (array $data) => ! empty($data['hook']) && ! empty($data['body']));
-        if ($data === null) {
+        $data = $this->runAgent(new SofiScriptAgent($cliente?->tenant_id, $cliente?->id), $prompt, $cliente);
+        if (! is_array($data) || empty($data['hook']) || empty($data['body'])) {
             return null;
         }
 
-        $data['framework'] = $data['framework'] ?? $frameworkDesc;
-        $data['estimated_time'] = $data['estimated_time'] ?? '50-55s';
-        $data['client_niche'] = $data['client_niche'] ?? $ctx['niche'];
-        $data['full_script'] = $data['full_script'] ?? ($data['hook'] . "\n\n" . $data['body'] . "\n\n" . ($data['cta'] ?? ''));
+        $data['framework'] = $frameworkDesc;
+        $data['estimated_time'] = ($data['estimated_time'] ?? '') ?: '50-55s';
+        $data['client_niche'] = $ctx['niche'];
+        $data['full_script'] = $data['full_script'] ?? ($data['hook']."\n\n".$data['body']."\n\n".($data['cta'] ?? ''));
         $data['seo_title'] = $data['seo_title'] ?? $title;
         $data['seo_description'] = $data['seo_description'] ?? $description;
         $data['seo_hashtags'] = is_array($data['seo_hashtags'] ?? null) ? $data['seo_hashtags'] : ['#VideoMarketing', '#SaaS'];
@@ -156,66 +143,30 @@ class SofiCopywriterService
         return $data;
     }
 
-    protected function geminiApiKey(): ?string
-    {
-        return config('services.gemini.key')
-            ?: Setting::get('gemini_api_key')
-            ?: env('GEMINI_API_KEY');
-    }
-
     /**
-     * Única chamada HTTP ao Gemini deste serviço: tenta os modelos em ordem e devolve o primeiro
-     * JSON que passar em $isValid. Falha de rede ou JSON inválido cai no próximo modelo; sem nenhum, null.
-     *
-     * @param  callable(array): bool  $isValid
+     * Única chamada a modelo deste serviço: agente do Laravel AI SDK (uso registrado por tenant e
+     * cliente, limite mensal conferido pelo AiBudget). Sem provedor, acima do limite ou em falha: null,
+     * e quem chamou usa o motor heurístico.
      */
-    protected function requestGeminiJson(string $prompt, callable $isValid): ?array
+    protected function runAgent(Agent $agent, string $prompt, ?Cliente $cliente): ?array
     {
-        $apiKey = $this->geminiApiKey();
-        if (! $apiKey) {
+        $sofiProvider = app(SofiProvider::class);
+
+        try {
+            $options = $sofiProvider->options($cliente?->tenant);
+            if ($options === null) {
+                return null;
+            }
+
+            $data = $agent->prompt($prompt, ...$options)->structured ?? null;
+
+            return is_array($data) ? $data : null;
+        } catch (\Throwable $e) {
+            // Só o tipo da exceção: a mensagem pode conter URL ou credenciais.
+            Log::warning('SofiCopywriterService AI SDK falhou ('.$sofiProvider->driver().'): '.get_class($e));
+
             return null;
         }
-
-        $primaryModel = config('services.gemini.model')
-            ?: Setting::get('gemini_model')
-            ?: env('GEMINI_MODEL', 'gemini-3.5-flash-lite');
-        $fallbackModels = config('services.gemini.fallback_models', ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash']);
-        $candidateModels = array_unique(array_filter([$primaryModel, ...$fallbackModels]));
-
-        foreach ($candidateModels as $model) {
-            try {
-                $response = Http::timeout(25)->withHeaders(['x-goog-api-key' => $apiKey])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
-                    'contents' => [
-                        [
-                            'parts' => [
-                                ['text' => $prompt]
-                            ]
-                        ]
-                    ],
-                    'generationConfig' => [
-                        'temperature' => 0.85,
-                        'maxOutputTokens' => 2048,
-                    ]
-                ]);
-
-                if ($response->successful()) {
-                    $jsonText = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                    $jsonText = preg_replace('/^```(?:json)?\s*/i', '', trim($jsonText));
-                    $jsonText = preg_replace('/\s*```$/', '', $jsonText);
-
-                    $data = json_decode(trim($jsonText), true);
-                    if (is_array($data) && $isValid($data)) {
-                        return $data;
-                    }
-                } else {
-                    Log::warning("SofiCopywriterService AI response error with model {$model}: HTTP " . $response->status());
-                }
-            } catch (Exception $e) {
-                Log::warning("SofiCopywriterService AI error with model {$model}: " . get_class($e));
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -258,25 +209,30 @@ class SofiCopywriterService
      * Roteiro seguindo os blocos do tipo de vídeo cadastrado pelo admin: IA bloco a bloco e, se ela
      * falhar, o motor heurístico escreve cada bloco. A resposta leva a cópia da estrutura usada.
      */
-    protected function generateFromVideoType(VideoType $type, string $title, string $desc, ?string $keywords, string $tone, bool $isEs, array $ctx): array
+    protected function generateFromVideoType(VideoType $type, string $title, string $desc, ?string $keywords, string $tone, bool $isEs, array $ctx, ?Cliente $cliente = null): array
     {
         $blocks = array_values(array_filter($type->blocks ?? [], fn ($b) => is_array($b) && ! empty($b['key'])));
         $keys = array_column($blocks, 'key');
 
         $ai = null;
-        if ($blocks !== [] && $this->geminiApiKey()) {
-            $ai = $this->requestGeminiJson(
+        if ($blocks !== []) {
+            $raw = $this->runAgent(
+                new SofiScriptBlocksAgent($cliente?->tenant_id, $cliente?->id),
                 $this->blocksPrompt($type, $blocks, $title, $desc, $keywords, $tone, $isEs, $ctx),
-                function (array $data) use ($keys) {
-                    foreach ($keys as $key) {
-                        if (! is_string($data['blocks'][$key] ?? null) || trim($data['blocks'][$key]) === '') {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                }
+                $cliente
             );
+
+            // Saída em lista [{key, text}] vira mapa; só vale se TODOS os blocos vierem preenchidos.
+            $byKey = [];
+            foreach ((array) ($raw['blocks'] ?? []) as $item) {
+                if (is_array($item) && is_string($item['key'] ?? null) && is_string($item['text'] ?? null) && trim($item['text']) !== '') {
+                    $byKey[$item['key']] = $item['text'];
+                }
+            }
+
+            if ($raw !== null && array_diff($keys, array_keys($byKey)) === []) {
+                $ai = ['blocks' => $byKey] + $raw;
+            }
         }
 
         $written = [];
@@ -319,24 +275,19 @@ class SofiCopywriterService
             $lines[] = ($i + 1).". [{$block['key']}] {$block['name']} (".$this->clock((int) $block['start']).' - '.$this->clock((int) $block['end'])."): {$block['purpose']}";
         }
 
-        $jsonKeys = implode(', ', array_map(fn ($b) => '"'.$b['key'].'": "texto do bloco"', $blocks));
         $langPrompt = $isEs
             ? "El guión y todos los textos DEBEN estar en Español de España (ej. 'vídeo', 'móvil'), trato cercano y profesional."
             : 'O roteiro e todos os textos DEVEM estar em Português do Brasil de alto padrão corporativo.';
 
-        return "Você é a Sofi, roteirista de vídeos curtos de alta retenção da NUME Creative.\n"
-            .'Escreva um roteiro do tipo "'.$type->name.'" com duração total de '.$type->duration_seconds." segundos, seguindo EXATAMENTE estes blocos, nesta ordem:\n"
+        return 'TIPO DE VÍDEO: "'.$type->name.'", duração total de '.$type->duration_seconds." segundos. BLOCOS, nesta ordem ([key] nome (tempo): função):\n"
             .implode("\n", $lines)."\n\n"
             .($type->sofi_guidance ? "ORIENTAÇÃO DA PRODUTORA PARA ESTE TIPO: {$type->sofi_guidance}\n\n" : '')
+            ."TOM DE VOZ: {$tone}\n{$langPrompt}\n\n"
             .$this->brandStudyPrompt($ctx)
-            ."DADOS DO PROJETO:\n"
-            ."- TÍTULO: {$title}\n- OBJETIVO: {$desc}\n- PALAVRAS-CHAVE: {$keywords}\n- TOM DE VOZ: {$tone}\n"
+            ."DADOS DO PROJETO E DO CLIENTE:\n<<<\n"
+            ."- TÍTULO: {$title}\n- OBJETIVO: {$desc}\n- PALAVRAS-CHAVE: {$keywords}\n"
             ."- EMPRESA: {$ctx['company']}\n- NICHO: {$ctx['niche']}\n- PÚBLICO: {$ctx['audience']}\n- DIFERENCIAIS: {$ctx['differentials']}\n"
-            ."- INSTAGRAM: {$ctx['instagram']}\n- SITE: {$ctx['website']}\n"
-            ."{$langPrompt}\n\n"
-            ."Para cada bloco escreva ENQUADRAMENTO, TEXTO NA TELA e ÁUDIO/FALA, cabendo no tempo do bloco. Só um CTA no roteiro inteiro.\n"
-            ."Retorne ESTRITAMENTE um JSON válido, sem markdown, com esta estrutura:\n"
-            .'{"blocks": {'.$jsonKeys.'}, "seo_title": "max 65 caracteres", "seo_description": "descrição com palavras-chave", "seo_hashtags": ["#tag"], "b_roll_suggestions": ["sugestão"]}';
+            ."- INSTAGRAM: {$ctx['instagram']}\n- SITE: {$ctx['website']}\n>>>";
     }
 
     /**
@@ -399,42 +350,42 @@ class SofiCopywriterService
     {
         if ($isEs) {
             $hook = "🎬 [ESCENA 1 - GANCHO DE INTERRUPCIÓN (00:00 - 00:03)]\n"
-                  . "ENQUADRE: Primer plano con zoom in rápido y mirada directa a cámara.\n"
-                  . "TEXTO EN PANTALLA: ⚠️ ¿Cometes este error en {$ctx['niche']}?\n"
-                  . "B-ROLL / VISUAL: Plano dinámico de atención inmediata.\n"
-                  . "AUDIO / VOZ: 'Si todavía estás buscando captar clientes en {$ctx['niche']} con fotos estáticas... estás quemando dinero todos los días.'";
+                  ."ENQUADRE: Primer plano con zoom in rápido y mirada directa a cámara.\n"
+                  ."TEXTO EN PANTALLA: ⚠️ ¿Cometes este error en {$ctx['niche']}?\n"
+                  ."B-ROLL / VISUAL: Plano dinámico de atención inmediata.\n"
+                  ."AUDIO / VOZ: 'Si todavía estás buscando captar clientes en {$ctx['niche']} con fotos estáticas... estás quemando dinero todos los días.'";
 
             $body = "💡 [ESCENA 2 - AGITACIÓN & DIFERENCIAL (00:04 - 00:42)]\n"
-                  . "ENQUADRE: Plano medio con iluminación profesional y cortes de apoyo.\n"
-                  . "TEXTO EN PANTALLA: 82% de {$ctx['audience']} decide tras ver un vídeo\n"
-                  . "B-ROLL SUGERIDO: Detalle de procesos reales de {$ctx['company']} mostrando {$ctx['differentials']}.\n"
-                  . "AUDIO / VOZ: 'El mercado cambió por completo. {$desc} En {$ctx['company']}, ayudamos a que tu marca transmita confianza inmediata con narrativas que retienen la atención en los primeros 3 segundos.'";
+                  ."ENQUADRE: Plano medio con iluminación profesional y cortes de apoyo.\n"
+                  ."TEXTO EN PANTALLA: 82% de {$ctx['audience']} decide tras ver un vídeo\n"
+                  ."B-ROLL SUGERIDO: Detalle de procesos reales de {$ctx['company']} mostrando {$ctx['differentials']}.\n"
+                  ."AUDIO / VOZ: 'El mercado cambió por completo. {$desc} En {$ctx['company']}, ayudamos a que tu marca transmita confianza inmediata con narrativas que retienen la atención en los primeros 3 segundos.'";
 
-            $ctaLink = $ctx['website'] ? "o accede a {$ctx['website']}" : "y agenda una sesión estratégica";
+            $ctaLink = $ctx['website'] ? "o accede a {$ctx['website']}" : 'y agenda una sesión estratégica';
             $cta = "🎯 [ESCENA 3 - LLAMADA A LA ACCIÓN (00:43 - 00:55)]\n"
-                 . "ENQUADRE: Primer plano con gesto hacia la bio y sonrisa de autoridad.\n"
-                 . "TEXTO EN PANTALLA: 📲 Toca en {$ctx['instagram']} " . ($ctx['website'] ? "· {$ctx['website']}" : "") . "\n"
-                 . "BANDA SONORA: Tech Beat moderno con ritmo ascendente.\n"
-                 . "AUDIO / VOZ: '¿Quieres destacar y dominar tu sector? Haz clic en el enlace de {$ctx['instagram']} {$ctaLink} hoy mismo.'";
+                 ."ENQUADRE: Primer plano con gesto hacia la bio y sonrisa de autoridad.\n"
+                 ."TEXTO EN PANTALLA: 📲 Toca en {$ctx['instagram']} ".($ctx['website'] ? "· {$ctx['website']}" : '')."\n"
+                 ."BANDA SONORA: Tech Beat moderno con ritmo ascendente.\n"
+                 ."AUDIO / VOZ: '¿Quieres destacar y dominar tu sector? Haz clic en el enlace de {$ctx['instagram']} {$ctaLink} hoy mismo.'";
         } else {
             $hook = "🎬 [CENA 1 - GANCHO DE PADRÃO DE INTERRUPÇÃO (00:00 - 00:03)]\n"
-                  . "ENQUADRAMENTO: Plano fechado com zoom in dinâmico e olhar firme na lente.\n"
-                  . "TEXTO NA TELA: ⚠️ Você comete esse erro em {$ctx['niche']}?\n"
-                  . "B-ROLL / VISUAL: Corte rápido com padrão de interrupção visual.\n"
-                  . "ÁUDIO / FALA: 'Se você ainda tenta atrair clientes em {$ctx['niche']} postando fotos estáticas... está deixando dinheiro na mesa todos os dias.'";
+                  ."ENQUADRAMENTO: Plano fechado com zoom in dinâmico e olhar firme na lente.\n"
+                  ."TEXTO NA TELA: ⚠️ Você comete esse erro em {$ctx['niche']}?\n"
+                  ."B-ROLL / VISUAL: Corte rápido com padrão de interrupção visual.\n"
+                  ."ÁUDIO / FALA: 'Se você ainda tenta atrair clientes em {$ctx['niche']} postando fotos estáticas... está deixando dinheiro na mesa todos os dias.'";
 
             $body = "💡 [CENA 2 - AGITAÇÃO & DIFERENCIAL (00:04 - 00:42)]\n"
-                  . "ENQUADRAMENTO: Plano médio cinematográfico com B-Rolls dinâmicos.\n"
-                  . "TEXTO NA TELA: 82% de {$ctx['audience']} compra após assistir vídeo\n"
-                  . "B-ROLL SUGERIDO: Gravação de bastidores de {$ctx['company']} destacando {$ctx['differentials']}.\n"
-                  . "ÁUDIO / FALA: 'O algoritmo mudou. {$desc} Na {$ctx['company']}, estruturamos vídeos pensados cientificamente para gerar autoridade imediata e converter quem assiste em cliente fiel.'";
+                  ."ENQUADRAMENTO: Plano médio cinematográfico com B-Rolls dinâmicos.\n"
+                  ."TEXTO NA TELA: 82% de {$ctx['audience']} compra após assistir vídeo\n"
+                  ."B-ROLL SUGERIDO: Gravação de bastidores de {$ctx['company']} destacando {$ctx['differentials']}.\n"
+                  ."ÁUDIO / FALA: 'O algoritmo mudou. {$desc} Na {$ctx['company']}, estruturamos vídeos pensados cientificamente para gerar autoridade imediata e converter quem assiste em cliente fiel.'";
 
-            $ctaLink = $ctx['website'] ? "ou acesse {$ctx['website']}" : "para falar com nosso time";
+            $ctaLink = $ctx['website'] ? "ou acesse {$ctx['website']}" : 'para falar com nosso time';
             $cta = "🎯 [CENA 3 - CHAMADA PARA AÇÃO (00:43 - 00:55)]\n"
-                 . "ENQUADRAMENTO: Plano médio com gesto apontando para a bio/link.\n"
-                 . "TEXTO NA TELA: 📲 Link na Bio: {$ctx['instagram']} " . ($ctx['website'] ? "· {$ctx['website']}" : "") . "\n"
-                 . "TRILHA SONORA: Lo-Fi Corporativo Moderno / Beat Eletrônico de alta energia.\n"
-                 . "ÁUDIO / FALA: 'Quer posicionar a sua marca no topo do mercado? Toque no link de {$ctx['instagram']} {$ctaLink} e solicite seu plano agora mesmo.'";
+                 ."ENQUADRAMENTO: Plano médio com gesto apontando para a bio/link.\n"
+                 ."TEXTO NA TELA: 📲 Link na Bio: {$ctx['instagram']} ".($ctx['website'] ? "· {$ctx['website']}" : '')."\n"
+                 ."TRILHA SONORA: Lo-Fi Corporativo Moderno / Beat Eletrônico de alta energia.\n"
+                 ."ÁUDIO / FALA: 'Quer posicionar a sua marca no topo do mercado? Toque no link de {$ctx['instagram']} {$ctaLink} e solicite seu plano agora mesmo.'";
         }
 
         $fullScript = "{$hook}\n\n{$body}\n\n{$cta}";
@@ -454,26 +405,26 @@ class SofiCopywriterService
     {
         if ($isEs) {
             $fullScript = "🎬 [ESCENA 1 - GANCHO DE AUTORIDAD EJECUTIVA (00:00 - 00:04)]\n"
-                        . "ENQUADRE: Formato entrevista / podcast con micrófono profesional en toma.\n"
-                        . "TEXTO EN PANTALLA: 🎙️ El estándar en {$ctx['niche']}\n"
-                        . "AUDIO / VOZ: 'Hay un principio clave que los líderes de {$ctx['niche']} aplican para construir reputación inquebrantable.'\n\n"
-                        . "💡 [ESCENA 2 - POSICIONAMIENTO & DIFERENCIAL (00:05 - 00:45)]\n"
-                        . "B-ROLL: Tomas de instalaciones y detalles de excelencia de {$ctx['company']}.\n"
-                        . "AUDIO / VOZ: '{$desc} En {$ctx['company']}, nos enfocamos en {$ctx['differentials']}. Cuando tu mensaje se transmite con claridad y autoridad visual, dejas de competir por precio.'\n\n"
-                        . "🎯 [ESCENA 3 - CIERRE DE AUTORIDAD (00:46 - 00:58)]\n"
-                        . "TEXTO EN PANTALLA: Sigue a {$ctx['instagram']}" . ($ctx['website'] ? " · {$ctx['website']}" : "") . "\n"
-                        . "AUDIO / VOZ: 'Síguenos en {$ctx['instagram']} para más insights de alto nivel y visita {$ctx['website']} para conocer nuestro trabajo.'";
+                        ."ENQUADRE: Formato entrevista / podcast con micrófono profesional en toma.\n"
+                        ."TEXTO EN PANTALLA: 🎙️ El estándar en {$ctx['niche']}\n"
+                        ."AUDIO / VOZ: 'Hay un principio clave que los líderes de {$ctx['niche']} aplican para construir reputación inquebrantable.'\n\n"
+                        ."💡 [ESCENA 2 - POSICIONAMIENTO & DIFERENCIAL (00:05 - 00:45)]\n"
+                        ."B-ROLL: Tomas de instalaciones y detalles de excelencia de {$ctx['company']}.\n"
+                        ."AUDIO / VOZ: '{$desc} En {$ctx['company']}, nos enfocamos en {$ctx['differentials']}. Cuando tu mensaje se transmite con claridad y autoridad visual, dejas de competir por precio.'\n\n"
+                        ."🎯 [ESCENA 3 - CIERRE DE AUTORIDAD (00:46 - 00:58)]\n"
+                        ."TEXTO EN PANTALLA: Sigue a {$ctx['instagram']}".($ctx['website'] ? " · {$ctx['website']}" : '')."\n"
+                        ."AUDIO / VOZ: 'Síguenos en {$ctx['instagram']} para más insights de alto nivel y visita {$ctx['website']} para conocer nuestro trabajo.'";
         } else {
             $fullScript = "🎬 [CENA 1 - GANCHO DE AUTORIDADE EXECUTIVA (00:00 - 00:04)]\n"
-                        . "ENQUADRAMENTO: Formato podcast / entrevista com iluminação quente e microfone no plano.\n"
-                        . "TEXTO NA TELA: 🎙️ A virada de chave em {$ctx['niche']}\n"
-                        . "ÁUDIO / FALA: 'Existe uma regra clara que os líderes em {$ctx['niche']} dominam para construir valor inegociável.'\n\n"
-                        . "💡 [CENA 2 - POSICIONAMENTO & DIFERENCIAL (00:05 - 00:45)]\n"
-                        . "B-ROLL: Imagens de alto padrão de {$ctx['company']} ressaltando {$ctx['differentials']}.\n"
-                        . "ÁUDIO / FALA: '{$desc} Na {$ctx['company']}, nós priorizamos {$ctx['differentials']}. Quando sua autoridade visual reflete a excelência do seu produto, o cliente fecha sem hesitar.'\n\n"
-                        . "🎯 [CENA 3 - FECHAMENTO & CTA (00:46 - 00:58)]\n"
-                        . "TEXTO NA TELA: Siga {$ctx['instagram']}" . ($ctx['website'] ? " · {$ctx['website']}" : "") . "\n"
-                        . "ÁUDIO / FALA: 'Acompanhe nosso perfil em {$ctx['instagram']} para análises estratégicas e acesse nosso link para acelerar seus resultados.'";
+                        ."ENQUADRAMENTO: Formato podcast / entrevista com iluminação quente e microfone no plano.\n"
+                        ."TEXTO NA TELA: 🎙️ A virada de chave em {$ctx['niche']}\n"
+                        ."ÁUDIO / FALA: 'Existe uma regra clara que os líderes em {$ctx['niche']} dominam para construir valor inegociável.'\n\n"
+                        ."💡 [CENA 2 - POSICIONAMENTO & DIFERENCIAL (00:05 - 00:45)]\n"
+                        ."B-ROLL: Imagens de alto padrão de {$ctx['company']} ressaltando {$ctx['differentials']}.\n"
+                        ."ÁUDIO / FALA: '{$desc} Na {$ctx['company']}, nós priorizamos {$ctx['differentials']}. Quando sua autoridade visual reflete a excelência do seu produto, o cliente fecha sem hesitar.'\n\n"
+                        ."🎯 [CENA 3 - FECHAMENTO & CTA (00:46 - 00:58)]\n"
+                        ."TEXTO NA TELA: Siga {$ctx['instagram']}".($ctx['website'] ? " · {$ctx['website']}" : '')."\n"
+                        ."ÁUDIO / FALA: 'Acompanhe nosso perfil em {$ctx['instagram']} para análises estratégicas e acesse nosso link para acelerar seus resultados.'";
         }
 
         return [
@@ -491,22 +442,22 @@ class SofiCopywriterService
     {
         if ($isEs) {
             $fullScript = "🎬 [ESCENA 1 - GANCHO DE OFERTA EXCLUSIVA (00:00 - 00:03)]\n"
-                        . "TEXTO EN PANTALLA: 🔥 Oferta Especial para {$ctx['niche']}\n"
-                        . "AUDIO / VOZ: 'Si eres parte de {$ctx['audience']}, esto es exactamente lo que estabas esperando.'\n\n"
-                        . "💡 [ESCENA 2 - SOLUCIÓN {$ctx['company']} (00:04 - 00:35)]\n"
-                        . "AUDIO / VOZ: '{$title}: {$desc}. Contamos con {$ctx['differentials']}, garantizando una entrega impecable.'\n\n"
-                        . "🎯 [ESCENA 3 - CTA DIRECTA (00:36 - 00:45)]\n"
-                        . "TEXTO EN PANTALLA: 📲 Toca en el botón o visita {$ctx['instagram']}\n"
-                        . "AUDIO / VOZ: 'Cupos limitados. Haz clic en el botón abajo o ingresa a {$ctx['instagram']} para asegurar tu plaza ahora.'";
+                        ."TEXTO EN PANTALLA: 🔥 Oferta Especial para {$ctx['niche']}\n"
+                        ."AUDIO / VOZ: 'Si eres parte de {$ctx['audience']}, esto es exactamente lo que estabas esperando.'\n\n"
+                        ."💡 [ESCENA 2 - SOLUCIÓN {$ctx['company']} (00:04 - 00:35)]\n"
+                        ."AUDIO / VOZ: '{$title}: {$desc}. Contamos con {$ctx['differentials']}, garantizando una entrega impecable.'\n\n"
+                        ."🎯 [ESCENA 3 - CTA DIRECTA (00:36 - 00:45)]\n"
+                        ."TEXTO EN PANTALLA: 📲 Toca en el botón o visita {$ctx['instagram']}\n"
+                        ."AUDIO / VOZ: 'Cupos limitados. Haz clic en el botón abajo o ingresa a {$ctx['instagram']} para asegurar tu plaza ahora.'";
         } else {
             $fullScript = "🎬 [CENA 1 - GANCHO DE OFERTA EXCLUSIVA (00:00 - 00:03)]\n"
-                        . "TEXTO NA TELA: 🔥 Oportunidade Exclusiva para {$ctx['niche']}\n"
-                        . "ÁUDIO / FALA: 'Se você faz parte de {$ctx['audience']}, preste muita atenção nos próximos 30 segundos.'\n\n"
-                        . "💡 [CENA 2 - SOLUÇÃO {$ctx['company']} (00:04 - 00:35)]\n"
-                        . "ÁUDIO / FALA: '{$title}: {$desc}. Com {$ctx['differentials']}, garantimos uma experiência completa sem dores de cabeça.'\n\n"
-                        . "🎯 [CENA 3 - CTA DIRETA (00:36 - 00:45)]\n"
-                        . "TEXTO NA TELA: 📲 Clique em Saiba Mais ou acesse {$ctx['instagram']}\n"
-                        . "ÁUDIO / FALA: 'Condições exclusivas por tempo limitado. Clique no botão abaixo ou acesse {$ctx['instagram']} para garantir sua vaga.'";
+                        ."TEXTO NA TELA: 🔥 Oportunidade Exclusiva para {$ctx['niche']}\n"
+                        ."ÁUDIO / FALA: 'Se você faz parte de {$ctx['audience']}, preste muita atenção nos próximos 30 segundos.'\n\n"
+                        ."💡 [CENA 2 - SOLUÇÃO {$ctx['company']} (00:04 - 00:35)]\n"
+                        ."ÁUDIO / FALA: '{$title}: {$desc}. Com {$ctx['differentials']}, garantimos uma experiência completa sem dores de cabeça.'\n\n"
+                        ."🎯 [CENA 3 - CTA DIRETA (00:36 - 00:45)]\n"
+                        ."TEXTO NA TELA: 📲 Clique em Saiba Mais ou acesse {$ctx['instagram']}\n"
+                        ."ÁUDIO / FALA: 'Condições exclusivas por tempo limitado. Clique no botão abaixo ou acesse {$ctx['instagram']} para garantir sua vaga.'";
         }
 
         return [
@@ -524,20 +475,20 @@ class SofiCopywriterService
     {
         if ($isEs) {
             $fullScript = "🎬 [ESCENA 1 - GANCHO DE TRANSFORMACIÓN (00:00 - 00:04)]\n"
-                        . "TEXTO EN PANTALLA: 🚀 Caso Real en {$ctx['niche']}\n"
-                        . "AUDIO / VOZ: 'Muchos nos decían que destacar en {$ctx['niche']} era cada vez más difícil... hasta que implementamos este método.'\n\n"
-                        . "💡 [ESCENA 2 - EL CAMINO DE {$ctx['company']} (00:05 - 00:45)]\n"
-                        . "AUDIO / VOZ: '{$desc} Combinamos {$ctx['differentials']} con una estrategia visual enfocada 100% en {$ctx['audience']}. El resultado fue un incremento directo en la tasa de cierre.'\n\n"
-                        . "🎯 [ESCENA 3 - CTA INSPIRACIONAL (00:46 - 00:55)]\n"
-                        . "AUDIO / VOZ: 'El próximo caso de éxito puede ser tu marca. Síguenos en {$ctx['instagram']}" . ($ctx['website'] ? " o visita {$ctx['website']}" : "") . " para comenzar.'";
+                        ."TEXTO EN PANTALLA: 🚀 Caso Real en {$ctx['niche']}\n"
+                        ."AUDIO / VOZ: 'Muchos nos decían que destacar en {$ctx['niche']} era cada vez más difícil... hasta que implementamos este método.'\n\n"
+                        ."💡 [ESCENA 2 - EL CAMINO DE {$ctx['company']} (00:05 - 00:45)]\n"
+                        ."AUDIO / VOZ: '{$desc} Combinamos {$ctx['differentials']} con una estrategia visual enfocada 100% en {$ctx['audience']}. El resultado fue un incremento directo en la tasa de cierre.'\n\n"
+                        ."🎯 [ESCENA 3 - CTA INSPIRACIONAL (00:46 - 00:55)]\n"
+                        ."AUDIO / VOZ: 'El próximo caso de éxito puede ser tu marca. Síguenos en {$ctx['instagram']}".($ctx['website'] ? " o visita {$ctx['website']}" : '')." para comenzar.'";
         } else {
             $fullScript = "🎬 [CENA 1 - GANCHO DE TRANSFORMAÇÃO (00:00 - 00:04)]\n"
-                        . "TEXTO NA TELA: 🚀 Case Real em {$ctx['niche']}\n"
-                        . "ÁUDIO / FALA: 'Muitos diziam que era impossível se destacar em {$ctx['niche']} hoje em dia... até aplicarmos esta estratégia.'\n\n"
-                        . "💡 [CENA 2 - O CAMINHO DA {$ctx['company']} (00:05 - 00:45)]\n"
-                        . "ÁUDIO / FALA: '{$desc} Unimos {$ctx['differentials']} com uma comunicação magnética para {$ctx['audience']}. O resultado foi um salto no fechamento de contratos.'\n\n"
-                        . "🎯 [CENA 3 - CTA INSPIRACIONAL (00:46 - 00:55)]\n"
-                        . "ÁUDIO / FALA: 'A sua empresa pode ser o nosso próximo case. Siga {$ctx['instagram']}" . ($ctx['website'] ? " ou acesse {$ctx['website']}" : "") . " e dê o próximo passo hoje.'";
+                        ."TEXTO NA TELA: 🚀 Case Real em {$ctx['niche']}\n"
+                        ."ÁUDIO / FALA: 'Muitos diziam que era impossível se destacar em {$ctx['niche']} hoje em dia... até aplicarmos esta estratégia.'\n\n"
+                        ."💡 [CENA 2 - O CAMINHO DA {$ctx['company']} (00:05 - 00:45)]\n"
+                        ."ÁUDIO / FALA: '{$desc} Unimos {$ctx['differentials']} com uma comunicação magnética para {$ctx['audience']}. O resultado foi um salto no fechamento de contratos.'\n\n"
+                        ."🎯 [CENA 3 - CTA INSPIRACIONAL (00:46 - 00:55)]\n"
+                        ."ÁUDIO / FALA: 'A sua empresa pode ser o nosso próximo case. Siga {$ctx['instagram']}".($ctx['website'] ? " ou acesse {$ctx['website']}" : '')." e dê o próximo passo hoje.'";
         }
 
         return [
@@ -551,7 +502,7 @@ class SofiCopywriterService
     /**
      * Sofi AI (/ceo + /strategy): Gera SEO Estratégico completo para o Tenant (Produtora)
      */
-    public function generateTenantSeo(\App\Models\Tenant $tenant): array
+    public function generateTenantSeo(Tenant $tenant): array
     {
         $name = $tenant->name ?: 'NUME Vídeos Estratégicos';
         $desc = $tenant->description ?: 'Produção audiovisual estratégica, roteiros persuasivos e vídeos de alta conversão.';
@@ -560,17 +511,17 @@ class SofiCopywriterService
         // Análise com olhar CEO: conversão, posicionamento de autoridade e retenção
         $metaTitle = "{$name} | Vídeos Estratégicos de Alta Conversão";
         if (mb_strlen($metaTitle) > 70) {
-            $metaTitle = mb_substr($metaTitle, 0, 67) . '...';
+            $metaTitle = mb_substr($metaTitle, 0, 67).'...';
         }
 
         $metaDescription = "Aumente seu faturamento e autoridade com vídeos de alta retenção produzidos pela {$name}. Roteiros estratégicos para B2B e marcas líderes.";
         if (mb_strlen($metaDescription) > 160) {
-            $metaDescription = mb_substr($metaDescription, 0, 157) . '...';
+            $metaDescription = mb_substr($metaDescription, 0, 157).'...';
         }
 
-        $ogDescription = "Transforme visualizações em contratos. Vídeos gravados em 4K, roteiros persuasivos e padrão de interrupção com foco em ROI.";
+        $ogDescription = 'Transforme visualizações em contratos. Vídeos gravados em 4K, roteiros persuasivos e padrão de interrupção com foco em ROI.';
         if (mb_strlen($ogDescription) > 200) {
-            $ogDescription = mb_substr($ogDescription, 0, 197) . '...';
+            $ogDescription = mb_substr($ogDescription, 0, 197).'...';
         }
 
         $keywords = [
@@ -597,7 +548,7 @@ class SofiCopywriterService
     /**
      * Sofi AI (/ceo + /copywriter): Sugere títulos, descrição, hashtags e tags SEO para o vídeo entregue ao cliente
      */
-    public function generateVideoSeo(\App\Models\Video $video, ?\App\Models\Cliente $cliente = null): array
+    public function generateVideoSeo(Video $video, ?Cliente $cliente = null): array
     {
         $cliente = $cliente ?: $video->production?->cliente;
         $company = $cliente?->company_name ?: ($cliente?->name ?: 'Sua Marca');
@@ -613,16 +564,16 @@ class SofiCopywriterService
 
         // Descrição estruturada para YouTube / Instagram / TikTok / LinkedIn
         $sofiDescription = "Você quer saber como atrair mais clientes e se consolidar em {$niche}?\n\n"
-            . "Neste vídeo especial da {$company}, mostramos na prática os pontos fundamentais que geram autoridade imediata e retenção máxima.\n\n"
-            . "🎯 Direcionado para: {$audience}\n"
-            . "💡 Produção e Estratégia Audiovisual: Padrão NUME Creative\n\n"
-            . "Comente o que achou e compartilhe com quem precisa transformar conteúdo em resultados!";
+            ."Neste vídeo especial da {$company}, mostramos na prática os pontos fundamentais que geram autoridade imediata e retenção máxima.\n\n"
+            ."🎯 Direcionado para: {$audience}\n"
+            ."💡 Produção e Estratégia Audiovisual: Padrão NUME Creative\n\n"
+            .'Comente o que achou e compartilhe com quem precisa transformar conteúdo em resultados!';
 
         // Hashtags estratégicas organizadas por nicho e alcance orgânico
-        $sanitizeTag = fn($str) => preg_replace('/[^a-zA-Z0-9]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $str));
-        $companyTag = '#' . $sanitizeTag($company);
+        $sanitizeTag = fn ($str) => preg_replace('/[^a-zA-Z0-9]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $str));
+        $companyTag = '#'.$sanitizeTag($company);
         $nicheWords = explode(' ', $niche);
-        $nicheTag = !empty($nicheWords[0]) ? '#' . $sanitizeTag($nicheWords[0]) : '#Negocios';
+        $nicheTag = ! empty($nicheWords[0]) ? '#'.$sanitizeTag($nicheWords[0]) : '#Negocios';
 
         $hashtags = array_unique(array_filter([
             $companyTag,
@@ -639,10 +590,10 @@ class SofiCopywriterService
         $keywords = [
             mb_strtolower($company),
             mb_strtolower($niche),
-            'dicas de ' . mb_strtolower($niche),
-            'autoridade em ' . mb_strtolower($niche),
+            'dicas de '.mb_strtolower($niche),
+            'autoridade em '.mb_strtolower($niche),
             'video marketing',
-            'como atrair ' . mb_strtolower($audience),
+            'como atrair '.mb_strtolower($audience),
             'conteudo estrategico',
         ];
 
@@ -672,20 +623,20 @@ class SofiCopywriterService
         // Análise de Nicho/Tipo de Produção
         if (str_contains($cat, 'ad') || str_contains($cat, 'anuncio') || str_contains(mb_strtolower($name), 'ad')) {
             $desc = $isEs
-                ? "Campañas de vídeo diseñadas con ganchos de alta retención (0-3s) y llamadas a la acción directas para maximizar el ROI en Meta Ads y TikTok."
-                : "Campanhas de vídeo estruturadas com ganchos de padrão de interrupção (0-3s) e CTAs diretas para maximizar o ROI no Meta Ads e TikTok.";
+                ? 'Campañas de vídeo diseñadas con ganchos de alta retención (0-3s) y llamadas a la acción directas para maximizar el ROI en Meta Ads y TikTok.'
+                : 'Campanhas de vídeo estruturadas com ganchos de padrão de interrupção (0-3s) e CTAs diretas para maximizar o ROI no Meta Ads e TikTok.';
             $features = $isEs ? [
                 "{$qty} vídeos orientados 100% a captación y ventas",
-                "Guiones con ganchos de alta retención (0-3s)",
-                "Subtítulos dinámicos de alto impacto visual",
-                "Formatos optimizados para Reels, TikTok y Feed (9:16 / 4:5)",
-                "Asesoramiento en segmentación de audiencia",
+                'Guiones con ganchos de alta retención (0-3s)',
+                'Subtítulos dinámicos de alto impacto visual',
+                'Formatos optimizados para Reels, TikTok y Feed (9:16 / 4:5)',
+                'Asesoramiento en segmentación de audiencia',
             ] : [
                 "{$qty} vídeos focados 100% em captação e conversão",
-                "Roteiros com ganchos de padrão de interrupção (0-3s)",
-                "Legendas dinâmicas de alto impacto visual",
-                "Formatos otimizados para Reels, TikTok e Feed",
-                "Consultoria de segmentação de público",
+                'Roteiros com ganchos de padrão de interrupção (0-3s)',
+                'Legendas dinâmicas de alto impacto visual',
+                'Formatos otimizados para Reels, TikTok e Feed',
+                'Consultoria de segmentação de público',
             ];
             $addons = $isEs ? [
                 ['name' => 'Variaciones de Ganchos A/B (0-3s)', 'price' => 90],
@@ -700,20 +651,20 @@ class SofiCopywriterService
             ];
         } elseif (str_contains($cat, 'podcast') || str_contains(mb_strtolower($name), 'podcast')) {
             $desc = $isEs
-                ? "Producción multicámara profesional de podcast con cortes estratégicos (Reels/Shorts) para viralizar tu mensaje y consolidar autoridad."
-                : "Produção multicâmera profissional de podcast com cortes estratégicos (Reels/Shorts) para viralizar seu conteúdo e consolidar autoridade.";
+                ? 'Producción multicámara profesional de podcast con cortes estratégicos (Reels/Shorts) para viralizar tu mensaje y consolidar autoridad.'
+                : 'Produção multicâmera profissional de podcast com cortes estratégicos (Reels/Shorts) para viralizar seu conteúdo e consolidar autoridade.';
             $features = $isEs ? [
-                "Grabación multicámara 4K en estudio o localización",
-                "Tratamiento y masterización de audio profesional",
-                "Edición integral del episodio completo",
-                "Cortes estratégicos (Shorts/Reels) incluidos",
-                "Aprobación y feedback en el Portal del Cliente",
+                'Grabación multicámara 4K en estudio o localización',
+                'Tratamiento y masterización de audio profesional',
+                'Edición integral del episodio completo',
+                'Cortes estratégicos (Shorts/Reels) incluidos',
+                'Aprobación y feedback en el Portal del Cliente',
             ] : [
-                "Gravação multicâmera 4K em estúdio ou externa",
-                "Tratamento e masterização de áudio profissional",
-                "Edição integral do episódio completo",
-                "Cortes estratégicos (Shorts/Reels) inclusos",
-                "Aprovação e feedback no Portal do Cliente",
+                'Gravação multicâmera 4K em estúdio ou externa',
+                'Tratamento e masterização de áudio profissional',
+                'Edição integral do episódio completo',
+                'Cortes estratégicos (Shorts/Reels) inclusos',
+                'Aprovação e feedback no Portal do Cliente',
             ];
             $addons = $isEs ? [
                 ['name' => 'Cortes adicionales para redes (+3 shorts)', 'price' => 120],
@@ -728,20 +679,20 @@ class SofiCopywriterService
             ];
         } elseif (str_contains($cat, 'evento') || str_contains(mb_strtolower($name), 'evento')) {
             $desc = $isEs
-                ? "Cobertura audiovisual cinematográfica de eventos corporativos: Aftermovie dinámico, testimonios y fotografía profesional para inmortalizar tu marca."
-                : "Cobertura audiovisual cinematográfica de eventos corporativos: Aftermovie dinâmico, depoimentos e fotografia profissional para valorizar sua marca.";
+                ? 'Cobertura audiovisual cinematográfica de eventos corporativos: Aftermovie dinámico, testimonios y fotografía profesional para inmortalizar tu marca.'
+                : 'Cobertura audiovisual cinematográfica de eventos corporativos: Aftermovie dinâmico, depoimentos e fotografia profissional para valorizar sua marca.';
             $features = $isEs ? [
-                "Cobertura presencial con equipo audiovisual completo",
-                "Aftermovie cinematográfico dinámico",
-                "Selección de fotografías profesionales tratadas",
-                "Cortes rápidos para difusión en tiempo real",
-                "Entrega en máxima resolución 4K",
+                'Cobertura presencial con equipo audiovisual completo',
+                'Aftermovie cinematográfico dinámico',
+                'Selección de fotografías profesionales tratadas',
+                'Cortes rápidos para difusión en tiempo real',
+                'Entrega en máxima resolución 4K',
             ] : [
-                "Cobertura presencial com equipe audiovisual completa",
-                "Aftermovie cinematográfico dinâmico",
-                "Seleção de fotografias profissionais tratadas",
-                "Cortes rápidos para divulgação em tempo real",
-                "Entrega em resolução máxima 4K",
+                'Cobertura presencial com equipe audiovisual completa',
+                'Aftermovie cinematográfico dinâmico',
+                'Seleção de fotografias profissionais tratadas',
+                'Cortes rápidos para divulgação em tempo real',
+                'Entrega em resolução máxima 4K',
             ];
             $addons = $isEs ? [
                 ['name' => 'Grabación de Ponencia Completa', 'price' => 400],
@@ -756,20 +707,20 @@ class SofiCopywriterService
             ];
         } elseif (str_contains($cat, 'instituc') || str_contains(mb_strtolower($name), 'instituc')) {
             $desc = $isEs
-                ? "Vídeo de presentación corporativa de alto impacto para comunicar la esencia, dimensión e infraestructura de tu empresa con estética cinematográfica."
-                : "Vídeo de apresentação corporativa de alto padrão para comunicar a essência, dimensão e infraestrutura da sua empresa com estética cinematográfica.";
+                ? 'Vídeo de presentación corporativa de alto impacto para comunicar la esencia, dimensión e infraestructura de tu empresa con estética cinematográfica.'
+                : 'Vídeo de apresentação corporativa de alto padrão para comunicar a essência, dimensão e infraestrutura da sua empresa com estética cinematográfica.';
             $features = $isEs ? [
-                "Guion institucional y narrativa corporativa",
-                "Grabación cinematográfica 4K de instalaciones y equipo",
-                "Color grading y corrección de color avanzada",
-                "Diseño sonoro y banda sonora con licencia comercial",
-                "Versión completa + versión reducida para redes",
+                'Guion institucional y narrativa corporativa',
+                'Grabación cinematográfica 4K de instalaciones y equipo',
+                'Color grading y corrección de color avanzada',
+                'Diseño sonoro y banda sonora con licencia comercial',
+                'Versión completa + versión reducida para redes',
             ] : [
-                "Roteiro institucional e narrativa corporativa",
-                "Gravação cinematográfica 4K de instalações e equipe",
-                "Color grading e correção de cor avançada",
-                "Sound design e trilha com licença comercial",
-                "Versão completa + versão reduzida para redes",
+                'Roteiro institucional e narrativa corporativa',
+                'Gravação cinematográfica 4K de instalações e equipe',
+                'Color grading e correção de cor avançada',
+                'Sound design e trilha com licença comercial',
+                'Versão completa + versão reduzida para redes',
             ];
             $addons = $isEs ? [
                 ['name' => 'Locución Profesional en múltiples idiomas', 'price' => 80],
@@ -785,20 +736,20 @@ class SofiCopywriterService
         } else {
             // Padrão: Posicionamiento de Marca / Reels
             $desc = $isEs
-                ? "Producción audiovisual recurrente para posicionar tu marca como referente de mercado mediante narrativas persuasivas y retención algorítmica."
-                : "Produção audiovisual recorrente para posicionar sua marca como referência de mercado através de narrativas persuasivas e retenção algorítmica.";
+                ? 'Producción audiovisual recurrente para posicionar tu marca como referente de mercado mediante narrativas persuasivas y retención algorítmica.'
+                : 'Produção audiovisual recorrente para posicionar sua marca como referência de mercado através de narrativas persuasivas e retenção algorítmica.';
             $features = $isEs ? [
                 "{$qty} vídeos grabados y editados en calidad profesional",
-                "Roteirización estratégica orientada a tu público objetivo",
-                "Alineación con directrices de retención (0-3s)",
-                "Edición dinámica, b-rolls y subtítulos animados",
-                "Aprobación individual por vídeo en el Portal del Cliente",
+                'Roteirización estratégica orientada a tu público objetivo',
+                'Alineación con directrices de retención (0-3s)',
+                'Edición dinámica, b-rolls y subtítulos animados',
+                'Aprobación individual por vídeo en el Portal del Cliente',
             ] : [
                 "{$qty} vídeos gravados e editados em qualidade profissional",
-                "Roteirização estratégica orientada ao seu público-alvo",
-                "Alinhamento com diretrizes de retenção (0-3s)",
-                "Edição dinâmica, b-rolls e legendas animadas",
-                "Aprovação individual por vídeo no Portal do Cliente",
+                'Roteirização estratégica orientada ao seu público-alvo',
+                'Alinhamento com diretrizes de retenção (0-3s)',
+                'Edição dinâmica, b-rolls e legendas animadas',
+                'Aprovação individual por vídeo no Portal do Cliente',
             ];
             $addons = $isEs ? [
                 ['name' => 'Composición con Inteligencia Artificial', 'price' => 100],
@@ -968,7 +919,7 @@ class SofiCopywriterService
         for ($i = 0; $i < $quantity; $i++) {
             $template = $frameworkTemplates[$i % count($frameworkTemplates)];
             $title = $isSpanish ? $template['angle_es'] : $template['angle_pt'];
-            $desc = ($isSpanish ? $template['purpose_es'] : $template['purpose_pt']) . ($notes ? " [Contexto: {$notes}]" : '');
+            $desc = ($isSpanish ? $template['purpose_es'] : $template['purpose_pt']).($notes ? " [Contexto: {$notes}]" : '');
             $funnelLabel = $isSpanish ? $template['funnel_label_es'] : $template['funnel_label_pt'];
 
             // Gera o roteiro completo usando o gerador individual do serviço
@@ -989,7 +940,7 @@ class SofiCopywriterService
                 if (preg_match("/(?:ÁUDIO \/ FALA|AUDIO \/ VOZ):\s*['\"]([^'\"]+)['\"]/u", $scriptContent, $matches)) {
                     $hook = $matches[1];
                 } else {
-                    $hook = \Illuminate\Support\Str::limit($scriptContent, 140);
+                    $hook = Str::limit($scriptContent, 140);
                 }
             }
 
@@ -1015,4 +966,3 @@ class SofiCopywriterService
         return $plan;
     }
 }
-

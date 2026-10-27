@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Ai\Agents\SofiScriptAgent;
+use App\Ai\Agents\SofiScriptBlocksAgent;
+use App\Models\AiUsageLog;
 use App\Models\Cliente;
 use App\Models\MarketingPlan;
 use App\Models\Production;
@@ -45,22 +48,22 @@ class RoteiroVideoTypeTest extends TestCase
         MarketingPlan::create(['tenant_id' => $this->tenant->id, 'cliente_id' => $cliente->id, 'month_year' => now()->format('Y-m')])
             ->approveBy($cliente);
 
-        config(['services.gemini.key' => 'chave-ficticia', 'services.gemini.model' => 'modelo-ficticio', 'services.gemini.fallback_models' => []]);
+        config(['sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-de-teste']);
     }
 
-    private function geminiReturns(array $payload): void
+    private function blocksReply(array $texts, array $extra = []): array
     {
-        Http::fake(['generativelanguage.googleapis.com/*' => Http::response([
-            'candidates' => [['content' => ['parts' => [['text' => json_encode($payload)]]]]],
-        ])]);
+        return array_merge([
+            'blocks' => array_map(fn ($key, $text) => ['key' => $key, 'text' => $text], array_keys($texts), $texts),
+            'seo_title' => 'Pão artesanal', 'seo_description' => 'Descrição', 'seo_hashtags' => ['pao'], 'b_roll_suggestions' => [],
+        ], $extra);
     }
 
     public function test_sofi_writes_each_block_of_the_type_with_ai(): void
     {
-        $this->geminiReturns([
-            'blocks' => ['hook' => 'Gancho IA', 'problem' => 'Dor IA', 'turn' => 'Virada IA', 'proof' => 'Prova IA', 'offer' => 'Oferta IA', 'cta' => 'CTA IA'],
-            'seo_title' => 'Pão artesanal',
-        ]);
+        SofiScriptBlocksAgent::fake([$this->blocksReply(
+            ['hook' => 'Gancho IA', 'problem' => 'Dor IA', 'turn' => 'Virada IA', 'proof' => 'Prova IA', 'offer' => 'Oferta IA', 'cta' => 'CTA IA']
+        )])->preventStrayPrompts();
 
         $response = $this->actingAs($this->admin)->postJson(route('roteiros.generate-sofi', $this->production), [
             'video_type_id' => $this->sales->id, 'language' => 'pt_BR',
@@ -74,13 +77,14 @@ class RoteiroVideoTypeTest extends TestCase
         $this->assertSame('30s', $data['estimated_time']);
         $this->assertSame('Pão artesanal', $data['seo_title']);
 
-        Http::assertSent(fn ($request) => str_contains($request['contents'][0]['parts'][0]['text'], 'Vendas (30 s)')
-            && $request->hasHeader('x-goog-api-key') && ! str_contains($request->url(), 'key='));
+        SofiScriptBlocksAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, 'TIPO DE VÍDEO: "Vendas (30 s)"')
+            && str_contains($prompt->prompt, '[hook] Gancho (00:00 - 00:03)'));
+        $this->assertSame(1, AiUsageLog::forTenant($this->tenant->id)->where('agent', SofiScriptBlocksAgent::class)->whereNotNull('cliente_id')->count(), 'uso registrado com tenant e cliente');
     }
 
     public function test_incomplete_ai_answer_falls_back_to_heuristic_blocks(): void
     {
-        $this->geminiReturns(['blocks' => ['hook' => 'Só o gancho']]);
+        SofiScriptBlocksAgent::fake([$this->blocksReply(['hook' => 'Só o gancho'])])->preventStrayPrompts();
 
         $data = $this->actingAs($this->admin)->postJson(route('roteiros.generate-sofi', $this->production), [
             'video_type_id' => $this->sales->id, 'language' => 'es',
@@ -94,7 +98,7 @@ class RoteiroVideoTypeTest extends TestCase
 
     public function test_without_type_the_classic_framework_still_works(): void
     {
-        Http::fake(['generativelanguage.googleapis.com/*' => Http::response([], 500)]);
+        SofiScriptAgent::fake([fn () => throw new \RuntimeException('falha simulada')])->preventStrayPrompts();
 
         $data = $this->actingAs($this->admin)->postJson(route('roteiros.generate-sofi', $this->production), [
             'framework' => 'direct_offer', 'video_type_id' => null,
@@ -102,6 +106,22 @@ class RoteiroVideoTypeTest extends TestCase
 
         $this->assertArrayNotHasKey('blocks', $data);
         $this->assertNotEmpty($data['full_script']);
+        SofiScriptAgent::assertPromptedTimes(1);
+    }
+
+    public function test_classic_framework_uses_the_script_agent(): void
+    {
+        SofiScriptAgent::fake([[
+            'hook' => 'Gancho clássico', 'body' => 'Corpo', 'cta' => 'CTA', 'full_script' => 'Roteiro completo da IA', 'estimated_time' => '50s',
+            'seo_title' => 'Título', 'seo_description' => 'Desc', 'seo_hashtags' => ['pao'], 'b_roll_suggestions' => ['forno'],
+        ]])->preventStrayPrompts();
+
+        $data = $this->actingAs($this->admin)->postJson(route('roteiros.generate-sofi', $this->production), [
+            'framework' => 'direct_offer',
+        ])->assertOk()->json('data');
+
+        $this->assertSame('Roteiro completo da IA', $data['full_script']);
+        SofiScriptAgent::assertPrompted(fn ($prompt) => str_contains($prompt->prompt, "<<<\n- TÍTULO DO PROJETO: Pão de fermentação natural"));
     }
 
     public function test_type_from_another_tenant_or_inactive_is_refused(): void

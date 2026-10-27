@@ -22,6 +22,7 @@ class RecordAiUsage
     public function __construct(
         protected ?int $tenantId,
         protected string $agent,
+        protected ?int $clienteId = null,
     ) {}
 
     public function handle(PendingStep $step, Closure $next)
@@ -30,6 +31,7 @@ class RecordAiUsage
             try {
                 AiUsageLog::create([
                     'tenant_id' => $this->tenantId,
+                    'cliente_id' => $this->clienteId,
                     'agent' => $this->agent,
                     'provider' => $this->driverFor($step->provider),
                     'model' => $response->meta->model ?? $step->model,

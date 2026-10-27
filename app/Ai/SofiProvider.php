@@ -2,6 +2,7 @@
 
 namespace App\Ai;
 
+use App\Models\Setting;
 use App\Models\Tenant;
 use Laravel\Ai\Ai;
 
@@ -58,8 +59,15 @@ class SofiProvider
     protected function apiKey(string $driver, ?Tenant $tenant): ?string
     {
         // TODO(chave por tenant): quando cada produtora tiver a própria chave, ler aqui
-        // a chave criptografada do tenant via Setting (escopo explícito pelo $tenant->id,
-        // sem depender do usuário autenticado) e só então cair na chave global.
-        return config("sofi.keys.{$driver}") ?: null;
+        // a chave criptografada do tenant (escopo explícito pelo $tenant->id) antes da global.
+        $key = config("sofi.keys.{$driver}");
+
+        // Gemini também pode estar só na tela de configurações (Setting criptografado), como
+        // nas chamadas antigas: sem isso, mover um serviço para o SDK desligaria a IA dele.
+        if (! $key && $driver === 'gemini') {
+            $key = Setting::get('gemini_api_key');
+        }
+
+        return $key ?: null;
     }
 }

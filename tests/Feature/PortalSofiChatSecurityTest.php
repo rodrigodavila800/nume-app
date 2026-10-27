@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Ai\Agents\SofiSupportChatAgent;
+use App\Models\AiUsageLog;
 use App\Models\Cliente;
 use App\Models\Production;
 use App\Models\SofiConversation;
@@ -115,6 +117,28 @@ class PortalSofiChatSecurityTest extends TestCase
         $this->postJson(route('portal.sofi.chat'), ['message' => 'um'])->assertOk();
         $this->postJson(route('portal.sofi.chat'), ['message' => 'dois'])->assertOk();
         $this->postJson(route('portal.sofi.chat'), ['message' => 'tres'])->assertStatus(429);
+    }
+
+    public function test_chat_uses_support_agent_and_records_usage_for_cliente(): void
+    {
+        config(['sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-ficticia']);
+        SofiSupportChatAgent::fake(['Suas faturas ficam na aba Orçamentos do portal.'])->preventStrayPrompts();
+
+        $this->actingAs($this->cliente, 'cliente')
+            ->postJson(route('portal.sofi.chat'), ['message' => 'Onde vejo minha fatura?'])
+            ->assertOk()
+            ->assertJsonPath('reply.content', 'Suas faturas ficam na aba Orçamentos do portal.')
+            ->assertJsonPath('reply.metadata.source', 'sdk:gemini');
+
+        SofiSupportChatAgent::assertPrompted(fn ($prompt) => $prompt->prompt === 'Onde vejo minha fatura?');
+
+        $this->assertSame(
+            1,
+            AiUsageLog::forTenant($this->tenant->id)
+                ->where('cliente_id', $this->cliente->id)
+                ->where('agent', SofiSupportChatAgent::class)
+                ->count()
+        );
     }
 
     private function conversation(Cliente $cliente): SofiConversation

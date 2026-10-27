@@ -18,9 +18,14 @@ Estudo completo, com riscos e plano em fases: `docs/estudo-laravel-ai-sdk.md`. E
 - **Tools:** `app/Ai/Tools/ListTenantPacksTool` (somente leitura): pacotes ativos, preço, vídeos e adicionais do tenant do construtor, com `withoutGlobalScope('tenant')` + `where('tenant_id', ...)` em pacotes **e** adicionais. Modelo para toda tool de contexto público.
 - **Rate limit do chat público:** limiters `sofi-chat` (por IP/min, por IP/hora, por vitrine/hora) e `sofi-chat-reset` no `AppServiceProvider`, números em `config('sofi.chat_rate_limits')`.
 - **Provider único:** `App\Ai\SofiProvider::options(?Tenant)` devolve `provider`/`model`/`timeout` para `prompt(...$options)` ou `null` sem chave. Nunca chame `Ai::build` direto num service. Chave ainda vem de `config('sofi.keys.*')`; o ponto da chave por tenant (via `Setting`) está marcado em `SofiProvider::apiKey()`.
-- **Uso por tenant:** middleware `App\Ai\Middleware\RecordAiUsage($tenantId, static::class)` em `middleware()` de todo agente (`HasMiddleware`), uma linha por step em `ai_usage_logs` (tokens, cache, driver, modelo, `invocation_id`, sem conteúdo). Model `AiUsageLog` **sem** `BelongsToTenant`; consulte sempre com `AiUsageLog::forTenant($id)`.
-- Ainda chamam o Gemini direto (chave no header `x-goog-api-key`, logs só com `get_class($e)`): `SofiCopywriterService`, `SofiCopilotChatService` e `SofiBrandAnalystService`, além do caminho antigo dos três migrados. `MarketingPlanGeneratorService` e `BrandDnaCrawlerService` não chamam o Gemini diretamente (o crawler só faz HTTP no site do cliente).
-- Config em `config/services.php` → `services.gemini.{key,model,fallback_models}`; chave também em `Setting::get('gemini_api_key')`.
+- **Uso por tenant e cliente:** middleware `App\Ai\Middleware\RecordAiUsage($tenantId, static::class, $clienteId)` em `middleware()` de todo agente (`HasMiddleware`), uma linha por step em `ai_usage_logs` (`tenant_id`, `cliente_id`, tokens, cache, driver, modelo, `invocation_id`, sem conteúdo). Model `AiUsageLog` **sem** `BelongsToTenant`; consulte sempre com `AiUsageLog::forTenant($id)`.
+- **Serviços no SDK (com fallback heurístico preservado):**
+  - `MarketingPlanGeneratorService` → `app/Ai/Agents/SofiMarketingPlanAgent.php` (`HasStructuredOutput`).
+  - `SofiBrandAnalystService` → `app/Ai/Agents/SofiBrandAnalystAgent.php` (`HasStructuredOutput`, `cliente_id` registrado).
+  - `SofiCopywriterService` → `app/Ai/Agents/SofiScriptAgent.php` (frameworks clássicos) e `app/Ai/Agents/SofiScriptBlocksAgent.php` (blocos do `VideoType`).
+  - `SofiCopilotChatService` → `app/Ai/Agents/SofiSupportChatAgent.php` (`Conversational`, suporte no portal do cliente, histórico via `messages()`).
+  - `SofiTranslatorService`, `SofiQuoteEstimatorService` e `SofiSalesConsultantService` ainda mantêm o caminho HTTP antigo quando `SOFI_USE_AI_SDK=false`.
+- Config em `config/sofi.php` e `config/services.php` → `services.gemini.{key,model,fallback_models}`; `SofiProvider::apiKey()` também lê `Setting::get('gemini_api_key')`.
 - Quando todos os modelos falham, o service devolve um **fallback heurístico** (templates PT-BR/ES). Esse comportamento deve ser mantido.
 
 ## Comportamentos do SDK v1.3 já verificados no código (vendor)

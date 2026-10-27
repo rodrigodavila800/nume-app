@@ -31,12 +31,12 @@ public function generate(
 
 Quando recebe um `VideoType`, a Sofi **ignora o `$framework`** e escreve um texto para cada bloco do tipo, na ordem e nos tempos cadastrados pelo admin (Configurações > Tipos de vídeo). O tipo padrão é "Vendas (30 s)", com 6 blocos: gancho 0–3 s, problema 3–8, virada 8–15, prova 15–22, oferta 22–26 e CTA 26–30 (`VideoType::salesBlocks()`).
 
-- O prompt leva os blocos, a `sofi_guidance` do tipo e o DNA do cliente, e exige o JSON `{"blocks": {"<key>": "..."}, "seo_title", "seo_description", "seo_hashtags", "b_roll_suggestions"}`.
+- O prompt leva os blocos, a `sofi_guidance` do tipo e o DNA do cliente para o `SofiScriptBlocksAgent` (`HasStructuredOutput`: `blocks` como lista `{key, text}`, `seo_title`, `seo_description`, `seo_hashtags`, `b_roll_suggestions`). Roteiros sem tipo usam `SofiScriptAgent`.
 - A resposta só vale se **todos** os blocos vierem preenchidos. Se não vierem, entra o fallback heurístico **por bloco**: ele reconhece a função pelo key ou pelo nome (gancho, dor, virada, prova, oferta, CTA, em PT/ES) e, para um bloco desconhecido, usa a função descrita pelo admin.
 - O retorno inclui `blocks` (key, name, start, end, script), `structure` (a cópia do tipo), `video_type_id` e `source` (`ai` ou `heuristic`). Também mantém `hook`/`body`/`cta` para não quebrar quem lê o formato antigo.
 - O roteiro salvo grava `video_type_id` e `structure` (`VideoType::snapshot()`). A estrutura só muda quando o tipo do roteiro muda, então editar ou desativar o tipo depois não altera roteiros já escritos.
 - O tipo vem sempre do tenant da produção e precisa estar ativo (`RoteiroController::resolveVideoType`).
-- Há **uma única chamada HTTP ao Gemini** no serviço: `requestGeminiJson($prompt, $isValid)`. Não crie outra.
+- Há **um único ponto de chamada a modelo** no serviço: `runAgent($agent, $prompt, $cliente)` via `SofiProvider`. Não crie outro.
 
 ### Retorno Estruturado:
 ```php
