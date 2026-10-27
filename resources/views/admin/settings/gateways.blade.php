@@ -9,9 +9,9 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-extrabold text-white tracking-tight">{{ __('Configurações de Pagamento & Perfil Fiscal') }}</h1>
+            <h1 class="text-2xl font-extrabold text-white tracking-tight">{{ __('Configurações de Pagamento & Login OAuth') }}</h1>
             <p class="text-xs text-zinc-400 mt-1">
-                {{ __('Gerencie gateways de pagamento, alíquotas fiscais (IVA/IRPF), dados da emissora e integrações.') }}
+                {{ __('Gerencie o gateway global Stripe (assinaturas e pacotes), login com Google e acesse os métodos exclusivos da sua produtora.') }}
             </p>
         </div>
     </div>
@@ -66,455 +66,171 @@
         </div>
     </div>
 
-    <!-- Navegação por Abas (Tabs) 100% Tailwind -->
+    <!-- Navegação por Abas -->
     <x-settings-tabs active="gateways" />
 
-    <!-- Gateway Settings Form -->
-    <form action="{{ route('admin.settings.gateways.update') }}" method="POST" id="settings-unified-form" class="p-6 sm:p-8 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-6">
+    <!-- Atalhos Rápidos para Configurações Financeiras da Produtora (Tenant) -->
+    <div class="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 space-y-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xs font-extrabold uppercase tracking-wider text-zinc-300">{{ __('Configurações Financeiras & Fiscais da sua Produtora') }}</h2>
+                <p class="text-[11px] text-zinc-500">{{ __('TPV Redsys/Bizum, IBAN e dados fiscais de faturação (AEAT) são isolados por produtora em suas respectivas abas.') }}</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a href="{{ route('admin.settings.fiscal') }}" class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-orange-500/50 transition flex items-center justify-between group">
+                <div>
+                    <p class="text-xs font-bold text-white group-hover:text-orange-400 transition">⚖️ {{ __('Perfil Fiscal & IVA/IRPF') }}</p>
+                    <p class="text-[11px] text-zinc-500 mt-0.5">{{ __('NIF/CIF, série e alíquotas') }}</p>
+                </div>
+                <span class="text-zinc-500 group-hover:text-orange-400 text-xs font-bold">→</span>
+            </a>
+            <a href="{{ route('admin.settings.redsys') }}" class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-blue-500/50 transition flex items-center justify-between group">
+                <div>
+                    <p class="text-xs font-bold text-white group-hover:text-blue-400 transition">🏦 {{ __('TPV Redsys & Bizum') }}</p>
+                    <p class="text-[11px] text-zinc-500 mt-0.5">{{ __('FUC, terminal e chave SHA-256') }}</p>
+                </div>
+                <span class="text-zinc-500 group-hover:text-blue-400 text-xs font-bold">→</span>
+            </a>
+            <a href="{{ route('admin.settings.bank-transfer') }}" class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-emerald-500/50 transition flex items-center justify-between group">
+                <div>
+                    <p class="text-xs font-bold text-white group-hover:text-emerald-400 transition">🏛️ {{ __('Transferência (IBAN)') }}</p>
+                    <p class="text-[11px] text-zinc-500 mt-0.5">{{ __('Conta bancária SEPA e titular') }}</p>
+                </div>
+                <span class="text-zinc-500 group-hover:text-emerald-400 text-xs font-bold">→</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Gateway Settings Form (Stripe + Google OAuth) -->
+    <form action="{{ route('admin.settings.gateways.update') }}" method="POST" id="settings-unified-form" class="p-6 sm:p-8 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-8">
         @csrf
 
-        <!-- ========================================== -->
-        <!-- ABA 1: GATEWAYS DE PAGAMENTO (STRIPE & BBVA) -->
-        <!-- ========================================== -->
-        <div id="tab-content-gateways" class="settings-tab-content space-y-8">
-            
-            <!-- Bloco 1: Stripe -->
-            <div class="space-y-6">
-                <!-- Header Stripe com Toggle de Ativação -->
-                <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
-                    <div>
-                        <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                            <span>🌐</span> {{ __('Gateway Stripe (Global / Apple Pay / Cards)') }}
-                        </h2>
-                        <p class="text-xs text-zinc-400 mt-0.5">
-                            {{ __('Ativa ou desativa o recebimento via Stripe nos portais e vitrines da plataforma.') }}
-                        </p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="stripe_enabled" value="1" @checked(old('stripe_enabled', $stripeEnabled)) class="sr-only peer">
-                        <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
-                        <span class="ml-2 text-xs font-semibold text-zinc-300">{{ __('Ativo') }}</span>
-                    </label>
-                </div>
-
-                <!-- Modo de Operação -->
-                <div class="space-y-1.5">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                        {{ __('Ambiente do Gateway') }} <span class="text-orange-500">*</span>
-                    </label>
-                    <div class="grid grid-cols-2 gap-3 max-w-md">
-                        <label class="flex items-center gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-950 cursor-pointer hover:border-orange-500/50 transition">
-                            <input type="radio" name="stripe_mode" value="test" @checked(old('stripe_mode', $stripeMode) === 'test')
-                                   class="text-orange-600 focus:ring-orange-500">
-                            <div>
-                                <p class="text-xs font-bold text-white">{{ __('Modo Teste / Sandbox') }}</p>
-                                <p class="text-[10px] text-zinc-500">pk_test / sk_test</p>
-                            </div>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-950 cursor-pointer hover:border-orange-500/50 transition">
-                            <input type="radio" name="stripe_mode" value="live" @checked(old('stripe_mode', $stripeMode) === 'live')
-                                   class="text-orange-600 focus:ring-orange-500">
-                            <div>
-                                <p class="text-xs font-bold text-white">{{ __('Modo Produção (Live)') }}</p>
-                                <p class="text-[10px] text-zinc-500">pk_live / sk_live</p>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Publishable Key -->
-                <div class="space-y-1.5">
-                    <label for="stripe_key" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                        {{ __('Stripe Publishable Key (Chave Pública)') }}
-                    </label>
-                    <input type="text" name="stripe_key" id="stripe_key"
-                           placeholder="pk_test_... ou pk_live_..."
-                           class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600"
-                           value="{{ old('stripe_key', $stripeKey) }}">
-                    <p class="text-[11px] text-zinc-500">{{ __('Utilizada na interface do cliente e componentes de checkout.') }}</p>
-                </div>
-
-                <!-- Secret Key -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <label for="stripe_secret" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Stripe Secret Key (Chave Secreta)') }}
-                        </label>
-                        @if(!empty($stripeSecret))
-                            <span class="text-[11px] font-bold text-emerald-400">🔒 {{ __('Chave configurada') }}</span>
-                        @endif
-                    </div>
-                    <div class="relative">
-                        <input type="password" name="stripe_secret" id="stripe_secret"
-                               placeholder="{{ !empty($stripeSecret) ? '••••••••••••••••••••••••••••••••' : 'sk_test_... ou sk_live_...' }}"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
-                        <button type="button" onclick="togglePasswordVisibility('stripe_secret')"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
-                            👁️
-                        </button>
-                    </div>
-                    <p class="text-[11px] text-zinc-500">{{ __('Deixe em branco caso deseje manter a chave atual.') }}</p>
-                </div>
-
-                <!-- Webhook Secret -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <label for="stripe_webhook_secret" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Stripe Webhook Signing Secret') }}
-                        </label>
-                        @if(!empty($stripeWebhook))
-                            <span class="text-[11px] font-bold text-emerald-400">🔒 {{ __('Secret configurado') }}</span>
-                        @endif
-                    </div>
-                    <div class="relative">
-                        <input type="password" name="stripe_webhook_secret" id="stripe_webhook_secret"
-                               placeholder="{{ !empty($stripeWebhook) ? '••••••••••••••••••••••••' : 'whsec_...' }}"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
-                        <button type="button" onclick="togglePasswordVisibility('stripe_webhook_secret')"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
-                            👁️
-                        </button>
-                    </div>
-                    <p class="text-[11px] text-zinc-500">{{ __('URL do Webhook:') }} <code class="text-orange-400 bg-zinc-950 px-1.5 py-0.5 rounded font-mono">{{ url('/stripe/webhook') }}</code></p>
-                </div>
-
-                <!-- Grid 2 colunas: Price ID & Fee -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div class="space-y-1.5">
-                        <label for="stripe_price_id" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Stripe Price ID (Assinatura)') }}
-                        </label>
-                        <input type="text" name="stripe_price_id" id="stripe_price_id"
-                               placeholder="price_1N..."
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600"
-                               value="{{ old('stripe_price_id', $stripePriceId) }}">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label for="stripe_platform_fee_percent" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Taxa da Plataforma NUME (%)') }}
-                        </label>
-                        <input type="number" step="0.1" min="0" max="100" name="stripe_platform_fee_percent" id="stripe_platform_fee_percent"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600"
-                               value="{{ old('stripe_platform_fee_percent', $stripeFee) }}">
-                        <p class="text-[11px] text-zinc-500">{{ __('Dedução retida automaticamente nas vendas dos pacotes.') }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bloco 2: BBVA Redsys / Bizum -->
-            <div class="pt-8 border-t border-zinc-800/80 space-y-6">
-                <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                                <span>🏦</span> {{ __('TPV Virtual BBVA (Redsys / Bizum / Tarjetas)') }}
-                            </h2>
-                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                PCI-DSS SAQ-A
-                            </span>
-                        </div>
-                        <p class="text-xs text-zinc-400 mt-0.5">
-                            {{ __('Pagamento instantâneo via Bizum e cartões na Espanha com taxas interbancárias ultrabaixas.') }}
-                        </p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="redsys_enabled" value="1" @checked(old('redsys_enabled', $redsysEnabled)) class="sr-only peer">
-                        <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span class="ml-2 text-xs font-semibold text-zinc-300">{{ __('Ativo') }}</span>
-                    </label>
-                </div>
-
-                <!-- Sub-toggles específicos de Bizum e Cartão BBVA -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                    <!-- Toggle Bizum -->
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-zinc-900 border border-zinc-800">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-lg">⚡</span>
-                            <div>
-                                <span class="text-xs font-bold text-white block">Bizum (BBVA)</span>
-                                <span class="text-[10px] text-zinc-400 block">{{ __('Pagamento instantâneo por celular espanhol') }}</span>
-                            </div>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="redsys_bizum_enabled" value="1" @checked(old('redsys_bizum_enabled', $redsysBizumEnabled)) class="sr-only peer">
-                            <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
-                        </label>
-                    </div>
-
-                    <!-- Toggle Cartão BBVA Redsys -->
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-zinc-900 border border-zinc-800">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-lg">💳</span>
-                            <div>
-                                <span class="text-xs font-bold text-white block">{{ __('Tarjeta Segura (BBVA)') }}</span>
-                                <span class="text-[10px] text-zinc-400 block">{{ __('Cartões com autenticação 3D Secure') }}</span>
-                            </div>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="redsys_card_enabled" value="1" @checked(old('redsys_card_enabled', $redsysCardEnabled)) class="sr-only peer">
-                            <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Ambiente Redsys -->
-                <div class="space-y-1.5">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                        {{ __('Ambiente do TPV Redsys') }} <span class="text-blue-500">*</span>
-                    </label>
-                    <div class="grid grid-cols-2 gap-3 max-w-md">
-                        <label class="flex items-center gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-950 cursor-pointer hover:border-blue-500/50 transition">
-                            <input type="radio" name="redsys_environment" value="test" @checked(old('redsys_environment', $redsysEnvironment) === 'test')
-                                   class="text-blue-600 focus:ring-blue-500">
-                            <div>
-                                <p class="text-xs font-bold text-white">{{ __('Sandbox / Pruebas') }}</p>
-                                <p class="text-[10px] text-zinc-500">sis-t.redsys.es:25443</p>
-                            </div>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-950 cursor-pointer hover:border-blue-500/50 transition">
-                            <input type="radio" name="redsys_environment" value="live" @checked(old('redsys_environment', $redsysEnvironment) === 'live')
-                                   class="text-blue-600 focus:ring-blue-500">
-                            <div>
-                                <p class="text-xs font-bold text-white">{{ __('Produção Real (BBVA)') }}</p>
-                                <p class="text-[10px] text-zinc-500">sis.redsys.es</p>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Grid FUC e Terminal -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label for="redsys_merchant_code" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Número de Comercio (FUC)') }}
-                        </label>
-                        <input type="text" name="redsys_merchant_code" id="redsys_merchant_code"
-                               placeholder="999008881"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition placeholder:text-zinc-600"
-                               value="{{ old('redsys_merchant_code', $redsysMerchantCode) }}">
-                        <p class="text-[11px] text-zinc-500">{{ __('Código de 9 dígitos fornecido pelo BBVA.') }}</p>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label for="redsys_terminal" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Terminal') }}
-                        </label>
-                        <input type="text" name="redsys_terminal" id="redsys_terminal"
-                               placeholder="001"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition placeholder:text-zinc-600"
-                               value="{{ old('redsys_terminal', $redsysTerminal) }}">
-                        <p class="text-[11px] text-zinc-500">{{ __('Geralmente 001 ou 1.') }}</p>
-                    </div>
-                </div>
-
-                <!-- Secret Key Redsys -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <label for="redsys_secret_key" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Clave Secreta SHA-256 (Clave de Encriptación)') }}
-                        </label>
-                        @if(!empty($redsysSecretKey))
-                            <span class="text-[11px] font-bold text-emerald-400">🔒 {{ __('Clave configurada') }}</span>
-                        @endif
-                    </div>
-                    <div class="relative">
-                        <input type="password" name="redsys_secret_key" id="redsys_secret_key"
-                               placeholder="{{ !empty($redsysSecretKey) ? '••••••••••••••••••••••••' : 'Chave SHA-256 do Portal Canales Redsys' }}"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition placeholder:text-zinc-600">
-                        <button type="button" onclick="togglePasswordVisibility('redsys_secret_key')"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
-                            👁️
-                        </button>
-                    </div>
-                    <p class="text-[11px] text-zinc-500">
-                        {{ __('URL de Notificação (Webhook Redsys):') }}
-                        <code class="text-blue-400 bg-zinc-950 px-1.5 py-0.5 rounded font-mono">{{ url('/webhooks/redsys') }}</code>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- ABA 2: PERFIL FISCAL & FATURAMENTO LEGAL  -->
-        <!-- ========================================== -->
-        <div id="tab-content-fiscal" class="settings-tab-content space-y-6 hidden">
-            
-            <div class="pb-4 border-b border-zinc-800">
-                <div class="flex items-center gap-2">
+        <!-- Bloco 1: Stripe -->
+        <div class="space-y-6">
+            <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+                <div>
                     <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-                        <span>⚖️</span> {{ __('Perfil Fiscal da Produtora & Tributação (AEAT España)') }}
+                        <span>🌐</span> {{ __('Gateway Stripe (Global / Apple Pay / Cards)') }}
                     </h2>
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        Hacienda / Real Decreto 1619/2012
-                    </span>
-                </div>
-                <p class="text-xs text-zinc-400 mt-0.5">
-                    {{ __('Configure se você fatura como Trabalhador Autônomo ou Sociedade Mercantil para aplicação exata de retenções IRPF e IVA.') }}
-                </p>
-            </div>
-
-            <!-- Seleção de Regime Tributário do Emissor -->
-            <div class="space-y-2">
-                <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                    {{ __('Regime Jurídico / Tributário do Titular') }} <span class="text-emerald-500">*</span>
-                </label>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label class="flex items-start gap-3 p-3.5 rounded-xl border border-zinc-800 bg-zinc-950 cursor-pointer hover:border-emerald-500/50 transition">
-                        <input type="radio" name="fiscal_regime" value="autonomo" @checked(old('fiscal_regime', $fiscalRegime) === 'autonomo')
-                               class="text-emerald-600 focus:ring-emerald-500 mt-1" onchange="updateIrpfVisibility()">
-                        <div>
-                            <p class="text-xs font-extrabold text-white flex items-center gap-1.5">
-                                <span>👤</span> {{ __('Autónomo Profissional (Persona Física)') }}
-                            </p>
-                            <p class="text-[11px] text-zinc-400 mt-0.5">
-                                {{ __('Aplica retenção de IRPF automaticamente quando o comprador for Empresa ou outro Autônomo na Espanha.') }}
-                            </p>
-                        </div>
-                    </label>
-                    <label class="flex items-start gap-3 p-3.5 rounded-xl border border-zinc-800 bg-zinc-950 cursor-pointer hover:border-emerald-500/50 transition">
-                        <input type="radio" name="fiscal_regime" value="empresa_sl" @checked(old('fiscal_regime', $fiscalRegime) === 'empresa_sl')
-                               class="text-emerald-600 focus:ring-emerald-500 mt-1" onchange="updateIrpfVisibility()">
-                        <div>
-                            <p class="text-xs font-extrabold text-white flex items-center gap-1.5">
-                                <span>🏢</span> {{ __('Sociedad Mercantil (S.L. / S.A.)') }}
-                            </p>
-                            <p class="text-[11px] text-zinc-400 mt-0.5">
-                                {{ __('Faturamento padrão Base + 21% IVA sem retenção de IRPF em serviços audiovisuais.') }}
-                            </p>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Alíquota de IRPF e IVA -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <!-- Alíquota IRPF -->
-                <div id="box-irpf-rate" class="space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <label for="fiscal_irpf_rate" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Alíquota de Retenção IRPF (%)') }} <span class="text-orange-500">*</span>
-                        </label>
-                        <span class="text-[10px] text-orange-400 font-mono font-bold">{{ __('Dedução em Faturas B2B') }}</span>
-                    </div>
-                    <select name="fiscal_irpf_rate" id="fiscal_irpf_rate"
-                            class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-sans focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
-                        <option value="15.00" @selected((float) old('fiscal_irpf_rate', $fiscalIrpfRate) == 15.00)>15,00% — {{ __('Alíquota Geral de Autônomo na Espanha') }}</option>
-                        <option value="7.00" @selected((float) old('fiscal_irpf_rate', $fiscalIrpfRate) == 7.00)>7,00% — {{ __('Novo Autônomo (Primeiros 3 Anos)') }}</option>
-                        <option value="0.00" @selected((float) old('fiscal_irpf_rate', $fiscalIrpfRate) == 0.00)>0,00% — {{ __('Isento de Retenção') }}</option>
-                    </select>
-                    <p class="text-[11px] text-zinc-500">
-                        {{ __('Abatido do total a pagar quando a empresa compradora for espanhola para repasse ao Modelo 111 da AEAT.') }}
+                    <p class="text-xs text-zinc-400 mt-0.5">
+                        {{ __('Ativa ou desativa o recebimento via Stripe nos portais e vitrines da plataforma.') }}
                     </p>
                 </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="stripe_enabled" value="1" @checked(old('stripe_enabled', $stripeEnabled)) class="sr-only peer">
+                    <div class="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                    <span class="ml-2 text-xs font-semibold text-zinc-300">{{ __('Ativo') }}</span>
+                </label>
+            </div>
 
-                <!-- Alíquota padrão de IVA -->
-                <div class="space-y-1.5">
-                    <label for="tax_default_iva_rate" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                        {{ __('Alíquota Geral de IVA (%)') }} <span class="text-emerald-500">*</span>
+            <!-- Modo de Operação -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
+                    {{ __('Ambiente do Gateway') }} <span class="text-orange-500">*</span>
+                </label>
+                <div class="grid grid-cols-2 gap-3 max-w-md">
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-950 cursor-pointer hover:border-orange-500/50 transition">
+                        <input type="radio" name="stripe_mode" value="test" @checked(old('stripe_mode', $stripeMode) === 'test')
+                               class="text-orange-600 focus:ring-orange-500">
+                        <div>
+                            <p class="text-xs font-bold text-white">{{ __('Modo Teste / Sandbox') }}</p>
+                            <p class="text-[10px] text-zinc-500">pk_test / sk_test</p>
+                        </div>
                     </label>
-                    <input type="number" step="0.01" min="0" max="100" name="tax_default_iva_rate" id="tax_default_iva_rate"
-                           class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition placeholder:text-zinc-600"
-                           value="{{ old('tax_default_iva_rate', $taxDefaultIvaRate) }}">
-                    <p class="text-[11px] text-zinc-500">{{ __('Alíquota de 21% para produções audiovisuais na Espanha Peninsular.') }}</p>
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-zinc-800 bg-zinc-950 cursor-pointer hover:border-orange-500/50 transition">
+                        <input type="radio" name="stripe_mode" value="live" @checked(old('stripe_mode', $stripeMode) === 'live')
+                               class="text-orange-600 focus:ring-orange-500">
+                        <div>
+                            <p class="text-xs font-bold text-white">{{ __('Modo Produção (Live)') }}</p>
+                            <p class="text-[10px] text-zinc-500">pk_live / sk_live</p>
+                        </div>
+                    </label>
                 </div>
             </div>
 
-            <!-- Dados Cadastrais da Emissora (Fatura Oficial) -->
-            <div class="pt-4 border-t border-zinc-800/80 space-y-4">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                    📋 {{ __('Identificação Cadastral da Produtora para Emissão de Faturas') }}
-                </h3>
+            <!-- Publishable Key -->
+            <div class="space-y-1.5">
+                <label for="stripe_key" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
+                    {{ __('Stripe Publishable Key (Chave Pública)') }}
+                </label>
+                <input type="text" name="stripe_key" id="stripe_key"
+                       placeholder="pk_test_... ou pk_live_..."
+                       class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600"
+                       value="{{ old('stripe_key', $stripeKey) }}">
+                <p class="text-[11px] text-zinc-500">{{ __('Utilizada na interface do cliente e componentes de checkout.') }}</p>
+            </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <!-- Razão Social / Nome do Titular -->
-                    <div class="sm:col-span-2 space-y-1.5">
-                        <label for="fiscal_company_name" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Nome do Titular / Razão Social') }} <span class="text-emerald-500">*</span>
-                        </label>
-                        <input type="text" name="fiscal_company_name" id="fiscal_company_name"
-                               placeholder="{{ __('Ex: Rodrigo Souza ou Nume Creative') }}"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-sans focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition placeholder:text-zinc-600"
-                               value="{{ old('fiscal_company_name', $fiscalCompanyName) }}">
-                    </div>
+            <!-- Secret Key -->
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label for="stripe_secret" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
+                        {{ __('Stripe Secret Key (Chave Secreta)') }}
+                    </label>
+                    @if(!empty($stripeSecret))
+                        <span class="text-[11px] font-bold text-emerald-400">🔒 {{ __('Chave configurada') }}</span>
+                    @endif
+                </div>
+                <div class="relative">
+                    <input type="password" name="stripe_secret" id="stripe_secret"
+                           placeholder="{{ !empty($stripeSecret) ? '••••••••••••••••••••••••••••••••' : 'sk_test_... ou sk_live_...' }}"
+                           class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
+                    <button type="button" onclick="togglePasswordVisibility('stripe_secret')"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
+                        👁️
+                    </button>
+                </div>
+                <p class="text-[11px] text-zinc-500">{{ __('Deixe em branco caso deseje manter a chave atual.') }}</p>
+            </div>
 
-                    <!-- CIF / NIF Fiscal -->
-                    <div class="space-y-1.5">
-                        <label for="fiscal_company_cif" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('NIF / DNI / NIE / CIF') }} <span class="text-emerald-500">*</span>
-                        </label>
-                        <input type="text" name="fiscal_company_cif" id="fiscal_company_cif"
-                               placeholder="12345678Z ou B50987654"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition placeholder:text-zinc-600"
-                               value="{{ old('fiscal_company_cif', $fiscalCompanyCif) }}">
-                    </div>
+            <!-- Webhook Secret -->
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label for="stripe_webhook_secret" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
+                        {{ __('Stripe Webhook Signing Secret') }}
+                    </label>
+                    @if(!empty($stripeWebhook))
+                        <span class="text-[11px] font-bold text-emerald-400">🔒 {{ __('Secret configurado') }}</span>
+                    @endif
+                </div>
+                <div class="relative">
+                    <input type="password" name="stripe_webhook_secret" id="stripe_webhook_secret"
+                           placeholder="{{ !empty($stripeWebhook) ? '••••••••••••••••••••••••' : 'whsec_...' }}"
+                           class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
+                    <button type="button" onclick="togglePasswordVisibility('stripe_webhook_secret')"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
+                        👁️
+                    </button>
+                </div>
+                <p class="text-[11px] text-zinc-500">{{ __('URL do Webhook:') }} <code class="text-orange-400 bg-zinc-950 px-1.5 py-0.5 rounded font-mono">{{ url('/stripe/webhook') }}</code></p>
+            </div>
+
+            <!-- Grid 2 colunas: Price ID & Fee -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div class="space-y-1.5">
+                    <label for="stripe_price_id" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
+                        {{ __('Stripe Price ID (Assinatura)') }}
+                    </label>
+                    <input type="text" name="stripe_price_id" id="stripe_price_id"
+                           placeholder="price_1N..."
+                           class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600"
+                           value="{{ old('stripe_price_id', $stripePriceId) }}">
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <!-- Domicílio Fiscal -->
-                    <div class="sm:col-span-2 space-y-1.5">
-                        <label for="fiscal_company_address" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Domicílio Fiscal / Endereço da Sede') }}
-                        </label>
-                        <input type="text" name="fiscal_company_address" id="fiscal_company_address"
-                               placeholder="Calle Alfonso I, 12, Planta 3"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-sans focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition placeholder:text-zinc-600"
-                               value="{{ old('fiscal_company_address', $fiscalCompanyAddress) }}">
-                    </div>
-
-                    <!-- Código Postal -->
-                    <div class="space-y-1.5">
-                        <label for="fiscal_company_postal_code" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Código Postal') }}
-                        </label>
-                        <input type="text" name="fiscal_company_postal_code" id="fiscal_company_postal_code"
-                               placeholder="50003"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition placeholder:text-zinc-600"
-                               value="{{ old('fiscal_company_postal_code', $fiscalCompanyPostalCode) }}">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <!-- Cidade -->
-                    <div class="space-y-1.5">
-                        <label for="fiscal_company_city" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Cidade / Província') }}
-                        </label>
-                        <input type="text" name="fiscal_company_city" id="fiscal_company_city"
-                               placeholder="Zaragoza"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-sans focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition placeholder:text-zinc-600"
-                               value="{{ old('fiscal_company_city', $fiscalCompanyCity) }}">
-                    </div>
-
-                    <!-- E-mail de Faturamento -->
-                    <div class="space-y-1.5">
-                        <label for="fiscal_company_email" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('E-mail de Faturamento Oficial') }}
-                        </label>
-                        <input type="email" name="fiscal_company_email" id="fiscal_company_email"
-                               placeholder="facturacion@numecreative.es"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-sans focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition placeholder:text-zinc-600"
-                               value="{{ old('fiscal_company_email', $fiscalCompanyEmail) }}">
-                    </div>
-
-                    <!-- Série Correlativa -->
-                    <div class="space-y-1.5">
-                        <label for="fiscal_invoice_series" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                            {{ __('Série de Faturamento') }}
-                        </label>
-                        <input type="text" name="fiscal_invoice_series" id="fiscal_invoice_series"
-                               placeholder="NUM-2026-"
-                               class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition placeholder:text-zinc-600"
-                               value="{{ old('fiscal_invoice_series', $fiscalInvoiceSeries) }}">
-                    </div>
+                <div class="space-y-1.5">
+                    <label for="stripe_platform_fee_percent" class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
+                        {{ __('Taxa da Plataforma NUME (%)') }}
+                    </label>
+                    <input type="number" step="0.1" min="0" max="100" name="stripe_platform_fee_percent" id="stripe_platform_fee_percent"
+                           class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600"
+                           value="{{ old('stripe_platform_fee_percent', $stripeFee) }}">
+                    <p class="text-[11px] text-zinc-500">{{ __('Dedução retida automaticamente nas vendas dos pacotes.') }}</p>
                 </div>
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- ABA 3: GOOGLE OAUTH & APIS                 -->
-        <!-- ========================================== -->
-        <div id="tab-content-oauth" class="settings-tab-content space-y-6 hidden">
+        <!-- Bloco 2: Google OAuth 2.0 (Login com 1 clique) -->
+        <div class="pt-8 border-t border-zinc-800 space-y-6">
             <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
                 <div>
                     <h3 class="text-sm font-extrabold uppercase tracking-wider text-white flex items-center gap-2">
@@ -524,7 +240,7 @@
                             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                         </svg>
-                        <span>{{ __('Autenticação Google (OAuth 2.0)') }}</span>
+                        <span>{{ __('Autenticação Google (OAuth 2.0 — Login Social)') }}</span>
                     </h3>
                     <p class="text-xs text-zinc-400 mt-0.5">
                         {{ __('Permite login com 1 clique para clientes e colaboradores através de contas Google.') }}
@@ -587,59 +303,25 @@
             </div>
         </div>
 
-        <!-- Botão Salvar Todas as Configurações -->
+        <!-- Botão Salvar Configurações -->
         <div class="flex items-center justify-between pt-6 border-t border-zinc-800">
             <span class="text-xs text-zinc-500">
-                🔒 {{ __('Todas as credenciais e parâmetros fiscais são salvos de forma criptografada.') }}
+                🔒 {{ __('Todas as credenciais são salvas de forma criptografada com AES-256.') }}
             </span>
             <button type="submit"
                     class="bg-orange-600 hover:bg-orange-500 active:scale-[0.98] text-white font-extrabold text-xs uppercase tracking-wider px-6 py-3 rounded-xl shadow-lg shadow-orange-900/20 transition-all flex items-center gap-2 cursor-pointer">
                 <span>💾</span>
-                <span>{{ __('Salvar Todas as Configurações') }}</span>
+                <span>{{ __('Salvar Configurações') }}</span>
             </button>
         </div>
     </form>
 </div>
 
 <script>
-function switchSettingTab(tabKey) {
-    const tabs = ['gateways', 'fiscal', 'oauth'];
-
-    tabs.forEach(key => {
-        const btn = document.getElementById('tab-btn-' + key);
-        const content = document.getElementById('tab-content-' + key);
-
-        if (key === tabKey) {
-            btn.classList.add('bg-orange-600', 'text-white', 'shadow-sm');
-            btn.classList.remove('text-zinc-400', 'hover:text-white', 'hover:bg-zinc-800/60');
-            content.classList.remove('hidden');
-        } else {
-            btn.classList.remove('bg-orange-600', 'text-white', 'shadow-sm');
-            btn.classList.add('text-zinc-400', 'hover:text-white', 'hover:bg-zinc-800/60');
-            content.classList.add('hidden');
-        }
-    });
-
-    if (history.replaceState) {
-        history.replaceState(null, null, '#' + tabKey);
-    }
-}
-
-// Inicializa a aba baseada no hash da URL (ex: #fiscal ou #oauth)
-window.addEventListener('DOMContentLoaded', () => {
-    const hash = window.location.hash.replace('#', '');
-    if (['gateways', 'fiscal', 'oauth'].includes(hash)) {
-        switchSettingTab(hash);
-    }
-});
-
-function togglePasswordVisibility(fieldId) {
-    const input = document.getElementById(fieldId);
-    if (input.type === "password") {
-        input.type = "text";
-    } else {
-        input.type = "password";
-    }
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
 }
 </script>
 @endsection

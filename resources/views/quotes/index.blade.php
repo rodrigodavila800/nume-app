@@ -30,6 +30,8 @@
         </div>
     </div>
 
+    <x-commercial-tabs active="quotes" />
+
     <!-- Cards de Métricas e Pipeline -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between">

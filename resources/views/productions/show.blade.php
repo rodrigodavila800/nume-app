@@ -35,8 +35,22 @@
             <p class="text-xs text-zinc-400 max-w-2xl">{{ $production->description ?: __('Sem descrição detalhada cadastrada.') }}</p>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             @can('update', $production)
+                <form action="{{ route('productions.update-status', $production) }}" method="POST" class="flex items-center gap-1.5">
+                    @csrf
+                    @method('PATCH')
+                    <select name="status" onchange="this.form.submit()" aria-label="{{ __('Mudar etapa da produção') }}"
+                            class="bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 text-xs font-bold text-zinc-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-500 cursor-pointer">
+                        <option value="draft" @selected($production->status === 'draft')>📝 {{ __('Etapa: Rascunho') }}</option>
+                        <option value="pending_review" @selected($production->status === 'pending_review')>⏳ {{ __('Etapa: Revisão de Roteiro') }}</option>
+                        <option value="in_production" @selected($production->status === 'in_production')>🎬 {{ __('Etapa: Em Gravação & Edição') }}</option>
+                        <option value="ready" @selected($production->status === 'ready')>📦 {{ __('Etapa: Corte Pronto') }}</option>
+                        <option value="approved" @selected($production->status === 'approved')>✅ {{ __('Etapa: Aprovado') }}</option>
+                        <option value="published" @selected($production->status === 'published')>🚀 {{ __('Etapa: Publicado') }}</option>
+                    </select>
+                </form>
+
                 <a href="{{ route('productions.edit', $production) }}"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition">
                     ✏️ {{ __('Editar Produção') }}
@@ -44,13 +58,45 @@
                 @if ($production->isReadyForProduction() && $production->status !== 'approved')
                     <form action="{{ route('productions.mark-approved', $production) }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer">
                             ✓ {{ __('Marcar como Aprovada') }}
                         </button>
                     </form>
                 @endif
             @endcan
         </div>
+    </div>
+
+    <!-- Esteira Visual de 5 Etapas da Produção -->
+    @php
+        $pipelineOrder = ['draft' => 1, 'pending_review' => 2, 'in_production' => 3, 'ready' => 4, 'approved' => 4, 'published' => 5];
+        $currentStage = $pipelineOrder[$production->status] ?? 1;
+        $pipelineStages = [
+            1 => ['label' => __('1. Planejamento'), 'desc' => __('Pauta & Briefing')],
+            2 => ['label' => __('2. Revisão Roteiro'), 'desc' => __('Aprovação do Cliente')],
+            3 => ['label' => __('3. Gravação & Edição'), 'desc' => __('Captação / Ilha')],
+            4 => ['label' => __('4. Corte Pronto'), 'desc' => __('Revisão Final / Aprovado')],
+            5 => ['label' => __('5. Publicado'), 'desc' => __('Distribuído nas Redes')],
+        ];
+    @endphp
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+        @foreach($pipelineStages as $stepNumber => $stageInfo)
+            @php
+                $isCompleted = $stepNumber < $currentStage || $production->status === 'published';
+                $isActive = $stepNumber === $currentStage && $production->status !== 'published';
+            @endphp
+            <div class="p-3 rounded-xl border {{ $isCompleted ? 'bg-emerald-950/20 border-emerald-500/30' : ($isActive ? 'bg-orange-950/25 border-orange-500/40' : 'bg-zinc-900/60 border-zinc-800') }}">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-extrabold {{ $isCompleted ? 'text-emerald-400' : ($isActive ? 'text-orange-400' : 'text-zinc-500') }}">
+                        {{ $stageInfo['label'] }}
+                    </span>
+                    <span class="text-xs">
+                        @if($isCompleted) ✓ @elseif($isActive) ● @else ○ @endif
+                    </span>
+                </div>
+                <p class="text-[10px] text-zinc-400 mt-0.5">{{ $stageInfo['desc'] }}</p>
+            </div>
+        @endforeach
     </div>
 
     @if (session('success'))
@@ -62,9 +108,17 @@
 
     <!-- Metadata Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Cliente Vinculado') }}</p>
-            <p class="text-sm font-bold text-white mt-1">{{ $production->cliente ? $production->cliente->name : __('Interno') }}</p>
+        <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-2">
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Cliente Vinculado') }}</p>
+                <p class="text-sm font-bold text-white mt-1">{{ $production->cliente ? $production->cliente->name : __('Interno') }}</p>
+            </div>
+            @if($production->cliente)
+                <a href="{{ route('clientes.show', $production->cliente) }}"
+                   class="px-2.5 py-1.5 rounded-lg bg-orange-600/15 hover:bg-orange-600 text-orange-400 hover:text-white border border-orange-500/30 text-[10px] font-extrabold transition shrink-0">
+                    {{ __('Ficha 360º →') }}
+                </a>
+            @endif
         </div>
         <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800">
             <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Criado Por') }}</p>

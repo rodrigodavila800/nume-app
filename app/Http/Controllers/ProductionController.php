@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Production;
 use App\Models\Cliente;
+use App\Models\MarketingPlan;
+use App\Models\Production;
+use App\Models\Quote;
+use App\Models\Roteiro;
+use App\Models\SupportTicket;
+use App\Models\Video;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Http\RedirectResponse;
 
 class ProductionController extends Controller
 {
@@ -59,7 +64,7 @@ class ProductionController extends Controller
                     'badge' => 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
                     'icon' => '✓',
                     'status_target' => 'approved',
-                    'items' => $allProductions->whereIn('status', ['approved', 'completed', 'entregue']),
+                    'items' => $allProductions->whereIn('status', ['approved', 'ready', 'completed', 'entregue']),
                 ],
                 'published' => [
                     'label' => __('Publicado nas Redes'),
@@ -73,12 +78,16 @@ class ProductionController extends Controller
 
         $stats = [
             'total' => Production::count(),
-            'approved' => Production::where('status', 'approved')->count(),
+            'approved' => Production::whereIn('status', ['approved', 'ready'])->count(),
             'in_production' => Production::where('status', 'in_production')->count(),
             'published' => Production::where('status', 'published')->count(),
             'total_clientes' => Cliente::count(),
-            'total_roteiros' => \App\Models\Roteiro::count(),
-            'total_videos' => \App\Models\Video::count(),
+            'total_roteiros' => Roteiro::count(),
+            'total_videos' => Video::count(),
+            'quote_requests' => Quote::where('status', 'requested')->count(),
+            'plan_adjustments' => MarketingPlan::where('status', MarketingPlan::STATUS_ADJUSTMENT)->count(),
+            'roteiros_rejected' => Roteiro::where('status', 'rejected')->count(),
+            'open_tickets' => SupportTicket::whereIn('status', SupportTicket::OPEN_STATUSES)->count(),
         ];
 
         $clientes = Cliente::orderBy('name')->get();
@@ -158,7 +167,7 @@ class ProductionController extends Controller
             'description' => 'nullable|string|max:1000',
             'target_publication_date' => 'nullable|date|after:today',
             'seo_keywords' => 'nullable|string|max:500',
-            'status' => 'in:draft,in_production,pending_review,approved,published,archived',
+            'status' => 'in:draft,submitted,in_production,pending_review,ready,approved,published,archived',
         ]);
 
         $production->update($validated);
@@ -187,7 +196,7 @@ class ProductionController extends Controller
     {
         $this->authorize('update', $production);
 
-        if (!$production->isReadyForProduction()) {
+        if (! $production->isReadyForProduction()) {
             return redirect()->back()
                 ->with('error', 'Production precisa ter um roteiro aprovado para ser marcada como pronta.');
         }
@@ -206,7 +215,7 @@ class ProductionController extends Controller
         $this->authorize('update', $production);
 
         $validated = $request->validate([
-            'status' => 'required|in:draft,in_production,pending_review,approved,published,archived',
+            'status' => 'required|in:draft,submitted,in_production,pending_review,ready,approved,published,archived',
         ]);
 
         $production->update(['status' => $validated['status']]);

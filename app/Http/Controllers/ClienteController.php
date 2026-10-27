@@ -3,6 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\MarketingPlan;
+use App\Models\SupportTicket;
+use App\Services\Crm\LeadAutomation;
+use App\Services\MarketingPlanGeneratorService;
+use App\Services\SocialPublishing\PublishingLimits;
+use App\Support\Anamnesis;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,10 +23,80 @@ class ClienteController extends Controller
         $this->authorize('viewAny', Cliente::class);
 
         $clientes = Cliente::withCount('productions')
+            ->with(['marketingPlans' => fn ($q) => $q->latest('id')->limit(1), 'socialConnections'])
             ->orderBy('name')
             ->paginate(15);
 
         return view('clientes.index', compact('clientes'));
+    }
+
+    public function show(Cliente $cliente): View
+    {
+        $this->authorize('view', $cliente);
+
+        $cliente->load([
+            'productions' => fn ($q) => $q->withCount(['roteiros', 'videos'])->latest(),
+            'marketingPlans' => fn ($q) => $q->with(['items.videoType', 'items.production'])->orderBy('month_year', 'desc'),
+            'socialConnections',
+            'packPurchases.pack',
+        ]);
+
+        $latestPlan = $cliente->marketingPlans->first();
+        $quotes = $cliente->allQuotes()->latest('id')->take(10)->get();
+        $tickets = SupportTicket::where('tenant_id', $cliente->tenant_id)
+            ->where('cliente_id', $cliente->id)
+            ->latest('id')
+            ->take(5)
+            ->get();
+        $limits = app(PublishingLimits::class)->summary($cliente);
+        $anamnesisLabels = [
+            'objectives' => Anamnesis::objectiveLabels(),
+            'tones' => Anamnesis::toneLabels(),
+            'frequencies' => Anamnesis::frequencyLabels(),
+        ];
+
+        return view('clientes.show', compact(
+            'cliente',
+            'latestPlan',
+            'quotes',
+            'tickets',
+            'limits',
+            'anamnesisLabels',
+        ));
+    }
+
+    public function regenerateMarketingPlan(
+        Request $request,
+        Cliente $cliente,
+        MarketingPlanGeneratorService $planGenerator,
+    ): RedirectResponse {
+        $this->authorize('view', $cliente);
+
+        $validated = $request->validate([
+            'adjustment_notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $currentMonth = now()->format('Y-m');
+        $existingPlan = MarketingPlan::forTenant($cliente->tenant_id)
+            ->where('cliente_id', $cliente->id)
+            ->where('month_year', $currentMonth)
+            ->first();
+
+        $latestPurchase = $cliente->packPurchases()->latest('id')->first();
+        $videoQty = MarketingPlanGeneratorService::videoQuantityFor($cliente, $latestPurchase);
+
+        if (! $existingPlan) {
+            $planGenerator->generate($cliente, $videoQty, $latestPurchase, $currentMonth);
+
+            return redirect()->route('clientes.show', $cliente)
+                ->with('success', __('Plano de marketing gerado pela Sofi IA e enviado para aprovação do cliente no portal.'));
+        }
+
+        $notes = trim((string) ($validated['adjustment_notes'] ?? '')) ?: $existingPlan->adjustment_request;
+        $planGenerator->regeneratePlan($existingPlan, $cliente, $videoQty, $notes);
+
+        return redirect()->route('clientes.show', $cliente)
+            ->with('success', __('Grade recalculada pela Sofi IA considerando os ajustes e devolvida para aprovação do cliente!'));
     }
 
     public function create(): View
@@ -48,7 +124,7 @@ class ClienteController extends Controller
 
         Password::broker('clientes')->sendResetLink(['email' => $cliente->email, 'tenant_id' => $cliente->tenant_id]);
 
-        app(\App\Services\Crm\LeadAutomation::class)->clienteRegistered($cliente, 'manual');
+        app(LeadAutomation::class)->clienteRegistered($cliente, 'manual');
 
         return redirect()->route('clientes.index')
             ->with('success', 'Cliente cadastrado! Um link de definição de senha foi enviado por e-mail.');

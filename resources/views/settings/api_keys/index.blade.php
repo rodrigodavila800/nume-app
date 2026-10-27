@@ -1,18 +1,19 @@
 @extends('layouts.app')
 
 @section('title', __('Chaves de API & Desenvolvedores') . ' | NUME')
+@section('breadcrumb', __('API & MCP'))
 
 @section('content')
-<div class="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="space-y-6 max-w-6xl mx-auto">
 
     <!-- Flash Messages -->
     @if(session('success') && ! session('plainTextToken'))
-        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between shadow-xs">
+        <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                 <span>{{ session('success') }}</span>
             </div>
-            <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900">✕</button>
+            <button type="button" onclick="this.parentElement.remove()" class="text-emerald-400 hover:text-white">✕</button>
         </div>
     @endif
 
@@ -20,22 +21,22 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">
                     {{ __('B2B Developer API') }}
                 </span>
-                <span class="text-zinc-400 text-xs">•</span>
-                <span class="text-xs text-zinc-500 font-medium">{{ __('White-label Engine') }}</span>
+                <span class="text-zinc-600 text-xs">•</span>
+                <span class="text-xs text-zinc-400 font-medium">{{ __('White-label Engine') }}</span>
             </div>
-            <h1 class="text-2xl font-black tracking-tight text-zinc-900 mt-1">
+            <h1 class="text-2xl font-extrabold tracking-tight text-white mt-1">
                 {{ __('Chaves de API & Desenvolvedores') }}
             </h1>
-            <p class="text-xs text-zinc-500 mt-1">
+            <p class="text-xs text-zinc-400 mt-1">
                 {{ __('Emita tokens B2B para integrar seu ERP, Make.com, n8n ou Zapier diretamente com a engine de postagens da NUME.') }}
             </p>
         </div>
 
         <div class="flex items-center gap-3">
-            <a href="{{ route('api.v1.docs') }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-bold transition shadow-xs">
+            <a href="{{ route('api.v1.docs') }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white rounded-xl text-xs font-bold transition shadow-xs">
                 <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
@@ -43,6 +44,8 @@
             </a>
         </div>
     </div>
+
+    <x-settings-tabs active="api_keys" />
 
     <!-- Mensagem de Sucesso com o Token Cru (Exibido apenas uma vez) -->
     @if (session('plainTextToken'))

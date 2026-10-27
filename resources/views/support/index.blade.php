@@ -15,6 +15,8 @@
         <p class="text-xs text-zinc-400 mt-1">{{ __('Demandas dos clientes abertas pelo portal ou pelo chat da Sofi. Urgentes e altas primeiro.') }}</p>
     </div>
 
+    <x-commercial-tabs active="support" />
+
     <div class="flex flex-wrap items-center gap-1.5">
         @foreach($tabs as $key => $label)
             <a href="{{ route('support.index', ['status' => $key]) }}"

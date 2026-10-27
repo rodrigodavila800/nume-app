@@ -24,8 +24,8 @@
         @endcan
     </div>
 
-    <!-- Navegação de Abas do Catálogo & Cadastros -->
-    <x-catalog-tabs active="clientes" />
+    <!-- Navegação Comercial & Clientes -->
+    <x-commercial-tabs active="clientes" />
 
     @if (session('success'))
         <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2">
@@ -41,25 +41,64 @@
                 <thead class="bg-zinc-950/60 border-b border-zinc-800 text-zinc-400 uppercase font-bold tracking-wider text-[10px]">
                     <tr>
                         <th class="px-5 py-3.5">{{ __('Cliente') }}</th>
-                        <th class="px-5 py-3.5">{{ __('E-mail de Contato') }}</th>
                         <th class="px-5 py-3.5">{{ __('Empresa / Marca') }}</th>
+                        <th class="px-5 py-3.5">{{ __('Jornada (DNA · Anamnese · Plano)') }}</th>
                         <th class="px-5 py-3.5">{{ __('Produções') }}</th>
                         <th class="px-5 py-3.5 text-right">{{ __('Ações') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-800/60">
                     @forelse ($clientes as $cliente)
+                        @php
+                            $plan = $cliente->marketingPlans->first();
+                        @endphp
                         <tr class="hover:bg-zinc-800/30 transition">
                             <td class="px-5 py-4">
-                                <div class="flex items-center gap-3">
+                                <a href="{{ route('clientes.show', $cliente) }}" class="flex items-center gap-3 group">
                                     <div class="w-8 h-8 rounded-full bg-orange-600/20 border border-orange-500/20 text-orange-400 font-bold text-xs flex items-center justify-center shrink-0">
                                         {{ substr($cliente->name, 0, 2) }}
                                     </div>
-                                    <span class="font-bold text-white">{{ $cliente->name }}</span>
+                                    <div>
+                                        <span class="font-bold text-white group-hover:text-orange-400 transition block">{{ $cliente->name }}</span>
+                                        <span class="text-zinc-500 font-mono text-[10px]">{{ $cliente->email }}</span>
+                                    </div>
+                                </a>
+                            </td>
+                            <td class="px-5 py-4">
+                                <span class="text-zinc-200 font-medium block">{{ $cliente->company_name ?? '—' }}</span>
+                                @if($cliente->brand_niche)
+                                    <span class="text-[10px] text-zinc-500">{{ $cliente->brand_niche }}</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $cliente->hasCompletedBrandProfile() ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-500' }}">
+                                        {{ $cliente->hasCompletedBrandProfile() ? '✓ DNA' : '○ DNA' }}
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $cliente->hasCompletedAnamnesis() ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-500' }}">
+                                        {{ $cliente->hasCompletedAnamnesis() ? '✓ Anamnese' : '○ Anamnese' }}
+                                    </span>
+                                    @if ($plan)
+                                        @if ($plan->status === \App\Models\MarketingPlan::STATUS_APPROVED)
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                ✓ {{ __('Plano Aprovado') }}
+                                            </span>
+                                        @elseif ($plan->status === \App\Models\MarketingPlan::STATUS_ADJUSTMENT)
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                                ⚠️ {{ __('Ajuste no Plano') }}
+                                            </span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                                                ⏳ {{ __('Plano em Revisão') }}
+                                            </span>
+                                        @endif
+                                    @else
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-800 text-zinc-500">
+                                            ○ {{ __('Sem Plano') }}
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
-                            <td class="px-5 py-4 text-zinc-300 font-mono text-[11px]">{{ $cliente->email }}</td>
-                            <td class="px-5 py-4 text-zinc-400">{{ $cliente->company_name ?? '—' }}</td>
                             <td class="px-5 py-4">
                                 <span class="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 font-semibold text-[11px]">
                                     {{ $cliente->productions_count }} {{ __('produções') }}
@@ -67,6 +106,10 @@
                             </td>
                             <td class="px-5 py-4 text-right">
                                 <div class="inline-flex items-center gap-2">
+                                    <a href="{{ route('clientes.show', $cliente) }}"
+                                       class="px-3 py-1.5 rounded-lg bg-orange-600/20 hover:bg-orange-600 text-orange-400 hover:text-white font-bold text-xs border border-orange-500/30 transition">
+                                        {{ __('Ficha 360º →') }}
+                                    </a>
                                     @can('update', $cliente)
                                         <a href="{{ route('clientes.edit', $cliente) }}" class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition" title="Editar">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

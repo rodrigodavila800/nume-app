@@ -104,8 +104,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
     Route::get('/billing/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
 
-    // Clientes da produtora (compradores de pacotes)
-    Route::resource('clientes', ClienteController::class)->except(['show']);
+    // Clientes da produtora (ficha 360º, DNA, anamnese e plano de marketing)
+    Route::post('clientes/{cliente}/marketing-plan/regenerate', [ClienteController::class, 'regenerateMarketingPlan'])
+        ->whereNumber('cliente')
+        ->name('clientes.marketing-plan.regenerate');
+    Route::resource('clientes', ClienteController::class);
 
     // Taxonomia e Categorias
     Route::resource('categories', CategoryController::class)->except(['show']);

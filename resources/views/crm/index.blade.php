@@ -23,6 +23,8 @@
         </div>
     </div>
 
+    <x-commercial-tabs active="crm" />
+
     @if(session('success'))
         <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-semibold">{{ session('success') }}</div>
     @endif

@@ -35,15 +35,26 @@
             </div>
 
             <!-- Middle: Nav Sections -->
-            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6 [scrollbar-width:thin]">
-                
-                <!-- Section: Visão Geral -->
+            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5 [scrollbar-width:thin]">
+                @php
+                    $pendingQuoteRequestsCount = auth()->check() ? \App\Models\Quote::where('status', 'requested')->count() : 0;
+                    $openSupportTicketsCount = auth()->check() ? \App\Models\SupportTicket::whereIn('status', \App\Models\SupportTicket::OPEN_STATUSES)->count() : 0;
+                    $pendingPlanAdjustmentsCount = auth()->check() ? \App\Models\MarketingPlan::where('status', \App\Models\MarketingPlan::STATUS_ADJUSTMENT)->count() : 0;
+                    $totalCommercialAlerts = $pendingQuoteRequestsCount + $openSupportTicketsCount + $pendingPlanAdjustmentsCount;
+
+                    $isComercialActive = request()->routeIs(['clientes*', 'crm*', 'quotes*', 'support*', 'analytics*']);
+                    $isCatalogoActive = request()->routeIs(['packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*']);
+                    $isFinanceiroActive = request()->routeIs(['billing*', 'admin.invoices*', 'admin.subscriptions*', 'stripe-connect*']);
+                    $isSettingsActive = request()->routeIs(['admin.settings*', 'api_keys*', 'video_types*', 'ai_usage*']);
+                @endphp
+
+                <!-- 1. Operação & Conteúdo -->
                 <div class="space-y-1">
                     <p class="sidebar-heading px-3 text-[10px] font-extrabold uppercase tracking-widest text-zinc-500 mb-2">
-                        {{ __('Visão Geral') }}
+                        {{ __('Operação & Conteúdo') }}
                     </p>
                     <a href="{{ route('productions.index') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('productions*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                       class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('productions*', 'roteiros*', 'videos*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <rect width="7" height="9" x="3" y="3" rx="1" stroke-width="2"/>
                             <rect width="7" height="5" x="14" y="3" rx="1" stroke-width="2"/>
@@ -51,13 +62,6 @@
                             <rect width="7" height="5" x="3" y="16" rx="1" stroke-width="2"/>
                         </svg>
                         <span class="sidebar-text">{{ __('Produções & Painel') }}</span>
-                    </a>
-                    <a href="{{ route('distributions.index') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('distributions*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                        </svg>
-                        <span class="sidebar-text">{{ __('Distribuição Social') }}</span>
                     </a>
                     <a href="{{ route('calendar.index') }}"
                        class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('calendar*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
@@ -76,31 +80,97 @@
                         </div>
                         <span class="sidebar-badge text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-extrabold uppercase">AI</span>
                     </a>
-                    <a href="{{ route('analytics.index') }}"
-                       class="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('analytics*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
-                            <span class="sidebar-text">{{ __('Vendas & BI (Sofi)') }}</span>
-                        </div>
-                        <span class="sidebar-badge text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-extrabold uppercase">AI</span>
+                    <a href="{{ route('distributions.index') }}"
+                       class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('distributions*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                        <span class="sidebar-text">{{ __('Distribuição Social') }}</span>
                     </a>
                 </div>
 
-                @php
-                    $isCatalogoActive = request()->routeIs(['clientes*', 'crm*', 'support*', 'packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*']);
-                    $isFinanceiroActive = request()->routeIs(['billing*', 'admin.invoices*', 'admin.subscriptions*', 'stripe-connect*', 'quotes*']);
-                    $isSettingsActive = request()->routeIs(['admin.settings*', 'api_keys*', 'video_types*', 'ai_usage*']);
-                @endphp
+                <!-- 2. Comercial & Clientes -->
+                <div class="space-y-1">
+                    <button type="button" onclick="toggleNavGroup('comercial')"
+                            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all {{ $isComercialActive ? 'text-white bg-zinc-800/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30' }}">
+                        <div class="flex items-center gap-2.5">
+                            <svg class="w-4 h-4 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span class="sidebar-text">{{ __('Comercial & Clientes') }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            @if ($totalCommercialAlerts > 0)
+                                <span class="sidebar-badge px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                                    {{ $totalCommercialAlerts }}
+                                </span>
+                            @endif
+                            <svg id="menu-chevron-comercial" class="sidebar-chevron w-4 h-4 text-zinc-500 transition-transform duration-200 {{ ($isComercialActive || $totalCommercialAlerts > 0) ? 'rotate-180 text-sky-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </button>
 
-                <!-- Section: Catálogo & Cadastros (Dropdown Retrátil) -->
+                    <div id="menu-group-comercial" class="space-y-1 pl-3 border-l-2 border-zinc-800 ml-3.5 my-1 transition-all {{ ($isComercialActive || $totalCommercialAlerts > 0) ? '' : 'hidden' }}">
+                        <a href="{{ route('clientes.index') }}"
+                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('clientes*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <div class="flex items-center gap-2.5">
+                                <span>👥</span>
+                                <span class="sidebar-text">{{ __('Clientes') }}</span>
+                            </div>
+                            @if ($pendingPlanAdjustmentsCount > 0)
+                                <span class="sidebar-badge text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-extrabold" title="{{ __('Planos de marketing com ajuste pedido') }}">
+                                    {{ $pendingPlanAdjustmentsCount }}
+                                </span>
+                            @endif
+                        </a>
+                        <a href="{{ route('crm.leads.index') }}"
+                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('crm*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <span>📈</span>
+                            <span class="sidebar-text">{{ __('CRM · Funil') }}</span>
+                        </a>
+                        <a href="{{ route('quotes.index') }}"
+                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('quotes*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <div class="flex items-center gap-2.5">
+                                <span>🧮</span>
+                                <span class="sidebar-text">{{ __('Orçamentos & Propostas') }}</span>
+                            </div>
+                            @if ($pendingQuoteRequestsCount > 0)
+                                <span class="sidebar-badge text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded font-extrabold" title="{{ __('Pedidos de orçamento de clientes') }}">
+                                    {{ $pendingQuoteRequestsCount }}
+                                </span>
+                            @endif
+                        </a>
+                        <a href="{{ route('support.index') }}"
+                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('support*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <div class="flex items-center gap-2.5">
+                                <span>🛟</span>
+                                <span class="sidebar-text">{{ __('Suporte') }}</span>
+                            </div>
+                            @if ($openSupportTicketsCount > 0)
+                                <span class="sidebar-badge text-[9px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-extrabold" title="{{ __('Chamados de suporte abertos') }}">
+                                    {{ $openSupportTicketsCount }}
+                                </span>
+                            @endif
+                        </a>
+                        <a href="{{ route('analytics.index') }}"
+                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('analytics*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <div class="flex items-center gap-2.5">
+                                <span>📊</span>
+                                <span class="sidebar-text">{{ __('Vendas & BI (Sofi)') }}</span>
+                            </div>
+                            <span class="sidebar-badge text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-extrabold uppercase">AI</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. Catálogo & Vitrine (Dropdown Retrátil) -->
                 <div class="space-y-1">
                     <button type="button" onclick="toggleNavGroup('catalogo')"
                             class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all {{ $isCatalogoActive ? 'text-white bg-zinc-800/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30' }}">
                         <div class="flex items-center gap-2.5">
                             <svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                             </svg>
                             <span class="sidebar-text">{{ __('Catálogo & Cadastros') }}</span>
                         </div>
@@ -135,25 +205,10 @@
                             <span>🎬</span>
                             <span class="sidebar-text">{{ __('Portfólio / Vitrine') }}</span>
                         </a>
-                        <a href="{{ route('clientes.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('clientes*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>👥</span>
-                            <span class="sidebar-text">{{ __('Clientes') }}</span>
-                        </a>
-                        <a href="{{ route('crm.leads.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('crm*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>📈</span>
-                            <span class="sidebar-text">{{ __('CRM · Funil') }}</span>
-                        </a>
-                        <a href="{{ route('support.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('support*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🛟</span>
-                            <span class="sidebar-text">{{ __('Suporte') }}</span>
-                        </a>
                     </div>
                 </div>
 
-                <!-- Section: Financeiro & Faturas (Dropdown Retrátil) -->
+                <!-- 4. Financeiro & Faturas (Dropdown Retrátil) -->
                 <div class="space-y-1">
                     <button type="button" onclick="toggleNavGroup('financeiro')"
                             class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all {{ $isFinanceiroActive ? 'text-white bg-zinc-800/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30' }}">
@@ -169,11 +224,6 @@
                     </button>
 
                     <div id="menu-group-financeiro" class="space-y-1 pl-3 border-l-2 border-zinc-800 ml-3.5 my-1 transition-all {{ $isFinanceiroActive ? '' : 'hidden' }}">
-                        <a href="{{ route('quotes.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('quotes*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🧮</span>
-                            <span class="sidebar-text">{{ __('Orçamentos & Propostas') }}</span>
-                        </a>
                         <a href="{{ route('admin.subscriptions.index') }}"
                            class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.subscriptions*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
                             <span>🔄</span>
@@ -183,11 +233,6 @@
                            class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.invoices*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
                             <span>📄</span>
                             <span class="sidebar-text">{{ __('Facturas & AEAT') }}</span>
-                        </a>
-                        <a href="{{ route('billing.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('billing*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>💎</span>
-                            <span class="sidebar-text">{{ __('Assinatura SaaS') }}</span>
                         </a>
                         <a href="{{ route('stripe-connect.index') }}"
                            class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('stripe-connect*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
@@ -201,11 +246,16 @@
                                 <span class="sidebar-badge text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pendente</span>
                             @endif
                         </a>
+                        <a href="{{ route('billing.index') }}"
+                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('billing*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <span>💎</span>
+                            <span class="sidebar-text">{{ __('Assinatura SaaS') }}</span>
+                        </a>
                     </div>
                 </div>
 
                 @if(auth()->check() && auth()->user()->isAdmin())
-                <!-- Section: Configurações do SaaS (Dropdown Retrátil) -->
+                <!-- 5. Configurações do SaaS (Dropdown Retrátil) -->
                 <div class="space-y-1">
                     <button type="button" onclick="toggleNavGroup('configuracoes')"
                             class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all {{ $isSettingsActive ? 'text-white bg-zinc-800/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30' }}">
@@ -226,6 +276,21 @@
                            class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.gateways*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
                             <span>💳</span>
                             <span class="sidebar-text">{{ __('Gateways & Fiscal') }}</span>
+                        </a>
+                        <a href="{{ route('admin.settings.fiscal') }}"
+                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.fiscal*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <span>⚖️</span>
+                            <span class="sidebar-text">{{ __('Perfil Fiscal (AEAT)') }}</span>
+                        </a>
+                        <a href="{{ route('admin.settings.redsys') }}"
+                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.redsys*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <span>🏦</span>
+                            <span class="sidebar-text">{{ __('TPV Redsys & Bizum') }}</span>
+                        </a>
+                        <a href="{{ route('admin.settings.bank-transfer') }}"
+                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.bank-transfer*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <span>🏛️</span>
+                            <span class="sidebar-text">{{ __('Transferência (IBAN)') }}</span>
                         </a>
                         <a href="{{ route('admin.settings.platform') }}"
                            class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.platform*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">

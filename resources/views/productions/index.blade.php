@@ -37,76 +37,74 @@
         </div>
     </div>
 
-    <!-- ================= 2. KPI METRIC CARDS (AKADASH STYLE) ================= -->
+    <!-- ================= 2. FILA DE AÇÃO OPERACIONAL DA EQUIPE ================= -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <!-- Total de Produções -->
-        <div class="rounded-2xl p-5 bg-zinc-900 border border-zinc-800 relative overflow-hidden group hover:border-zinc-700 transition">
-            <div class="flex items-center justify-between mb-3">
-                <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Total de Produções') }}</p>
-                <div class="w-9 h-9 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                    </svg>
-                </div>
-            </div>
-            <p class="text-3xl font-extrabold text-white">{{ $stats['total'] ?? $productions->total() }}</p>
-            <p class="text-[11px] text-emerald-400 mt-2 flex items-center gap-1 font-semibold">
-                <span>↑</span>
-                <span>{{ __('Operação ativa') }}</span>
-            </p>
-        </div>
 
-        <!-- Em Produção -->
-        <div class="rounded-2xl p-5 bg-zinc-900 border border-zinc-800 relative overflow-hidden group hover:border-zinc-700 transition">
-            <div class="flex items-center justify-between mb-3">
-                <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Em Produção') }}</p>
-                <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
+        <!-- 1. Pedidos de Orçamento de Clientes -->
+        <a href="{{ route('quotes.index', ['status' => ($stats['quote_requests'] ?? 0) > 0 ? 'requested' : 'all']) }}"
+           class="rounded-2xl p-5 bg-zinc-900 border {{ ($stats['quote_requests'] ?? 0) > 0 ? 'border-orange-500/40 bg-orange-950/10' : 'border-zinc-800' }} hover:border-orange-500/50 transition block group">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Pedidos de Orçamento') }}</p>
+                <span class="w-8 h-8 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-sm">🧮</span>
             </div>
-            <p class="text-3xl font-extrabold text-white">{{ $stats['in_production'] ?? 0 }}</p>
-            <p class="text-[11px] text-amber-400 mt-2 flex items-center gap-1 font-semibold">
-                <span>⚡</span>
-                <span>{{ __('Gravações & Edição') }}</span>
+            <p class="text-3xl font-extrabold text-white font-mono">{{ $stats['quote_requests'] ?? 0 }}</p>
+            <p class="text-[11px] {{ ($stats['quote_requests'] ?? 0) > 0 ? 'text-orange-400 font-bold' : 'text-zinc-500' }} mt-2 flex items-center justify-between">
+                <span>{{ ($stats['quote_requests'] ?? 0) > 0 ? __('Aguardando cálculo da equipe') : __('Nenhum pedido pendente') }}</span>
+                <span class="group-hover:translate-x-0.5 transition">→</span>
             </p>
-        </div>
+        </a>
 
-        <!-- Roteiros Cadastrados -->
-        <div class="rounded-2xl p-5 bg-zinc-900 border border-zinc-800 relative overflow-hidden group hover:border-zinc-700 transition">
-            <div class="flex items-center justify-between mb-3">
-                <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Roteiros & Scripts') }}</p>
-                <div class="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                </div>
+        <!-- 2. Clientes & Planos de Marketing -->
+        <a href="{{ route('clientes.index') }}"
+           class="rounded-2xl p-5 bg-zinc-900 border {{ ($stats['plan_adjustments'] ?? 0) > 0 ? 'border-amber-500/40 bg-amber-950/10' : 'border-zinc-800' }} hover:border-amber-500/50 transition block group">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Clientes & Planos') }}</p>
+                <span class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm">👥</span>
             </div>
-            <p class="text-3xl font-extrabold text-white">{{ $stats['total_roteiros'] ?? 0 }}</p>
-            <p class="text-[11px] text-sky-400 mt-2 flex items-center gap-1 font-semibold">
-                <span>✍️</span>
-                <span>{{ __('Estrutura narrativa') }}</span>
+            <div class="flex items-baseline gap-2">
+                <p class="text-3xl font-extrabold text-white font-mono">{{ $stats['total_clientes'] ?? 0 }}</p>
+                @if (($stats['plan_adjustments'] ?? 0) > 0)
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        {{ $stats['plan_adjustments'] }} {{ __('ajuste(s) pedido(s)') }}
+                    </span>
+                @endif
+            </div>
+            <p class="text-[11px] text-zinc-400 mt-2 flex items-center justify-between">
+                <span>{{ __('Abrir Ficha 360º, DNA e Anamnese') }}</span>
+                <span class="group-hover:translate-x-0.5 transition">→</span>
             </p>
-        </div>
+        </a>
 
-        <!-- Clientes da Produtora -->
-        <div class="rounded-2xl p-5 bg-zinc-900 border border-zinc-800 relative overflow-hidden group hover:border-zinc-700 transition">
-            <div class="flex items-center justify-between mb-3">
-                <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Clientes B2B') }}</p>
-                <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                </div>
+        <!-- 3. Esteira Audiovisual Ativa -->
+        <a href="{{ route('productions.index', ['view' => 'kanban']) }}"
+           class="rounded-2xl p-5 bg-zinc-900 border border-zinc-800 hover:border-sky-500/50 transition block group">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Em Gravação & Edição') }}</p>
+                <span class="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sm">🎬</span>
             </div>
-            <p class="text-3xl font-extrabold text-white">{{ $stats['total_clientes'] ?? 0 }}</p>
-            <p class="text-[11px] text-purple-400 mt-2 flex items-center gap-1 font-semibold">
-                <span>💼</span>
-                <span>{{ __('Base cadastrada') }}</span>
+            <div class="flex items-baseline gap-2">
+                <p class="text-3xl font-extrabold text-white font-mono">{{ $stats['in_production'] ?? 0 }}</p>
+                <span class="text-xs text-zinc-500">{{ __('de :total produções', ['total' => $stats['total'] ?? $productions->total()]) }}</span>
+            </div>
+            <p class="text-[11px] text-sky-400 mt-2 flex items-center justify-between font-semibold">
+                <span>{{ __(':roteiros roteiros · :videos vídeos', ['roteiros' => $stats['total_roteiros'] ?? 0, 'videos' => $stats['total_videos'] ?? 0]) }}</span>
+                <span class="group-hover:translate-x-0.5 transition">→</span>
             </p>
-        </div>
+        </a>
+
+        <!-- 4. Chamados de Suporte Abertos -->
+        <a href="{{ route('support.index') }}"
+           class="rounded-2xl p-5 bg-zinc-900 border {{ ($stats['open_tickets'] ?? 0) > 0 ? 'border-rose-500/40 bg-rose-950/10' : 'border-zinc-800' }} hover:border-rose-500/50 transition block group">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-bold uppercase tracking-wider text-zinc-400">{{ __('Suporte ao Cliente') }}</p>
+                <span class="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-sm">🛟</span>
+            </div>
+            <p class="text-3xl font-extrabold text-white font-mono">{{ $stats['open_tickets'] ?? 0 }}</p>
+            <p class="text-[11px] {{ ($stats['open_tickets'] ?? 0) > 0 ? 'text-rose-400 font-bold' : 'text-zinc-500' }} mt-2 flex items-center justify-between">
+                <span>{{ ($stats['open_tickets'] ?? 0) > 0 ? __('Chamados abertos aguardando') : __('Sem chamados pendentes') }}</span>
+                <span class="group-hover:translate-x-0.5 transition">→</span>
+            </p>
+        </a>
     </div>
 
     <!-- ================= 3. CONTROLES: FILTRO DE CLIENTE & SELETOR DE VISUALIZAÇÃO (LISTA vs. KANBAN) ================= -->
@@ -221,6 +219,7 @@
                                         <option value="draft" {{ $production->status === 'draft' ? 'selected' : '' }}>💡 Planejamento</option>
                                         <option value="pending_review" {{ in_array($production->status, ['pending_review', 'submitted']) ? 'selected' : '' }}>⏳ Revisão Cliente</option>
                                         <option value="in_production" {{ $production->status === 'in_production' ? 'selected' : '' }}>🎬 Em Gravação/Edição</option>
+                                        <option value="ready" {{ $production->status === 'ready' ? 'selected' : '' }}>🎞️ Corte Pronto</option>
                                         <option value="approved" {{ $production->status === 'approved' ? 'selected' : '' }}>✓ Aprovado / Pronto</option>
                                         <option value="published" {{ $production->status === 'published' ? 'selected' : '' }}>🚀 Publicado</option>
                                     </select>
