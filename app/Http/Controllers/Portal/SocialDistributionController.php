@@ -7,9 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\PublishVideoRequest;
 use App\Models\Video;
 use App\Models\VideoPublication;
+use App\Services\SocialPublishing\Connectors\ConnectorRegistry;
+use App\Services\SocialPublishing\PublishingLimits;
 use App\Services\SocialPublishing\SocialPublicationService;
 use App\Services\SocialPublishing\SocialPublisherRouter;
-use App\Services\SocialPublishing\Connectors\ConnectorRegistry;
 use App\Services\UploadPost\SocialDistributionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,8 +24,7 @@ class SocialDistributionController extends Controller
         private readonly SocialPublicationService $publications,
         private readonly ConnectorRegistry $connectors,
         private readonly SocialPublisherRouter $router,
-    ) {
-    }
+    ) {}
 
     /**
      * Tela principal de Redes Sociais no Portal do Cliente.
@@ -42,8 +42,11 @@ class SocialDistributionController extends Controller
 
         // Contas conectadas pelo app próprio (a mais recente por rede), sem tokens na view.
         $connections = $cliente->socialConnections()->latest('id')->get()->unique('platform')->keyBy('platform');
+        $usesUploadPost = collect($platforms)->contains(
+            fn (PlataformaAlvo $platform) => $this->router->routeFor($platform->value) === SocialPublisherRouter::UPLOAD_POST
+        );
         $connectedPlatforms = collect($platforms)
-            ->filter(fn (PlataformaAlvo $platform) => $profile->isPlatformConnected($platform->value)
+            ->filter(fn (PlataformaAlvo $platform) => ($this->router->routeFor($platform->value) === SocialPublisherRouter::UPLOAD_POST && $profile->isPlatformConnected($platform->value))
                 || $connections->get($platform->value)?->isActive())
             ->map(fn (PlataformaAlvo $platform) => $platform->value)
             ->values();
@@ -56,9 +59,9 @@ class SocialDistributionController extends Controller
             }
         }
 
-        $limits = app(\App\Services\SocialPublishing\PublishingLimits::class)->summary($cliente);
+        $limits = app(PublishingLimits::class)->summary($cliente);
 
-        return view('portal.social.index', compact('cliente', 'profile', 'publications', 'platforms', 'connections', 'connectedPlatforms', 'nativeAvailable', 'limits'));
+        return view('portal.social.index', compact('cliente', 'profile', 'publications', 'platforms', 'connections', 'connectedPlatforms', 'nativeAvailable', 'limits', 'usesUploadPost'));
     }
 
     /**

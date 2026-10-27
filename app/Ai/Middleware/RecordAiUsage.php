@@ -2,6 +2,7 @@
 
 namespace App\Ai\Middleware;
 
+use App\Ai\AiBudget;
 use App\Models\AiUsageLog;
 use Closure;
 use Illuminate\Support\Facades\Log;
@@ -41,6 +42,8 @@ class RecordAiUsage
                     'cache_write_input_tokens' => $response->usage->cacheWriteInputTokens ?? 0,
                     'invocation_id' => $step->invocationId,
                 ]);
+
+                app(AiBudget::class)->checkThresholdAlert($this->tenantId);
             } catch (Throwable $e) {
                 Log::warning('RecordAiUsage falhou ao gravar uso: '.get_class($e));
             }

@@ -57,26 +57,28 @@
             </p>
         </div>
 
-        <!-- Ações do Cabeçalho -->
-        <div class="flex items-center gap-2">
-            <form action="{{ route('portal.social.sync') }}" method="POST">
-                @csrf
-                <button type="submit" 
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 shadow-xs transition active:scale-95">
-                    <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                    {{ __('Sincronizar Status') }}
-                </button>
-            </form>
+        @if($usesUploadPost ?? false)
+            <!-- Ações do Cabeçalho (apenas quando alguma rede usa hub externo) -->
+            <div class="flex items-center gap-2">
+                <form action="{{ route('portal.social.sync') }}" method="POST">
+                    @csrf
+                    <button type="submit" 
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 shadow-xs transition active:scale-95">
+                        <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        {{ __('Sincronizar Status') }}
+                    </button>
+                </form>
 
-            <form action="{{ route('portal.social.connect-url') }}" method="POST">
-                @csrf
-                <button type="submit" 
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-sm transition active:scale-95">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                    {{ $profile->connected ? __('Gerenciar Conexões Sociais') : __('Conectar Minhas Redes Sociais') }}
-                </button>
-            </form>
-        </div>
+                <form action="{{ route('portal.social.connect-url') }}" method="POST">
+                    @csrf
+                    <button type="submit" 
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-sm transition active:scale-95">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                        {{ $profile->connected ? __('Gerenciar Conexões Sociais') : __('Conectar Minhas Redes Sociais') }}
+                    </button>
+                </form>
+            </div>
+        @endif
     </div>
 
     <!-- Status Bar Card -->
@@ -88,9 +90,9 @@
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Status Geral') }}</span>
                 <div class="flex items-center gap-2 mt-0.5">
-                    <span class="w-2.5 h-2.5 rounded-full {{ $profile->connected ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-300' }}"></span>
+                    <span class="w-2.5 h-2.5 rounded-full {{ $connectedPlatforms->isNotEmpty() ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-300' }}"></span>
                     <span class="text-sm font-extrabold text-zinc-900">
-                        {{ $profile->connected ? __('Canais Prontos') : __('Desconectado') }}
+                        {{ $connectedPlatforms->isNotEmpty() ? __('Canais Prontos') : __('Desconectado') }}
                     </span>
                 </div>
             </div>
@@ -199,7 +201,13 @@
                                 @endif
                             @else
                                 <p class="text-[11px] text-zinc-500 mt-0.5">
-                                    {{ $isConnected ? __('Pronto para receber publicações em 1 clique.') : __('Clique no botão acima para vincular esta rede.') }}
+                                    @if($isConnected)
+                                        {{ __('Pronto para receber publicações em 1 clique.') }}
+                                    @elseif($usesUploadPost ?? false)
+                                        {{ __('Clique no botão acima para vincular esta rede.') }}
+                                    @else
+                                        {{ __('Conexão direta da NUME aguarda configuração das credenciais OAuth desta rede.') }}
+                                    @endif
                                 </p>
                             @endif
                         </div>
@@ -226,7 +234,7 @@
                             </form>
                         @elseif($canConnectNative)
                             <span class="text-[10px] font-mono font-medium text-zinc-400 uppercase">
-                                Slug: {{ $platform->value }}
+                                {{ $platform->value }}
                             </span>
                             <a href="{{ route('portal.social.oauth.redirect', $canConnectNative) }}"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
@@ -234,12 +242,12 @@
                             </a>
                         @else
                             <span class="text-[10px] font-mono font-medium text-zinc-400 uppercase">
-                                Slug: {{ $platform->value }}
+                                {{ $platform->value }}
                             </span>
                             @if($isConnected)
                                 <span class="text-xs text-emerald-600 font-extrabold">✓ OK</span>
                             @else
-                                <span class="text-xs text-zinc-400 font-bold">-</span>
+                                <span class="text-[11px] text-zinc-400 font-semibold">{{ __('OAuth pendente') }}</span>
                             @endif
                         @endif
                     </div>

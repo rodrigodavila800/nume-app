@@ -10,16 +10,16 @@ use App\Http\Controllers\Admin\TenantBankTransferSettingsController;
 use App\Http\Controllers\Admin\TenantFiscalSettingsController;
 use App\Http\Controllers\Admin\TenantRedsysSettingsController;
 use App\Http\Controllers\Admin\TenantSettingsController;
+use App\Http\Controllers\AiUsageController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\BatchContentPlannerController;
-use App\Http\Controllers\LeadController;
-use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\MagicApprovalController;
 use App\Http\Controllers\MagicVideoController;
 use App\Http\Controllers\MarketplaceController;
@@ -33,7 +33,9 @@ use App\Http\Controllers\SocialDistributionManagementController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\StripeConnectController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\VideoMediaController;
 use App\Http\Controllers\VideoTypeController;
 use App\Http\Controllers\Webhooks\RedsysWebhookController;
 use App\Http\Controllers\Webhooks\UploadPostWebhookController;
@@ -260,6 +262,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/configuracoes/api-keys/{apiKey}', [ApiKeyController::class, 'destroy'])
         ->name('api_keys.destroy');
 
+    // Uso de IA & Limites Mensais de Tokens
+    Route::get('/configuracoes/uso-de-ia', [AiUsageController::class, 'index'])
+        ->name('ai_usage.index');
+    Route::post('/configuracoes/uso-de-ia/limites', [AiUsageController::class, 'updateLimits'])
+        ->name('ai_usage.limits.update');
+
     // Roteiros
     Route::scopeBindings()->prefix('productions/{production}')->group(function () {
         Route::post('generate-sofi-script', [RoteiroController::class, 'generateSofiScript'])
@@ -299,7 +307,7 @@ Route::get('/m/videos/{video}', [MagicVideoController::class, 'show'])
     ->middleware('signed');
 
 // Arquivo de vídeo hospedado na NUME: URL assinada e temporária (reprodução com Range; download com login do dono).
-Route::get('/media/videos/{video}', [\App\Http\Controllers\VideoMediaController::class, 'show'])
+Route::get('/media/videos/{video}', [VideoMediaController::class, 'show'])
     ->whereNumber('video')
     ->middleware(['signed', 'throttle:300,1'])
     ->name('videos.media');
@@ -309,8 +317,6 @@ Route::post('/webhooks/redsys', [RedsysWebhookController::class, 'handle'])->nam
 Route::post('/webhooks/upload-post', [UploadPostWebhookController::class, 'handle'])->name('upload-post.webhook');
 Route::get('/pagamento/redsys/sucesso', [StorefrontController::class, 'redsysSuccess'])->name('redsys.success');
 Route::get('/pagamento/redsys/cancelado', [StorefrontController::class, 'redsysCancel'])->name('redsys.cancel');
-
-
 
 // Magic Links de Aprovação Sem Senha (Zero Friction) - Assinatura Criptográfica HMAC SHA-256
 Route::prefix('magic')->name('magic.')->middleware('signed')->group(function () {

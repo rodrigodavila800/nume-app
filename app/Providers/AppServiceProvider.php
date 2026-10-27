@@ -2,24 +2,41 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Models\Production;
-use App\Models\Roteiro;
-use App\Models\ShowcaseVideo;
-use App\Models\Video;
+use App\Contracts\SocialPublisherContract;
+use App\Models\AiUsageLog;
 use App\Models\Cliente;
+use App\Models\Lead;
 use App\Models\Pack;
+use App\Models\Production;
+use App\Models\Quote;
+use App\Models\Roteiro;
+use App\Models\Setting;
+use App\Models\ShowcaseVideo;
+use App\Models\SupportTicket;
+use App\Models\Tenant;
+use App\Models\Video;
+use App\Models\VideoType;
+use App\Policies\AiUsageLogPolicy;
+use App\Policies\ClientePolicy;
+use App\Policies\LeadPolicy;
+use App\Policies\PackPolicy;
 use App\Policies\ProductionPolicy;
+use App\Policies\QuotePolicy;
 use App\Policies\RoteiroPolicy;
 use App\Policies\ShowcaseVideoPolicy;
+use App\Policies\SupportTicketPolicy;
 use App\Policies\VideoPolicy;
-use App\Policies\ClientePolicy;
-use App\Policies\PackPolicy;
+use App\Policies\VideoTypePolicy;
+use App\Services\SocialPublishing\SocialPublisherManager;
+use App\Services\UploadPost\SocialDistributionService;
 use App\Services\UploadPost\UploadPostClient;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,9 +47,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(UploadPostClient::class, fn () => UploadPostClient::fromConfig());
-        $this->app->singleton(\App\Services\UploadPost\SocialDistributionService::class);
-        $this->app->singleton(\App\Services\SocialPublishing\SocialPublisherManager::class);
-        $this->app->bind(\App\Contracts\SocialPublisherContract::class, \App\Services\SocialPublishing\SocialPublisherManager::class);
+        $this->app->singleton(SocialDistributionService::class);
+        $this->app->singleton(SocialPublisherManager::class);
+        $this->app->bind(SocialPublisherContract::class, SocialPublisherManager::class);
     }
 
     /**
@@ -41,14 +58,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Carrega configurações e chaves de pagamento criptografadas do banco
-        \App\Models\Setting::loadIntoConfig();
+        Setting::loadIntoConfig();
 
         // Suprime warnings informativos emitidos pela SDK do Stripe (ex: recomendação v2 do Stripe Connect)
         set_error_handler(function ($errno, $errstr) {
             if (str_contains($errstr, 'Accounts v2') || str_contains($errstr, 'stripe.com/api/v2')) {
-                \Illuminate\Support\Facades\Log::info("Stripe Notice: {$errstr}");
+                Log::info("Stripe Notice: {$errstr}");
+
                 return true;
             }
+
             return false;
         }, E_USER_WARNING);
 
@@ -69,14 +88,16 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Video::class, VideoPolicy::class);
         Gate::policy(Cliente::class, ClientePolicy::class);
         Gate::policy(Pack::class, PackPolicy::class);
-        Gate::policy(\App\Models\Quote::class, \App\Policies\QuotePolicy::class);
-        Gate::policy(\App\Models\VideoType::class, \App\Policies\VideoTypePolicy::class);
-        Gate::policy(\App\Models\Lead::class, \App\Policies\LeadPolicy::class);
-        Gate::policy(\App\Models\SupportTicket::class, \App\Policies\SupportTicketPolicy::class);
+        Gate::policy(Quote::class, QuotePolicy::class);
+        Gate::policy(VideoType::class, VideoTypePolicy::class);
+        Gate::policy(Lead::class, LeadPolicy::class);
+        Gate::policy(SupportTicket::class, SupportTicketPolicy::class);
+        Gate::policy(AiUsageLog::class, AiUsageLogPolicy::class);
 
         // Rate limiter para operações de distribuição social
         RateLimiter::for('social', function (Request $request) {
             $identifier = auth('cliente')->id() ?: $request->user()?->id ?: $request->ip();
+
             return Limit::perMinute(10)->by($identifier);
         });
 
@@ -109,13 +130,13 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // MVC: Compartilha dados institucionais do tenant nas views do Portal sem queries dentro do Blade
-        \Illuminate\Support\Facades\View::composer(['layouts.portal', 'portal.*'], function ($view) {
+        View::composer(['layouts.portal', 'portal.*'], function ($view) {
             $tenant = auth('cliente')->user()?->tenant;
             if (! $tenant && app()->bound('current_tenant')) {
                 $tenant = app('current_tenant');
             }
             if (! $tenant) {
-                $tenant = \App\Models\Tenant::where('slug', 'nume')->first();
+                $tenant = Tenant::where('slug', 'nume')->first();
             }
             $view->with('portalTenant', $tenant);
         });
@@ -128,7 +149,6 @@ class AppServiceProvider extends ServiceProvider
     {
         $tenant = $request->route('tenant');
 
-        return $tenant instanceof \App\Models\Tenant ? (string) $tenant->slug : (string) $tenant;
+        return $tenant instanceof Tenant ? (string) $tenant->slug : (string) $tenant;
     }
 }
-

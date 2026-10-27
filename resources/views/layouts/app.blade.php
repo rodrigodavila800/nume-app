@@ -91,7 +91,7 @@
                 @php
                     $isCatalogoActive = request()->routeIs(['clientes*', 'crm*', 'support*', 'packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*']);
                     $isFinanceiroActive = request()->routeIs(['billing*', 'admin.invoices*', 'admin.subscriptions*', 'stripe-connect*', 'quotes*']);
-                    $isSettingsActive = request()->routeIs(['admin.settings*', 'api_keys*', 'video_types*']);
+                    $isSettingsActive = request()->routeIs(['admin.settings*', 'api_keys*', 'video_types*', 'ai_usage*']);
                 @endphp
 
                 <!-- Section: Catálogo & Cadastros (Dropdown Retrátil) -->
@@ -236,6 +236,11 @@
                            class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('video_types*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
                             <span>🎬</span>
                             <span class="sidebar-text">{{ __('Tipos de vídeo') }}</span>
+                        </a>
+                        <a href="{{ route('ai_usage.index') }}"
+                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('ai_usage*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
+                            <span>🤖</span>
+                            <span class="sidebar-text">{{ __('Uso de IA') }}</span>
                         </a>
                         <a href="{{ route('api_keys.index') }}"
                            class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('api_keys*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
