@@ -45,185 +45,187 @@
                 <span class="logo-text">NUME Studio</span>
             </a>
 
-            <!-- 1. Operação -->
-            <nav class="nav-section">
-                <div class="nav-label">{{ __('Operação') }}</div>
+            <div class="sidebar-nav">
+                <!-- 1. Operação -->
+                <nav class="nav-section">
+                    <div class="nav-label">{{ __('Operação') }}</div>
 
-                <a href="{{ route('productions.index') }}" class="nav-item {{ request()->routeIs('productions*', 'roteiros*', 'videos*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7" rx="1"/>
-                            <rect x="14" y="3" width="7" height="7" rx="1"/>
-                            <rect x="3" y="14" width="7" height="7" rx="1"/>
-                            <rect x="14" y="14" width="7" height="7" rx="1"/>
-                        </svg>
-                        <span>{{ __('Produções') }}</span>
-                    </span>
-                </a>
-
-                <a href="{{ route('calendar.index') }}" class="nav-item {{ request()->routeIs('calendar*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
-                        <span>{{ __('Calendário') }}</span>
-                    </span>
-                </a>
-
-                <a href="{{ route('batch_planner.index') }}" class="nav-item {{ request()->routeIs('batch_planner*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                            <polyline points="2 17 12 22 22 17"/>
-                            <polyline points="2 12 12 17 22 12"/>
-                        </svg>
-                        <span>{{ __('Batch Planner') }}</span>
-                    </span>
-                    <span class="nav-badge">AI</span>
-                </a>
-
-                <a href="{{ route('distributions.index') }}" class="nav-item {{ request()->routeIs('distributions*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="18" cy="5" r="3"/>
-                            <circle cx="6" cy="12" r="3"/>
-                            <circle cx="18" cy="19" r="3"/>
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                        </svg>
-                        <span>{{ __('Distribuição Social') }}</span>
-                    </span>
-                </a>
-            </nav>
-
-            <!-- 2. Comercial & Clientes -->
-            <nav class="nav-section">
-                <div class="nav-label">{{ __('Comercial & Clientes') }}</div>
-
-                <a href="{{ route('clientes.index') }}" class="nav-item {{ request()->routeIs('clientes*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                        <span>{{ __('Clientes') }}</span>
-                    </span>
-                    @if ($pendingPlanAdjustmentsCount > 0)
-                        <span class="nav-badge">{{ $pendingPlanAdjustmentsCount }}</span>
-                    @endif
-                </a>
-
-                <a href="{{ route('crm.leads.index') }}" class="nav-item {{ request()->routeIs('crm*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                        </svg>
-                        <span>{{ __('CRM & Funil') }}</span>
-                    </span>
-                </a>
-
-                <a href="{{ route('quotes.index') }}" class="nav-item {{ request()->routeIs('quotes*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
-                        </svg>
-                        <span>{{ __('Orçamentos') }}</span>
-                    </span>
-                    @if ($pendingQuoteRequestsCount > 0)
-                        <span class="nav-badge">{{ $pendingQuoteRequestsCount }}</span>
-                    @endif
-                </a>
-
-                <a href="{{ route('support.index') }}" class="nav-item {{ request()->routeIs('support*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                        </svg>
-                        <span>{{ __('Suporte') }}</span>
-                    </span>
-                    @if ($openSupportTicketsCount > 0)
-                        <span class="nav-badge">{{ $openSupportTicketsCount }}</span>
-                    @endif
-                </a>
-
-                <a href="{{ route('analytics.index') }}" class="nav-item {{ request()->routeIs('analytics*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10"/>
-                            <line x1="12" y1="20" x2="12" y2="4"/>
-                            <line x1="6" y1="20" x2="6" y2="14"/>
-                        </svg>
-                        <span>{{ __('Analytics & BI') }}</span>
-                    </span>
-                </a>
-            </nav>
-
-            <!-- 3. Catálogo & Financeiro -->
-            <nav class="nav-section">
-                <div class="nav-label">{{ __('Catálogo & Financeiro') }}</div>
-
-                <a href="{{ route('packs.index') }}" class="nav-item {{ request()->routeIs('packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                            <line x1="12" y1="22.08" x2="12" y2="12"/>
-                        </svg>
-                        <span>{{ __('Catálogo & Vitrine') }}</span>
-                    </span>
-                </a>
-
-                <a href="{{ route('admin.subscriptions.index') }}" class="nav-item {{ request()->routeIs('admin.subscriptions*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 4 23 10 17 10"/>
-                            <polyline points="1 20 1 14 7 14"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                        <span>{{ __('Assinaturas') }}</span>
-                    </span>
-                </a>
-
-                <a href="{{ route('admin.invoices.index') }}" class="nav-item {{ request()->routeIs('admin.invoices*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                            <line x1="1" y1="10" x2="23" y2="10"/>
-                        </svg>
-                        <span>{{ __('Facturas & AEAT') }}</span>
-                    </span>
-                </a>
-
-                <a href="{{ route('stripe-connect.index') }}" class="nav-item {{ request()->routeIs('stripe-connect*', 'billing*') ? 'active' : '' }}">
-                    <span class="nav-item-left">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="1" x2="12" y2="23"/>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                        <span>{{ __('Repasses & Plano SaaS') }}</span>
-                    </span>
-                </a>
-
-                @if(auth()->check() && auth()->user()->isAdmin())
-                    <a href="{{ route('admin.settings.gateways') }}" class="nav-item {{ request()->routeIs('admin.settings*', 'api_keys*', 'video_types*', 'ai_usage*') ? 'active' : '' }}">
+                    <a href="{{ route('productions.index') }}" class="nav-item {{ request()->routeIs('productions*', 'roteiros*', 'videos*') ? 'active' : '' }}">
                         <span class="nav-item-left">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="3"/>
-                                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                                <rect x="14" y="14" width="7" height="7" rx="1"/>
                             </svg>
-                            <span>{{ __('Configurações') }}</span>
+                            <span>{{ __('Produções') }}</span>
                         </span>
                     </a>
-                @endif
-            </nav>
+
+                    <a href="{{ route('calendar.index') }}" class="nav-item {{ request()->routeIs('calendar*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                            <span>{{ __('Calendário') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('batch_planner.index') }}" class="nav-item {{ request()->routeIs('batch_planner*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                                <polyline points="2 17 12 22 22 17"/>
+                                <polyline points="2 12 12 17 22 12"/>
+                            </svg>
+                            <span>{{ __('Batch Planner') }}</span>
+                        </span>
+                        <span class="nav-badge">AI</span>
+                    </a>
+
+                    <a href="{{ route('distributions.index') }}" class="nav-item {{ request()->routeIs('distributions*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="18" cy="5" r="3"/>
+                                <circle cx="6" cy="12" r="3"/>
+                                <circle cx="18" cy="19" r="3"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            </svg>
+                            <span>{{ __('Distribuição Social') }}</span>
+                        </span>
+                    </a>
+                </nav>
+
+                <!-- 2. Comercial & Clientes -->
+                <nav class="nav-section">
+                    <div class="nav-label">{{ __('Comercial & Clientes') }}</div>
+
+                    <a href="{{ route('clientes.index') }}" class="nav-item {{ request()->routeIs('clientes*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <span>{{ __('Clientes') }}</span>
+                        </span>
+                        @if ($pendingPlanAdjustmentsCount > 0)
+                            <span class="nav-badge">{{ $pendingPlanAdjustmentsCount }}</span>
+                        @endif
+                    </a>
+
+                    <a href="{{ route('crm.leads.index') }}" class="nav-item {{ request()->routeIs('crm*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                            <span>{{ __('CRM & Funil') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('quotes.index') }}" class="nav-item {{ request()->routeIs('quotes*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            <span>{{ __('Orçamentos') }}</span>
+                        </span>
+                        @if ($pendingQuoteRequestsCount > 0)
+                            <span class="nav-badge">{{ $pendingQuoteRequestsCount }}</span>
+                        @endif
+                    </a>
+
+                    <a href="{{ route('support.index') }}" class="nav-item {{ request()->routeIs('support*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span>{{ __('Suporte') }}</span>
+                        </span>
+                        @if ($openSupportTicketsCount > 0)
+                            <span class="nav-badge">{{ $openSupportTicketsCount }}</span>
+                        @endif
+                    </a>
+
+                    <a href="{{ route('analytics.index') }}" class="nav-item {{ request()->routeIs('analytics*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"/>
+                                <line x1="12" y1="20" x2="12" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                            <span>{{ __('Analytics & BI') }}</span>
+                        </span>
+                    </a>
+                </nav>
+
+                <!-- 3. Catálogo & Financeiro -->
+                <nav class="nav-section">
+                    <div class="nav-label">{{ __('Catálogo & Financeiro') }}</div>
+
+                    <a href="{{ route('packs.index') }}" class="nav-item {{ request()->routeIs('packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                            </svg>
+                            <span>{{ __('Catálogo & Vitrine') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.subscriptions.index') }}" class="nav-item {{ request()->routeIs('admin.subscriptions*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <polyline points="1 20 1 14 7 14"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                            </svg>
+                            <span>{{ __('Assinaturas') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('admin.invoices.index') }}" class="nav-item {{ request()->routeIs('admin.invoices*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                            </svg>
+                            <span>{{ __('Facturas & AEAT') }}</span>
+                        </span>
+                    </a>
+
+                    <a href="{{ route('stripe-connect.index') }}" class="nav-item {{ request()->routeIs('stripe-connect*', 'billing*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            <span>{{ __('Repasses & Plano SaaS') }}</span>
+                        </span>
+                    </a>
+
+                    @if(auth()->check() && auth()->user()->isAdmin())
+                        <a href="{{ route('admin.settings.gateways') }}" class="nav-item {{ request()->routeIs('admin.settings*', 'api_keys*', 'video_types*', 'ai_usage*') ? 'active' : '' }}">
+                            <span class="nav-item-left">
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                                </svg>
+                                <span>{{ __('Configurações') }}</span>
+                            </span>
+                        </a>
+                    @endif
+                </nav>
+            </div>
 
             <!-- Sidebar Footer -->
             <div class="sidebar-footer">
