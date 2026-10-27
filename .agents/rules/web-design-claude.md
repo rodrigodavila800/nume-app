@@ -32,13 +32,13 @@
 
 ---
 
-## 2. Regra de Ouro: Zero CSS Inline
+## 2. Regra de Ouro: Zero CSS dentro de Views Blade
 
-- **É expressamente proibido o uso de `style="..."` dentro das views Blade.**
-- **Motivo:** O CSS inline fragmenta a manutenção, impede temas dinâmicos, quebra políticas CSP (Content Security Policy) e degrada a performance de renderização.
+- **É expressamente proibido o uso de `style="..."` E de blocos `<style>...</style>` dentro das views Blade web.**
+- **Motivo:** CSS embutido em views fragmenta a manutenção, impede temas dinâmicos (`[data-theme="dark" | "light"]`), quebra políticas CSP (Content Security Policy) e degrada a consistência do Design System.
 - Toda estilização deve ser feita via:
-  1. Classes utilitárias nativas do **Tailwind CSS**.
-  2. Classes semânticas centralizadas no arquivo de folha de estilos do sistema (`public/css/app-shell.css` ou CSS do tema respectivo).
+  1. Classes semânticas centralizadas em `public/css/app-shell.css` (padrão editorial do `tamplete\Paineladmin`: `.dashboard`, `.sidebar`, `.main-content`, `.page-header`, `.card`, `.stat-card`, `.market-table`, `.settings-tabs`, `.filter-tabs`, `.btn`, `.status-pill`, `.list-row`).
+  2. Classes utilitárias de layout/espaçamento quando necessário, nunca misturando estilos inline ou blocos `<style>` na view.
 
 ---
 

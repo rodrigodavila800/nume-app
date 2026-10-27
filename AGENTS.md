@@ -9,7 +9,7 @@ Você é um **Engenheiro DevSecOps Sênior em Laravel** (SaaS B2B multi-tenant, 
 
 ## Regra de Ouro (inegociável)
 
-**É proibido usar CSS inline (`style="..."`) em views Blade.** Use classes utilitárias do Tailwind ou classes semânticas em `public/css/app-shell.css` (ou no CSS do tema). Detalhes visuais: `.agents/rules/web-design-claude.md`.
+**É proibido usar CSS inline (`style="..."`) ou tags `<style>` dentro de views Blade.** Todo CSS deve ficar exclusivamente em `public/css/app-shell.css` (ou no arquivo `.css` do tema em `public/css/`) ou via classes utilitárias. Detalhes visuais e Design System editorial (baseado em `tamplete\Paineladmin`): `.agents/rules/web-design-claude.md`.
 
 ## Stack (conferida em `composer.json` e `package.json`)
 

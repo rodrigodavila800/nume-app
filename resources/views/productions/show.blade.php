@@ -6,18 +6,16 @@
 @section('content')
 <div class="space-y-6">
 
-    <!-- Top: Header & Badges -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- Page Header -->
+    <div class="page-header">
         <div>
             <div class="flex items-center gap-3 mb-1">
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{{ $production->title }}</h1>
+                <h1>{{ $production->title }}</h1>
                 @php
-                    $statusClasses = match($production->status) {
-                        'approved' => 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-                        'in_production' => 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-                        'pending_review' => 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-                        'published' => 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-                        default => 'bg-zinc-800 text-zinc-400 border-zinc-700',
+                    $statusPill = match($production->status) {
+                        'approved', 'published', 'ready' => 'positive',
+                        'in_production', 'pending_review' => 'copper',
+                        default => '',
                     };
                     $statusLabels = [
                         'draft' => __('Rascunho'),
@@ -28,38 +26,37 @@
                         'published' => __('Publicado'),
                     ];
                 @endphp
-                <span class="px-3 py-1 text-xs font-extrabold uppercase rounded-lg border {{ $statusClasses }}">
+                <span class="status-pill {{ $statusPill }}">
                     {{ $statusLabels[$production->status] ?? ucfirst($production->status) }}
                 </span>
             </div>
-            <p class="text-xs text-zinc-400 max-w-2xl">{{ $production->description ?: __('Sem descrição detalhada cadastrada.') }}</p>
+            <p>{{ $production->description ?: __('Sem descrição detalhada cadastrada.') }}</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2.5">
             @can('update', $production)
-                <form action="{{ route('productions.update-status', $production) }}" method="POST" class="flex items-center gap-1.5">
+                <form action="{{ route('productions.update-status', $production) }}" method="POST" class="inline">
                     @csrf
                     @method('PATCH')
                     <select name="status" onchange="this.form.submit()" aria-label="{{ __('Mudar etapa da produção') }}"
-                            class="bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 text-xs font-bold text-zinc-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-500 cursor-pointer">
-                        <option value="draft" @selected($production->status === 'draft')>📝 {{ __('Etapa: Rascunho') }}</option>
-                        <option value="pending_review" @selected($production->status === 'pending_review')>⏳ {{ __('Etapa: Revisão de Roteiro') }}</option>
-                        <option value="in_production" @selected($production->status === 'in_production')>🎬 {{ __('Etapa: Em Gravação & Edição') }}</option>
-                        <option value="ready" @selected($production->status === 'ready')>📦 {{ __('Etapa: Corte Pronto') }}</option>
-                        <option value="approved" @selected($production->status === 'approved')>✅ {{ __('Etapa: Aprovado') }}</option>
-                        <option value="published" @selected($production->status === 'published')>🚀 {{ __('Etapa: Publicado') }}</option>
+                            class="bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-200 rounded-xl px-3.5 py-2.5 focus:outline-none cursor-pointer">
+                        <option value="draft" @selected($production->status === 'draft')>{{ __('Etapa: Rascunho') }}</option>
+                        <option value="pending_review" @selected($production->status === 'pending_review')>{{ __('Etapa: Revisão de Roteiro') }}</option>
+                        <option value="in_production" @selected($production->status === 'in_production')>{{ __('Etapa: Em Gravação & Edição') }}</option>
+                        <option value="ready" @selected($production->status === 'ready')>{{ __('Etapa: Corte Pronto') }}</option>
+                        <option value="approved" @selected($production->status === 'approved')>{{ __('Etapa: Aprovado') }}</option>
+                        <option value="published" @selected($production->status === 'published')>{{ __('Etapa: Publicado') }}</option>
                     </select>
                 </form>
 
-                <a href="{{ route('productions.edit', $production) }}"
-                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition">
-                    ✏️ {{ __('Editar Produção') }}
+                <a href="{{ route('productions.edit', $production) }}" class="btn text-xs py-2 px-4">
+                    {{ __('Editar Produção') }}
                 </a>
                 @if ($production->isReadyForProduction() && $production->status !== 'approved')
                     <form action="{{ route('productions.mark-approved', $production) }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer">
-                            ✓ {{ __('Marcar como Aprovada') }}
+                        <button type="submit" class="btn primary text-xs py-2 px-4">
+                            {{ __('Marcar como Aprovada') }}
                         </button>
                     </form>
                 @endif
@@ -67,7 +64,7 @@
         </div>
     </div>
 
-    <!-- Esteira Visual de 5 Etapas da Produção -->
+    <!-- Esteira Visual de 5 Etapas -->
     @php
         $pipelineOrder = ['draft' => 1, 'pending_review' => 2, 'in_production' => 3, 'ready' => 4, 'approved' => 4, 'published' => 5];
         $currentStage = $pipelineOrder[$production->status] ?? 1;
@@ -79,76 +76,66 @@
             5 => ['label' => __('5. Publicado'), 'desc' => __('Distribuído nas Redes')],
         ];
     @endphp
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
         @foreach($pipelineStages as $stepNumber => $stageInfo)
             @php
                 $isCompleted = $stepNumber < $currentStage || $production->status === 'published';
                 $isActive = $stepNumber === $currentStage && $production->status !== 'published';
             @endphp
-            <div class="p-3 rounded-xl border {{ $isCompleted ? 'bg-emerald-950/20 border-emerald-500/30' : ($isActive ? 'bg-orange-950/25 border-orange-500/40' : 'bg-zinc-900/60 border-zinc-800') }}">
+            <div class="card p-4 {{ $isCompleted ? 'border-emerald-500/30' : ($isActive ? 'border-orange-500/40' : '') }}">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-[11px] font-extrabold {{ $isCompleted ? 'text-emerald-400' : ($isActive ? 'text-orange-400' : 'text-zinc-500') }}">
+                    <span class="text-xs font-semibold {{ $isCompleted ? 'text-emerald-400' : ($isActive ? 'text-orange-400' : 'text-zinc-500') }}">
                         {{ $stageInfo['label'] }}
                     </span>
                     <span class="text-xs">
                         @if($isCompleted) ✓ @elseif($isActive) ● @else ○ @endif
                     </span>
                 </div>
-                <p class="text-[10px] text-zinc-400 mt-0.5">{{ $stageInfo['desc'] }}</p>
+                <p class="text-xs text-zinc-400 mt-1">{{ $stageInfo['desc'] }}</p>
             </div>
         @endforeach
     </div>
 
-    @if (session('success'))
-        <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2">
-            <span>✓</span>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-
-    <!-- Metadata Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-2">
+    <!-- Metadata Row -->
+    <div class="market-stats">
+        <div class="card p-4 flex items-center justify-between gap-2">
             <div>
-                <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Cliente Vinculado') }}</p>
-                <p class="text-sm font-bold text-white mt-1">{{ $production->cliente ? $production->cliente->name : __('Interno') }}</p>
+                <div class="stat-label">{{ __('Cliente Vinculado') }}</div>
+                <div class="text-base font-semibold text-white">{{ $production->cliente ? $production->cliente->name : __('Interno') }}</div>
             </div>
             @if($production->cliente)
-                <a href="{{ route('clientes.show', $production->cliente) }}"
-                   class="px-2.5 py-1.5 rounded-lg bg-orange-600/15 hover:bg-orange-600 text-orange-400 hover:text-white border border-orange-500/30 text-[10px] font-extrabold transition shrink-0">
+                <a href="{{ route('clientes.show', $production->cliente) }}" class="btn text-xs py-1.5 px-3">
                     {{ __('Ficha 360º →') }}
                 </a>
             @endif
         </div>
-        <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Criado Por') }}</p>
-            <p class="text-sm font-bold text-white mt-1">{{ $production->creator->name }}</p>
+        <div class="card p-4">
+            <div class="stat-label">{{ __('Criado Por') }}</div>
+            <div class="text-base font-semibold text-white">{{ $production->creator->name }}</div>
         </div>
-        <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Data de Entrega Alvo') }}</p>
-            <p class="text-sm font-bold text-white mt-1">{{ $production->target_publication_date ? $production->target_publication_date->format('d/m/Y') : __('Não definida') }}</p>
+        <div class="card p-4">
+            <div class="stat-label">{{ __('Data de Entrega Alvo') }}</div>
+            <div class="text-base font-semibold text-white">{{ $production->target_publication_date ? $production->target_publication_date->format('d/m/Y') : __('Não definida') }}</div>
         </div>
-        <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Criada em') }}</p>
-            <p class="text-sm font-bold text-white mt-1">{{ $production->created_at->format('d/m/Y') }}</p>
+        <div class="card p-4">
+            <div class="stat-label">{{ __('Criada em') }}</div>
+            <div class="text-base font-semibold text-white">{{ $production->created_at->format('d/m/Y') }}</div>
         </div>
     </div>
 
     @if($production->packPurchase)
-        <div class="p-4 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div class="card py-4 px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
             <div class="flex items-center gap-2">
-                <span class="text-zinc-500 font-medium">{{ __('Pacote de Origem:') }}</span>
-                <span class="font-bold text-white bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-700">
-                    📦 {{ $production->packPurchase->pack?->name ?? __('Pacote Contratado') }}
+                <span class="text-zinc-400">{{ __('Pacote de Origem:') }}</span>
+                <span class="status-pill copper">
+                    {{ $production->packPurchase->pack?->name ?? __('Pacote Contratado') }}
                 </span>
             </div>
             @if(!empty($production->packPurchase->addons_purchased))
                 <div class="flex items-center flex-wrap gap-1.5">
-                    <span class="text-zinc-400 font-bold uppercase tracking-wider text-[10px] mr-1">{{ __('Add-ons Contratados:') }}</span>
+                    <span class="text-zinc-400 text-xs mr-1">{{ __('Add-ons Contratados:') }}</span>
                     @foreach($production->packPurchase->addons_purchased as $addon)
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-orange-950/40 text-orange-300 border border-orange-800/40">
-                            + {{ $addon }}
-                        </span>
+                        <span class="status-pill">+ {{ $addon }}</span>
                     @endforeach
                 </div>
             @endif
@@ -156,116 +143,110 @@
     @endif
 
     <!-- ROTEIROS SECTION -->
-    <div class="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-4">
-        <div class="flex items-center justify-between">
+    <div class="card">
+        <div class="card-header">
             <div>
-                <h2 class="text-base font-extrabold text-white">{{ __('Roteiros da Produção') }}</h2>
-                <p class="text-xs text-zinc-400 mt-0.5">{{ __('Textos estratégicos e estruturas narrativas vinculadas.') }}</p>
+                <h2 class="card-title">{{ __('Roteiros da Produção') }}</h2>
+                <p class="card-description">{{ __('Textos estratégicos e estruturas narrativas vinculadas.') }}</p>
             </div>
-            <a href="{{ route('roteiros.create', $production) }}"
-               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition">
+            <a href="{{ route('roteiros.create', $production) }}" class="btn primary text-xs py-2 px-4">
                 + {{ __('Novo Roteiro') }}
             </a>
         </div>
 
         @if ($roteiros->isEmpty())
-            <div class="p-8 rounded-xl bg-zinc-950 border border-zinc-800/80 text-center text-xs text-zinc-500">
+            <div class="py-8 text-center text-sm text-zinc-500">
                 {{ __('Nenhum roteiro cadastrado para esta produção ainda.') }}
             </div>
         @else
-            <div class="space-y-3">
+            <div class="divide-y divide-zinc-800">
                 @foreach ($roteiros as $roteiro)
-                    <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 flex items-center justify-between gap-4 transition">
+                    <div class="list-row">
                         <div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-sm text-white">{{ __('Roteiro #') }}{{ $roteiro->id }}</span>
-                                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
+                            <div class="flex items-center gap-2.5">
+                                <span class="font-semibold text-sm text-white">{{ __('Roteiro #') }}{{ $roteiro->id }}</span>
+                                <span class="status-pill {{ $roteiro->status === 'approved' ? 'positive' : ($roteiro->status === 'rejected' ? 'negative' : 'copper') }}">
                                     {{ ucfirst(str_replace('_', ' ', $roteiro->status)) }}
                                 </span>
                             </div>
-                            <p class="text-xs text-zinc-500 mt-1">{{ __('Criado por:') }} {{ $roteiro->creator->name }}</p>
+                            <p class="text-xs text-zinc-400 mt-1">{{ __('Criado por:') }} {{ $roteiro->creator->name }}</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <a href="{{ $roteiro->getWhatsAppShareUrl() }}" target="_blank" rel="noopener noreferrer"
-                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white text-xs font-bold border border-emerald-500/30 transition"
-                               title="{{ __('Enviar link de aprovação sem senha direto no WhatsApp do cliente') }}">
-                                <span>📲</span>
-                                <span>{{ __('WhatsApp Aprovação') }}</span>
+                               class="btn text-xs py-1.5 px-3">
+                                {{ __('WhatsApp Aprovação') }}
                             </a>
                             <a href="{{ route('roteiros.show', ['production' => $production, 'roteiro' => $roteiro]) }}"
-                               class="px-3 py-1.5 rounded-lg bg-orange-600/20 hover:bg-orange-600 text-orange-400 hover:text-white text-xs font-bold border border-orange-500/20 transition">
+                               class="btn primary text-xs py-1.5 px-3.5">
                                 {{ __('Ver Roteiro') }} →
                             </a>
                         </div>
                     </div>
                 @endforeach
             </div>
-            <div class="pt-2">
+            <div class="pt-4">
                 {{ $roteiros->links() }}
             </div>
         @endif
     </div>
 
     <!-- VÍDEOS SECTION -->
-    <div class="p-6 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-4">
-        <div class="flex items-center justify-between">
+    <div class="card">
+        <div class="card-header">
             <div>
-                <h2 class="text-base font-extrabold text-white">{{ __('Vídeos e Entregáveis') }}</h2>
-                <p class="text-xs text-zinc-400 mt-0.5">{{ __('Arquivos finais, links de entrega e status de publicação.') }}</p>
+                <h2 class="card-title">{{ __('Vídeos e Entregáveis') }}</h2>
+                <p class="card-description">{{ __('Arquivos finais, links de entrega e status de publicação.') }}</p>
             </div>
             @if ($production->roteiros->contains('status', 'approved'))
-                <a href="{{ route('videos.create', $production) }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition">
+                <a href="{{ route('videos.create', $production) }}" class="btn primary text-xs py-2 px-4">
                     + {{ __('Novo Vídeo') }}
                 </a>
             @endif
         </div>
 
         @if ($videos->isEmpty())
-            <div class="p-8 rounded-xl bg-zinc-950 border border-zinc-800/80 text-center text-xs text-zinc-500">
+            <div class="py-8 text-center text-sm text-zinc-500">
                 {{ __('Nenhum vídeo cadastrado ainda.') }}
                 @if (!$production->roteiros->contains('status', 'approved'))
-                    <span class="block text-zinc-600 mt-1">{{ __('(Necessário ter ao menos 1 roteiro aprovado para cadastrar o vídeo final)') }}</span>
+                    <span class="block text-xs text-zinc-500 mt-1">{{ __('(Necessário ter ao menos 1 roteiro aprovado para cadastrar o vídeo final)') }}</span>
                 @endif
             </div>
         @else
-            <div class="space-y-3">
+            <div class="divide-y divide-zinc-800">
                 @foreach ($videos as $video)
-                    <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 flex items-center justify-between gap-4 transition">
+                    <div class="list-row">
                         <div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-sm text-white">{{ $video->title }}</span>
-                                <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
+                            <div class="flex items-center gap-2.5">
+                                <span class="font-semibold text-sm text-white">{{ $video->title }}</span>
+                                <span class="status-pill {{ $video->status === 'approved' ? 'positive' : 'copper' }}">
                                     {{ ucfirst(str_replace('_', ' ', $video->status)) }}
                                 </span>
                             </div>
                             @if ($video->platform)
-                                <p class="text-xs text-zinc-500 mt-1">{{ __('Plataforma:') }} {{ ucfirst($video->platform) }}</p>
+                                <p class="text-xs text-zinc-400 mt-1">{{ __('Plataforma:') }} {{ ucfirst($video->platform) }}</p>
                             @endif
                         </div>
                         <div class="flex items-center gap-2">
                             <a href="{{ $video->getWhatsAppShareUrl() }}" target="_blank" rel="noopener noreferrer"
-                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white text-xs font-bold border border-emerald-500/30 transition"
-                               title="{{ __('Enviar link de aprovação do vídeo no WhatsApp do cliente') }}">
-                                <span>📲</span>
-                                <span>{{ __('WhatsApp Vídeo') }}</span>
+                               class="btn text-xs py-1.5 px-3">
+                                {{ __('WhatsApp Vídeo') }}
                             </a>
                             <a href="{{ route('videos.show', ['production' => $production, 'video' => $video]) }}"
-                               class="px-3 py-1.5 rounded-lg bg-orange-600/20 hover:bg-orange-600 text-orange-400 hover:text-white text-xs font-bold border border-orange-500/20 transition">
+                               class="btn primary text-xs py-1.5 px-3.5">
                                 {{ __('Ver Vídeo') }} →
                             </a>
                         </div>
                     </div>
                 @endforeach
             </div>
-            <div class="pt-2">
+            <div class="pt-4">
                 {{ $videos->links() }}
             </div>
         @endif
     </div>
 
     <div>
-        <a href="{{ route('productions.index') }}" class="text-xs font-bold text-zinc-400 hover:text-white transition">
+        <a href="{{ route('productions.index') }}" class="text-xs font-medium text-zinc-400 hover:text-white transition">
             ← {{ __('Voltar para todas as produções') }}
         </a>
     </div>

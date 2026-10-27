@@ -1,469 +1,382 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-zinc-950 overflow-x-hidden">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'NUME | Gestão Estratégica de Produções')</title>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ asset('css/app-shell.css') }}?v={{ file_exists(public_path('css/app-shell.css')) ? filemtime(public_path('css/app-shell.css')) : time() }}">
     @include('partials.favicons')
 </head>
-<body class="min-h-full bg-zinc-950 text-zinc-100 antialiased selection:bg-orange-500 selection:text-white overflow-x-hidden">
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Menu">
+        <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </button>
 
-    <div id="app-shell" class="min-h-screen flex flex-col overflow-x-hidden">
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- Mobile Sidebar Overlay -->
-        <div id="sidebar-overlay" onclick="toggleSidebarMobile()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden xl:hidden transition-opacity"></div>
+    @php
+        $pendingQuoteRequestsCount = auth()->check() ? \App\Models\Quote::where('status', 'requested')->count() : 0;
+        $openSupportTicketsCount = auth()->check() ? \App\Models\SupportTicket::whereIn('status', \App\Models\SupportTicket::OPEN_STATUSES)->count() : 0;
+        $pendingPlanAdjustmentsCount = auth()->check() ? \App\Models\MarketingPlan::where('status', \App\Models\MarketingPlan::STATUS_ADJUSTMENT)->count() : 0;
+    @endphp
 
-        <!-- ================= SIDEBAR ================= -->
-        <aside id="sidebar" class="fixed top-0 left-0 z-50 h-screen w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between transition-all duration-300 -translate-x-full xl:translate-x-0">
-            
-            <!-- Top: Brand Header -->
-            <div class="h-16 flex items-center justify-between px-5 border-b border-zinc-800 shrink-0">
-                <a href="{{ route('productions.index') }}" class="flex items-center gap-3 overflow-hidden">
-                    <img src="{{ asset('assests/img/logo.png') }}" alt="NUME" class="h-7 w-auto object-contain">
+    <div class="dashboard" id="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <a href="{{ route('productions.index') }}" class="logo">
+                <div class="logo-icon">N</div>
+                <span class="logo-text">NUME Studio</span>
+            </a>
+
+            <!-- 1. Operação -->
+            <nav class="nav-section">
+                <div class="nav-label">{{ __('Operação') }}</div>
+
+                <a href="{{ route('productions.index') }}" class="nav-item {{ request()->routeIs('productions*', 'roteiros*', 'videos*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
+                        <span>{{ __('Produções') }}</span>
+                    </span>
                 </a>
-                <button onclick="toggleSidebarDesktop()" class="hidden xl:flex text-zinc-500 hover:text-zinc-300 p-1.5 rounded-lg hover:bg-zinc-800 transition" title="Recolher menu">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-                    </svg>
-                </button>
-            </div>
 
-            <!-- Middle: Nav Sections -->
-            <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5 [scrollbar-width:thin]">
-                @php
-                    $pendingQuoteRequestsCount = auth()->check() ? \App\Models\Quote::where('status', 'requested')->count() : 0;
-                    $openSupportTicketsCount = auth()->check() ? \App\Models\SupportTicket::whereIn('status', \App\Models\SupportTicket::OPEN_STATUSES)->count() : 0;
-                    $pendingPlanAdjustmentsCount = auth()->check() ? \App\Models\MarketingPlan::where('status', \App\Models\MarketingPlan::STATUS_ADJUSTMENT)->count() : 0;
-                    $totalCommercialAlerts = $pendingQuoteRequestsCount + $openSupportTicketsCount + $pendingPlanAdjustmentsCount;
-
-                    $isComercialActive = request()->routeIs(['clientes*', 'crm*', 'quotes*', 'support*', 'analytics*']);
-                    $isCatalogoActive = request()->routeIs(['packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*']);
-                    $isFinanceiroActive = request()->routeIs(['billing*', 'admin.invoices*', 'admin.subscriptions*', 'stripe-connect*']);
-                    $isSettingsActive = request()->routeIs(['admin.settings*', 'api_keys*', 'video_types*', 'ai_usage*']);
-                @endphp
-
-                <!-- 1. Operação & Conteúdo -->
-                <div class="space-y-1">
-                    <p class="sidebar-heading px-3 text-[10px] font-extrabold uppercase tracking-widest text-zinc-500 mb-2">
-                        {{ __('Operação & Conteúdo') }}
-                    </p>
-                    <a href="{{ route('productions.index') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('productions*', 'roteiros*', 'videos*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <rect width="7" height="9" x="3" y="3" rx="1" stroke-width="2"/>
-                            <rect width="7" height="5" x="14" y="3" rx="1" stroke-width="2"/>
-                            <rect width="7" height="9" x="14" y="12" rx="1" stroke-width="2"/>
-                            <rect width="7" height="5" x="3" y="16" rx="1" stroke-width="2"/>
+                <a href="{{ route('calendar.index') }}" class="nav-item {{ request()->routeIs('calendar*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
                         </svg>
-                        <span class="sidebar-text">{{ __('Produções & Painel') }}</span>
-                    </a>
-                    <a href="{{ route('calendar.index') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('calendar*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        <span>{{ __('Calendário') }}</span>
+                    </span>
+                </a>
+
+                <a href="{{ route('batch_planner.index') }}" class="nav-item {{ request()->routeIs('batch_planner*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                            <polyline points="2 17 12 22 22 17"/>
+                            <polyline points="2 12 12 17 22 12"/>
                         </svg>
-                        <span class="sidebar-text">{{ __('Calendário Geral') }}</span>
-                    </a>
-                    <a href="{{ route('batch_planner.index') }}"
-                       class="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('batch_planner*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                            </svg>
-                            <span class="sidebar-text">{{ __('Sofi Batch Planner') }}</span>
-                        </div>
-                        <span class="sidebar-badge text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-extrabold uppercase">AI</span>
-                    </a>
-                    <a href="{{ route('distributions.index') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('distributions*') ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        <span>{{ __('Batch Planner') }}</span>
+                    </span>
+                    <span class="nav-badge">AI</span>
+                </a>
+
+                <a href="{{ route('distributions.index') }}" class="nav-item {{ request()->routeIs('distributions*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                         </svg>
-                        <span class="sidebar-text">{{ __('Distribuição Social') }}</span>
-                    </a>
-                </div>
+                        <span>{{ __('Distribuição Social') }}</span>
+                    </span>
+                </a>
+            </nav>
 
-                <!-- 2. Comercial & Clientes -->
-                <div class="space-y-1">
-                    <button type="button" onclick="toggleNavGroup('comercial')"
-                            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all {{ $isComercialActive ? 'text-white bg-zinc-800/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30' }}">
-                        <div class="flex items-center gap-2.5">
-                            <svg class="w-4 h-4 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                            <span class="sidebar-text">{{ __('Comercial & Clientes') }}</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            @if ($totalCommercialAlerts > 0)
-                                <span class="sidebar-badge px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                                    {{ $totalCommercialAlerts }}
-                                </span>
-                            @endif
-                            <svg id="menu-chevron-comercial" class="sidebar-chevron w-4 h-4 text-zinc-500 transition-transform duration-200 {{ ($isComercialActive || $totalCommercialAlerts > 0) ? 'rotate-180 text-sky-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </button>
+            <!-- 2. Comercial & Clientes -->
+            <nav class="nav-section">
+                <div class="nav-label">{{ __('Comercial & Clientes') }}</div>
 
-                    <div id="menu-group-comercial" class="space-y-1 pl-3 border-l-2 border-zinc-800 ml-3.5 my-1 transition-all {{ ($isComercialActive || $totalCommercialAlerts > 0) ? '' : 'hidden' }}">
-                        <a href="{{ route('clientes.index') }}"
-                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('clientes*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <div class="flex items-center gap-2.5">
-                                <span>👥</span>
-                                <span class="sidebar-text">{{ __('Clientes') }}</span>
-                            </div>
-                            @if ($pendingPlanAdjustmentsCount > 0)
-                                <span class="sidebar-badge text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-extrabold" title="{{ __('Planos de marketing com ajuste pedido') }}">
-                                    {{ $pendingPlanAdjustmentsCount }}
-                                </span>
-                            @endif
-                        </a>
-                        <a href="{{ route('crm.leads.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('crm*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>📈</span>
-                            <span class="sidebar-text">{{ __('CRM · Funil') }}</span>
-                        </a>
-                        <a href="{{ route('quotes.index') }}"
-                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('quotes*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <div class="flex items-center gap-2.5">
-                                <span>🧮</span>
-                                <span class="sidebar-text">{{ __('Orçamentos & Propostas') }}</span>
-                            </div>
-                            @if ($pendingQuoteRequestsCount > 0)
-                                <span class="sidebar-badge text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded font-extrabold" title="{{ __('Pedidos de orçamento de clientes') }}">
-                                    {{ $pendingQuoteRequestsCount }}
-                                </span>
-                            @endif
-                        </a>
-                        <a href="{{ route('support.index') }}"
-                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('support*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <div class="flex items-center gap-2.5">
-                                <span>🛟</span>
-                                <span class="sidebar-text">{{ __('Suporte') }}</span>
-                            </div>
-                            @if ($openSupportTicketsCount > 0)
-                                <span class="sidebar-badge text-[9px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-extrabold" title="{{ __('Chamados de suporte abertos') }}">
-                                    {{ $openSupportTicketsCount }}
-                                </span>
-                            @endif
-                        </a>
-                        <a href="{{ route('analytics.index') }}"
-                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('analytics*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <div class="flex items-center gap-2.5">
-                                <span>📊</span>
-                                <span class="sidebar-text">{{ __('Vendas & BI (Sofi)') }}</span>
-                            </div>
-                            <span class="sidebar-badge text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-extrabold uppercase">AI</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 3. Catálogo & Vitrine (Dropdown Retrátil) -->
-                <div class="space-y-1">
-                    <button type="button" onclick="toggleNavGroup('catalogo')"
-                            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all {{ $isCatalogoActive ? 'text-white bg-zinc-800/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30' }}">
-                        <div class="flex items-center gap-2.5">
-                            <svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                            <span class="sidebar-text">{{ __('Catálogo & Cadastros') }}</span>
-                        </div>
-                        <svg id="menu-chevron-catalogo" class="sidebar-chevron w-4 h-4 text-zinc-500 transition-transform duration-200 {{ $isCatalogoActive ? 'rotate-180 text-orange-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                <a href="{{ route('clientes.index') }}" class="nav-item {{ request()->routeIs('clientes*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                         </svg>
-                    </button>
+                        <span>{{ __('Clientes') }}</span>
+                    </span>
+                    @if ($pendingPlanAdjustmentsCount > 0)
+                        <span class="nav-badge">{{ $pendingPlanAdjustmentsCount }}</span>
+                    @endif
+                </a>
 
-                    <div id="menu-group-catalogo" class="space-y-1 pl-3 border-l-2 border-zinc-800 ml-3.5 my-1 transition-all {{ $isCatalogoActive ? '' : 'hidden' }}">
-                        <a href="{{ route('admin.plans.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.plans*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🔁</span>
-                            <span class="sidebar-text">{{ __('Planos de Assinatura') }}</span>
-                        </a>
-                        <a href="{{ route('packs.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('packs*') && !request()->routeIs('admin.plans*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>📦</span>
-                            <span class="sidebar-text">{{ __('Pacotes Avulsos') }}</span>
-                        </a>
-                        <a href="{{ route('addons.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('addons*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>⚡</span>
-                            <span class="sidebar-text">{{ __('Serviços & Add-ons') }}</span>
-                        </a>
-                        <a href="{{ route('categories.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('categories*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🏷️</span>
-                            <span class="sidebar-text">{{ __('Categorias & Tags') }}</span>
-                        </a>
-                        <a href="{{ route('showcase-videos.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('showcase-videos*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🎬</span>
-                            <span class="sidebar-text">{{ __('Portfólio / Vitrine') }}</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 4. Financeiro & Faturas (Dropdown Retrátil) -->
-                <div class="space-y-1">
-                    <button type="button" onclick="toggleNavGroup('financeiro')"
-                            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all {{ $isFinanceiroActive ? 'text-white bg-zinc-800/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30' }}">
-                        <div class="flex items-center gap-2.5">
-                            <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span class="sidebar-text">{{ __('Financeiro & Faturas') }}</span>
-                        </div>
-                        <svg id="menu-chevron-financeiro" class="sidebar-chevron w-4 h-4 text-zinc-500 transition-transform duration-200 {{ $isFinanceiroActive ? 'rotate-180 text-emerald-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                <a href="{{ route('crm.leads.index') }}" class="nav-item {{ request()->routeIs('crm*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                         </svg>
-                    </button>
+                        <span>{{ __('CRM & Funil') }}</span>
+                    </span>
+                </a>
 
-                    <div id="menu-group-financeiro" class="space-y-1 pl-3 border-l-2 border-zinc-800 ml-3.5 my-1 transition-all {{ $isFinanceiroActive ? '' : 'hidden' }}">
-                        <a href="{{ route('admin.subscriptions.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.subscriptions*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🔄</span>
-                            <span class="sidebar-text">{{ __('Assinaturas dos Clientes') }}</span>
-                        </a>
-                        <a href="{{ route('admin.invoices.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.invoices*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>📄</span>
-                            <span class="sidebar-text">{{ __('Facturas & AEAT') }}</span>
-                        </a>
-                        <a href="{{ route('stripe-connect.index') }}"
-                           class="flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('stripe-connect*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <div class="flex items-center gap-2.5">
-                                <span>⚡</span>
-                                <span class="sidebar-text">{{ __('Stripe Connect') }}</span>
-                            </div>
-                            @if(auth()->check() && auth()->user()->tenant && auth()->user()->tenant->canReceivePayments())
-                                <span class="sidebar-badge w-2 h-2 rounded-full bg-emerald-400"></span>
-                            @else
-                                <span class="sidebar-badge text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">Pendente</span>
-                            @endif
-                        </a>
-                        <a href="{{ route('billing.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('billing*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>💎</span>
-                            <span class="sidebar-text">{{ __('Assinatura SaaS') }}</span>
-                        </a>
-                    </div>
-                </div>
+                <a href="{{ route('quotes.index') }}" class="nav-item {{ request()->routeIs('quotes*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <span>{{ __('Orçamentos') }}</span>
+                    </span>
+                    @if ($pendingQuoteRequestsCount > 0)
+                        <span class="nav-badge">{{ $pendingQuoteRequestsCount }}</span>
+                    @endif
+                </a>
+
+                <a href="{{ route('support.index') }}" class="nav-item {{ request()->routeIs('support*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span>{{ __('Suporte') }}</span>
+                    </span>
+                    @if ($openSupportTicketsCount > 0)
+                        <span class="nav-badge">{{ $openSupportTicketsCount }}</span>
+                    @endif
+                </a>
+
+                <a href="{{ route('analytics.index') }}" class="nav-item {{ request()->routeIs('analytics*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                        <span>{{ __('Analytics & BI') }}</span>
+                    </span>
+                </a>
+            </nav>
+
+            <!-- 3. Catálogo & Financeiro -->
+            <nav class="nav-section">
+                <div class="nav-label">{{ __('Catálogo & Financeiro') }}</div>
+
+                <a href="{{ route('packs.index') }}" class="nav-item {{ request()->routeIs('packs*', 'admin.plans*', 'addons*', 'categories*', 'showcase-videos*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                        <span>{{ __('Catálogo & Vitrine') }}</span>
+                    </span>
+                </a>
+
+                <a href="{{ route('admin.subscriptions.index') }}" class="nav-item {{ request()->routeIs('admin.subscriptions*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <polyline points="1 20 1 14 7 14"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                        <span>{{ __('Assinaturas') }}</span>
+                    </span>
+                </a>
+
+                <a href="{{ route('admin.invoices.index') }}" class="nav-item {{ request()->routeIs('admin.invoices*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                            <line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
+                        <span>{{ __('Facturas & AEAT') }}</span>
+                    </span>
+                </a>
+
+                <a href="{{ route('stripe-connect.index') }}" class="nav-item {{ request()->routeIs('stripe-connect*', 'billing*') ? 'active' : '' }}">
+                    <span class="nav-item-left">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                        <span>{{ __('Repasses & Plano SaaS') }}</span>
+                    </span>
+                </a>
 
                 @if(auth()->check() && auth()->user()->isAdmin())
-                <!-- 5. Configurações do SaaS (Dropdown Retrátil) -->
-                <div class="space-y-1">
-                    <button type="button" onclick="toggleNavGroup('configuracoes')"
-                            class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all {{ $isSettingsActive ? 'text-white bg-zinc-800/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/30' }}">
-                        <div class="flex items-center gap-2.5">
-                            <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <a href="{{ route('admin.settings.gateways') }}" class="nav-item {{ request()->routeIs('admin.settings*', 'api_keys*', 'video_types*', 'ai_usage*') ? 'active' : '' }}">
+                        <span class="nav-item-left">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
                             </svg>
-                            <span class="sidebar-text">{{ __('Configurações') }}</span>
-                        </div>
-                        <svg id="menu-chevron-configuracoes" class="sidebar-chevron w-4 h-4 text-zinc-500 transition-transform duration-200 {{ $isSettingsActive ? 'rotate-180 text-amber-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-
-                    <div id="menu-group-configuracoes" class="space-y-1 pl-3 border-l-2 border-zinc-800 ml-3.5 my-1 transition-all {{ $isSettingsActive ? '' : 'hidden' }}">
-                        <a href="{{ route('admin.settings.gateways') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.gateways*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>💳</span>
-                            <span class="sidebar-text">{{ __('Gateways & Fiscal') }}</span>
-                        </a>
-                        <a href="{{ route('admin.settings.fiscal') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.fiscal*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>⚖️</span>
-                            <span class="sidebar-text">{{ __('Perfil Fiscal (AEAT)') }}</span>
-                        </a>
-                        <a href="{{ route('admin.settings.redsys') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.redsys*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🏦</span>
-                            <span class="sidebar-text">{{ __('TPV Redsys & Bizum') }}</span>
-                        </a>
-                        <a href="{{ route('admin.settings.bank-transfer') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.bank-transfer*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🏛️</span>
-                            <span class="sidebar-text">{{ __('Transferência (IBAN)') }}</span>
-                        </a>
-                        <a href="{{ route('admin.settings.platform') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('admin.settings.platform*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🌐</span>
-                            <span class="sidebar-text">{{ __('Redes & SEO Sofi') }}</span>
-                        </a>
-                        <a href="{{ route('video_types.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('video_types*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🎬</span>
-                            <span class="sidebar-text">{{ __('Tipos de vídeo') }}</span>
-                        </a>
-                        <a href="{{ route('ai_usage.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('ai_usage*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🤖</span>
-                            <span class="sidebar-text">{{ __('Uso de IA') }}</span>
-                        </a>
-                        <a href="{{ route('api_keys.index') }}"
-                           class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('api_keys*') ? 'bg-orange-600 text-white shadow-md shadow-orange-600/20' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60' }}">
-                            <span>🔑</span>
-                            <span class="sidebar-text">{{ __('API & Integrações') }}</span>
-                        </a>
-                    </div>
-                </div>
+                            <span>{{ __('Configurações') }}</span>
+                        </span>
+                    </a>
                 @endif
             </nav>
 
-            <!-- Bottom: User Profile & Logout -->
-            <div class="p-3 border-t border-zinc-800 space-y-2 shrink-0">
-                <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                    <div class="flex items-center gap-2.5 overflow-hidden">
-                        <div class="w-8 h-8 rounded-full bg-orange-600/20 border border-orange-500/30 text-orange-400 font-extrabold text-xs flex items-center justify-center shrink-0">
-                            {{ substr(auth()->user()->name ?? 'U', 0, 2) }}
-                        </div>
-                        <div class="sidebar-text overflow-hidden">
-                            <p class="text-xs font-bold text-white truncate">{{ auth()->user()->name ?? 'Usuário' }}</p>
-                            <p class="text-[10px] text-zinc-400 truncate">{{ auth()->user()->tenant->name ?? 'NUME Creative' }}</p>
-                        </div>
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="theme-toggle">
+                    <div class="theme-toggle-label">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/>
+                            <line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                        <span>{{ __('Modo Claro') }}</span>
                     </div>
-                    <form action="{{ route('logout') }}" method="POST" class="sidebar-text inline">
-                        @csrf
-                        <button type="submit" class="p-1.5 text-zinc-500 hover:text-rose-400 transition" title="Encerrar Sessão">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                        </button>
-                    </form>
+                    <button type="button" class="theme-switch" id="themeSwitch" aria-label="Alternar tema"></button>
                 </div>
+
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="logout-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        <span>{{ __('Encerrar Sessão') }}</span>
+                    </button>
+                </form>
             </div>
         </aside>
 
-        <!-- ================= MAIN WRAPPER ================= -->
-        <div id="main-wrapper" class="flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden transition-all duration-300 bg-zinc-950">
-
-            <!-- Sticky Top Navbar -->
-            <header class="sticky top-0 z-30 h-16 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 min-w-0">
-                
-                <!-- Left: Hamburger Mobile & Breadcrumb -->
-                <div class="flex items-center gap-3 min-w-0">
-                    <button onclick="toggleSidebarMobile()" class="xl:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
-                    </button>
-
-                    <div class="hidden sm:flex items-center gap-2 text-xs font-medium truncate">
-                        <span class="text-zinc-500">Painel</span>
-                        <span class="text-zinc-600">/</span>
-                        <span class="text-orange-500 font-semibold truncate">@yield('breadcrumb', 'Produções')</span>
+        <!-- Main Content -->
+        <main class="main-content" id="main-wrapper">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="header-breadcrumb">
+                        <span>NUME Studio</span>
+                        <span>/</span>
+                        <strong>@yield('breadcrumb', __('Produções'))</strong>
                     </div>
                 </div>
 
-                <!-- Right: Workspace Tag, Search, Languages & Actions -->
-                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                    
-                    <!-- Workspace Badge -->
-                    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs shrink-0 max-w-[200px]">
-                        <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse shrink-0"></span>
-                        <span class="text-zinc-400 font-medium shrink-0">Workspace:</span>
-                        <span class="text-white font-bold truncate">{{ auth()->user()->tenant->name ?? 'NUME' }}</span>
-                    </div>
-
-                    <!-- Language Switcher -->
-                    <div class="flex items-center gap-1.5 bg-zinc-900/80 border border-zinc-800 px-2 py-1 rounded-full text-base shrink-0">
-                        <a href="{{ route('lang.switch', 'pt_BR') }}" class="px-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-80 hover:grayscale-0' }}" title="Português">🇧🇷</a>
-                        <a href="{{ route('lang.switch', 'es') }}" class="px-1 rounded transition {{ session('locale') === 'es' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-80 hover:grayscale-0' }}" title="Español">🇪🇸</a>
-                    </div>
-
-                    <!-- Vitrine Pública Shortcut -->
+                <div class="header-right">
                     @if(auth()->check() && auth()->user()->tenant)
-                        <a href="{{ route('storefront.show', auth()->user()->tenant->slug) }}" target="_blank"
-                           class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition shrink-0">
-                            <span>{{ __('Ver Vitrine Pública') }}</span>
-                            <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        <a href="{{ route('storefront.show', auth()->user()->tenant->slug) }}" target="_blank" class="header-pill">
+                            <span class="header-pill-dot"></span>
+                            <span>{{ __('Vitrine Pública') }}</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/>
+                                <line x1="10" y1="14" x2="21" y2="3"/>
                             </svg>
                         </a>
                     @endif
-                </div>
-            </header>
 
-            <!-- Stripe Warning Banner -->
+                    <div class="lang-switcher">
+                        <a href="{{ route('lang.switch', 'pt_BR') }}" class="lang-btn {{ session('locale', 'pt_BR') === 'pt_BR' ? 'active' : '' }}">BR</a>
+                        <a href="{{ route('lang.switch', 'es') }}" class="lang-btn {{ session('locale') === 'es' ? 'active' : '' }}">ES</a>
+                    </div>
+
+                    <div class="user-menu">
+                        <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'N', 0, 2)) }}</div>
+                        <div class="user-info">
+                            <span class="user-name">{{ auth()->user()->name ?? 'Admin' }}</span>
+                            <span class="user-role">{{ auth()->user()->tenant->name ?? 'NUME Creative' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stripe Connect Notice -->
             @auth
                 @if (auth()->user()->isAdmin() && !auth()->user()->tenant->canReceivePayments())
-                    <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-b border-amber-500/20 text-amber-300 text-xs font-medium py-2.5 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span>⚡</span>
-                            <span>{{ __('Conecte o Stripe Connect para habilitar checkout e recebimento direto dos seus pacotes.') }}</span>
+                    <div class="card mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3.5 px-5">
+                        <div class="flex items-center gap-3 text-sm">
+                            <span class="status-pill copper">{{ __('Pagamentos') }}</span>
+                            <span class="text-zinc-300">{{ __('Conecte o Stripe Connect para habilitar checkout e recebimento direto dos pacotes.') }}</span>
                         </div>
-                        <a href="{{ route('stripe-connect.index') }}" class="font-bold underline text-amber-400 hover:text-white transition">
-                            {{ __('Conectar Agora →') }}
+                        <a href="{{ route('stripe-connect.index') }}" class="btn primary text-xs py-2 px-4">
+                            {{ __('Conectar Stripe') }}
                         </a>
                     </div>
                 @endif
             @endauth
 
-            <!-- Main Page Content -->
-            <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 min-w-0">
-                @if (session('warning'))
-                    <div class="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium animate-fadeIn">
-                        <span class="text-base">⚠️</span>
-                        <div class="flex-1">{{ session('warning') }}</div>
-                    </div>
-                @endif
-                @if (session('success'))
-                    <div class="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium animate-fadeIn">
-                        <span class="text-base">✓</span>
-                        <div class="flex-1">{{ session('success') }}</div>
-                    </div>
-                @endif
-                @if (session('error'))
-                    <div class="flex items-center gap-3 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium animate-fadeIn">
-                        <span class="text-base">✕</span>
-                        <div class="flex-1">{{ session('error') }}</div>
-                    </div>
-                @endif
+            <!-- Flash Messages -->
+            @if (session('warning'))
+                <div class="card mb-6 py-3.5 px-5 flex items-center gap-3 text-sm">
+                    <span class="status-pill copper">{{ __('Atenção') }}</span>
+                    <span>{{ session('warning') }}</span>
+                </div>
+            @endif
+            @if (session('success'))
+                <div class="card mb-6 py-3.5 px-5 flex items-center gap-3 text-sm">
+                    <span class="status-pill positive">{{ __('Sucesso') }}</span>
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="card mb-6 py-3.5 px-5 flex items-center gap-3 text-sm">
+                    <span class="status-pill negative">{{ __('Erro') }}</span>
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
 
+            <div class="flex-1">
                 @yield('content')
-            </main>
+            </div>
 
-            <!-- Footer -->
-            <footer class="border-t border-zinc-900 py-6 text-center text-xs text-zinc-600">
-                &copy; {{ date('Y') }} NUME Creative. {{ __('Plataforma de Gestão Audiovisual & Escala B2B.') }}
+            <footer class="copyright">
+                &copy; {{ date('Y') }} NUME Studio. {{ __('Plataforma de Gestão Audiovisual & Escala B2B.') }}
             </footer>
-        </div>
+        </main>
     </div>
 
     <script>
-        function toggleSidebarDesktop() {
-            document.body.classList.toggle('sidebar-collapsed');
-        }
-        function toggleSidebarMobile() {
+        (function() {
+            const themeSwitch = document.getElementById('themeSwitch');
+            const html = document.documentElement;
+
+            if (themeSwitch) {
+                themeSwitch.addEventListener('click', function() {
+                    const currentTheme = html.getAttribute('data-theme') || 'dark';
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    html.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
+
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
             const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
-        }
-        function toggleNavGroup(groupId) {
-            const group = document.getElementById('menu-group-' + groupId);
-            const chevron = document.getElementById('menu-chevron-' + groupId);
-            if (!group) return;
-            const isHidden = group.classList.contains('hidden');
-            if (isHidden) {
-                group.classList.remove('hidden');
-                if (chevron) {
-                    chevron.classList.add('rotate-180');
-                }
-            } else {
-                group.classList.add('hidden');
-                if (chevron) {
-                    chevron.classList.remove('rotate-180');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            function toggleMobileMenu() {
+                if (mobileMenuToggle && sidebar && sidebarOverlay) {
+                    mobileMenuToggle.classList.toggle('active');
+                    sidebar.classList.toggle('active');
+                    sidebarOverlay.classList.toggle('active');
                 }
             }
-        }
+
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+            }
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', toggleMobileMenu);
+            }
+        })();
     </script>
 </body>
 </html>

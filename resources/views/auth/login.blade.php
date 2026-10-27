@@ -8,27 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .input-field {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 0.75rem;
-            padding: 0.625rem 1rem;
-            font-size: 0.875rem;
-            color: #fff;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .input-field::placeholder { color: rgba(255,255,255,0.3); }
-        .input-field:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
-        .input-field:-webkit-autofill,
-        .input-field:-webkit-autofill:focus {
-            -webkit-box-shadow: 0 0 0 1000px #18181b inset;
-            -webkit-text-fill-color: #fff;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/app-shell.css') }}">
     @include('partials.favicons')
 </head>
 <body class="h-screen overflow-hidden bg-zinc-950 text-white antialiased selection:bg-orange-500 selection:text-white">

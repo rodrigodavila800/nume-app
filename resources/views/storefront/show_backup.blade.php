@@ -72,36 +72,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <style>
-        .swiper-3d-portfolio {
-            width: 100%;
-            perspective: 1200px;
-            overflow: visible !important;
-        }
-        .swiper-3d-portfolio .swiper-wrapper {
-            align-items: center;
-        }
-        .swiper-3d-pagination .swiper-pagination-bullet {
-            width: 8px;
-            height: 8px;
-            background: #52525b;
-            opacity: 0.6;
-            border-radius: 9999px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: inline-block;
-            cursor: pointer;
-        }
-        .swiper-3d-pagination .swiper-pagination-bullet-active {
-            width: 32px;
-            background: #ea580c;
-            opacity: 1;
-            box-shadow: 0 0 12px rgba(234, 88, 12, 0.6);
-        }
-        .swiper-slide-active {
-            border-color: rgba(234, 88, 12, 0.7) !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(234, 88, 12, 0.2) !important;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/app-shell.css') }}">
 </head>
 <body class="bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-orange-500 selection:text-white">
 
