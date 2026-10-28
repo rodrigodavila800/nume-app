@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -12,13 +13,36 @@ use Laravel\Socialite\Facades\Socialite;
 class GoogleController extends Controller
 {
     /**
+     * Retorna o provedor Google configurado dinamicamente com as credenciais salvas no banco.
+     */
+    protected function getGoogleProvider(string $redirectUrl)
+    {
+        $clientId = trim((string) (Setting::get('google_client_id') ?: config('services.google.client_id')));
+        $clientSecret = trim((string) (Setting::get('google_client_secret') ?: config('services.google.client_secret')));
+
+        config([
+            'services.google.client_id' => $clientId,
+            'services.google.client_secret' => $clientSecret,
+            'services.google.redirect' => $redirectUrl,
+        ]);
+
+        return Socialite::driver('google')->redirectUrl($redirectUrl);
+    }
+
+    /**
      * Redireciona para o Google OAuth (Login da Produtora)
      */
     public function redirect(): RedirectResponse
     {
-        return Socialite::driver('google')
-            ->redirectUrl(route('auth.google.callback'))
-            ->redirect();
+        $clientId = trim((string) (Setting::get('google_client_id') ?: config('services.google.client_id')));
+
+        if (empty($clientId)) {
+            return redirect()->route('login')->withErrors([
+                'email' => __('Login com o Google ainda não foi configurado na plataforma. Acesse Configurações > Stripe & Google Login para inserir o Client ID e Secret.'),
+            ]);
+        }
+
+        return $this->getGoogleProvider(route('auth.google.callback'))->redirect();
     }
 
     /**
@@ -29,11 +53,9 @@ class GoogleController extends Controller
     public function callback(): RedirectResponse
     {
         try {
-            $googleUser = Socialite::driver('google')
-                ->redirectUrl(route('auth.google.callback'))
-                ->user();
+            $googleUser = $this->getGoogleProvider(route('auth.google.callback'))->user();
         } catch (\Exception $e) {
-            return redirect()->route('login')->withErrors(['email' => 'Falha na autenticação com o Google. Tente novamente.']);
+            return redirect()->route('login')->withErrors(['email' => 'Falha na autenticação com o Google: '.$e->getMessage()]);
         }
 
         $user = User::where('email', $googleUser->getEmail())->first();

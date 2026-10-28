@@ -35,35 +35,55 @@
 
     <!-- Cards de Métricas e Pipeline -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">{{ __('Total Emitidos') }}</span>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-2xl font-black text-white font-mono">{{ $metrics['total_count'] }}</span>
-                <span class="text-xs text-zinc-500">{{ __('orçamentos') }}</span>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">{{ __('Total Emitidos') }}</span>
+                <div class="mt-1 flex items-baseline gap-1.5">
+                    <span class="text-2xl font-black text-white font-mono">{{ $metrics['total_count'] }}</span>
+                    <span class="text-xs text-zinc-500">{{ __('orçamentos') }}</span>
+                </div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             </div>
         </div>
 
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">{{ __('Em Negociação') }}</span>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-2xl font-black text-amber-400 font-mono">{{ $metrics['sent_count'] }}</span>
-                <span class="text-xs text-zinc-500">{{ $metrics['draft_count'] }} rascunhos</span>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-500">{{ __('Em Negociação') }}</span>
+                <div class="mt-1 flex items-baseline gap-1.5">
+                    <span class="text-2xl font-black text-amber-400 font-mono">{{ $metrics['sent_count'] }}</span>
+                    <span class="text-xs text-zinc-500">{{ $metrics['draft_count'] }} rascunhos</span>
+                </div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
         </div>
 
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-500">{{ __('Aprovados') }}</span>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-2xl font-black text-emerald-400 font-mono">{{ $metrics['accepted_count'] }}</span>
-                <span class="text-xs text-emerald-500/80 font-bold font-mono">€ {{ number_format($metrics['accepted_volume'], 0, ',', '.') }}</span>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-500">{{ __('Aprovados') }}</span>
+                <div class="mt-1 flex items-baseline gap-1.5">
+                    <span class="text-2xl font-black text-emerald-400 font-mono">{{ $metrics['accepted_count'] }}</span>
+                    <span class="text-xs text-emerald-500/80 font-bold font-mono">€ {{ number_format($metrics['accepted_volume'], 0, ',', '.') }}</span>
+                </div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
         </div>
 
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-orange-500">{{ __('Pipeline Ativo') }}</span>
-            <div class="mt-2 flex items-baseline justify-between">
-                <span class="text-2xl font-black text-orange-400 font-mono">€ {{ number_format($metrics['pipeline_volume'], 0, ',', '.') }}</span>
-                <span class="text-xs text-zinc-500">{{ __('em aberto') }}</span>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-orange-500">{{ __('Pipeline Ativo') }}</span>
+                <div class="mt-1 flex items-baseline gap-1.5">
+                    <span class="text-2xl font-black text-orange-400 font-mono">€ {{ number_format($metrics['pipeline_volume'], 0, ',', '.') }}</span>
+                    <span class="text-xs text-zinc-500">{{ __('em aberto') }}</span>
+                </div>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
             </div>
         </div>
     </div>

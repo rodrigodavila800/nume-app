@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Stripe\StripeClient;
-use Exception;
 
 class GatewaySettingController extends Controller
 {
@@ -42,7 +42,7 @@ class GatewaySettingController extends Controller
         $taxDefaultIvaRate = Setting::get('tax_default_iva_rate', 21.00);
         $fiscalCompanyName = Setting::get('fiscal_company_name', 'Nume Creative S.L.');
         $fiscalCompanyCif = Setting::get('fiscal_company_cif', 'B12345678');
-        $fiscalInvoiceSeries = Setting::get('fiscal_invoice_series', 'NUM-' . date('Y') . '-');
+        $fiscalInvoiceSeries = Setting::get('fiscal_invoice_series', 'NUM-'.date('Y').'-');
         $fiscalCompanyAddress = Setting::get('fiscal_company_address', 'Calle Alfonso I, 12, Planta 3');
         $fiscalCompanyPostalCode = Setting::get('fiscal_company_postal_code', '50003');
         $fiscalCompanyCity = Setting::get('fiscal_company_city', 'Zaragoza');
@@ -68,7 +68,7 @@ class GatewaySettingController extends Controller
                 $stripeStatus['message'] = 'Conectado e validado com sucesso pela API do Stripe!';
             } catch (Exception $e) {
                 $stripeStatus['connected'] = false;
-                $stripeStatus['message'] = 'Erro ao autenticar no Stripe: ' . $e->getMessage();
+                $stripeStatus['message'] = 'Erro ao autenticar no Stripe: '.$e->getMessage();
             }
         }
 
@@ -228,11 +228,12 @@ class GatewaySettingController extends Controller
         }
 
         // Google OAuth
-        if ($request->filled('google_client_id')) {
-            Setting::set('google_client_id', $validated['google_client_id'], 'oauth', false, 'Google Client ID');
+        if ($request->has('google_client_id')) {
+            $clientId = trim((string) ($validated['google_client_id'] ?? ''));
+            Setting::set('google_client_id', $clientId, 'oauth', false, 'Google Client ID');
         }
         if ($request->filled('google_client_secret')) {
-            Setting::set('google_client_secret', $validated['google_client_secret'], 'oauth', true, 'Google Client Secret (criptografada)');
+            Setting::set('google_client_secret', trim((string) $validated['google_client_secret']), 'oauth', true, 'Google Client Secret (criptografada)');
         }
 
         // Recarrega no runtime do Laravel

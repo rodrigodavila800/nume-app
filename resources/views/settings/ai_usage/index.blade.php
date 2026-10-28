@@ -67,21 +67,41 @@
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-                <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800">
-                    <span class="text-[11px] font-bold text-zinc-400 uppercase block">{{ __('Chamadas') }}</span>
-                    <span class="text-xl font-black text-white mt-1 block">{{ number_format($monthTotals['calls'], 0, ',', '.') }}</span>
+                <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold text-zinc-400 uppercase block">{{ __('Chamadas') }}</span>
+                        <span class="text-xl font-black text-white mt-1 block">{{ number_format($monthTotals['calls'], 0, ',', '.') }}</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
                 </div>
-                <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800">
-                    <span class="text-[11px] font-bold text-zinc-400 uppercase block">{{ __('Tokens de entrada') }}</span>
-                    <span class="text-xl font-black text-white mt-1 block">{{ number_format($monthTotals['input_tokens'], 0, ',', '.') }}</span>
+                <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold text-zinc-400 uppercase block">{{ __('Tokens de entrada') }}</span>
+                        <span class="text-xl font-black text-white mt-1 block">{{ number_format($monthTotals['input_tokens'], 0, ',', '.') }}</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                    </div>
                 </div>
-                <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800">
-                    <span class="text-[11px] font-bold text-zinc-400 uppercase block">{{ __('Tokens de saída') }}</span>
-                    <span class="text-xl font-black text-white mt-1 block">{{ number_format($monthTotals['output_tokens'], 0, ',', '.') }}</span>
+                <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold text-zinc-400 uppercase block">{{ __('Tokens de saída') }}</span>
+                        <span class="text-xl font-black text-white mt-1 block">{{ number_format($monthTotals['output_tokens'], 0, ',', '.') }}</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                    </div>
                 </div>
-                <div class="p-4 rounded-xl bg-orange-500/10 border border-orange-500/25">
-                    <span class="text-[11px] font-bold text-orange-400 uppercase block">{{ __('Total de tokens') }}</span>
-                    <span class="text-xl font-black text-orange-400 mt-1 block">{{ number_format($monthTotals['total_tokens'], 0, ',', '.') }}</span>
+                <div class="p-4 rounded-xl bg-orange-500/10 border border-orange-500/25 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold text-orange-400 uppercase block">{{ __('Total de tokens') }}</span>
+                        <span class="text-xl font-black text-orange-400 mt-1 block">{{ number_format($monthTotals['total_tokens'], 0, ',', '.') }}</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    </div>
                 </div>
             </div>
         </div>

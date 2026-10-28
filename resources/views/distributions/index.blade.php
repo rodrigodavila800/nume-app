@@ -20,17 +20,17 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">
                     {{ __('Social Publishing Hub') }}
                 </span>
-                <span class="text-xs text-zinc-500">
+                <span class="text-xs text-zinc-400">
                     {{ __('Auditoria & Monitoramento') }}
                 </span>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-zinc-900 mt-1">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">
                 {{ __('Distribuição Social Multiplataforma') }}
             </h1>
-            <p class="text-xs sm:text-sm text-zinc-500 mt-1">
+            <p class="text-xs sm:text-sm text-zinc-400 mt-1">
                 {{ __('Acompanhe em tempo real todas as publicações automatizadas dos vídeos dos seus clientes no Instagram, TikTok, YouTube Shorts e redes parceiras.') }}
             </p>
         </div>
@@ -43,8 +43,8 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Total de Disparos') }}</span>
                 <span class="text-xl font-black text-white mt-1 block">{{ $stats['total'] }}</span>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 border border-zinc-700 flex items-center justify-center text-lg font-bold">
-                
+            <div class="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 border border-zinc-700 flex items-center justify-center">
+                <svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
             </div>
         </div>
 
@@ -53,8 +53,8 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Publicados') }}</span>
                 <span class="text-xl font-black text-emerald-400 mt-1 block">{{ $stats['publicados'] }}</span>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg font-bold border border-emerald-500/20">
-                ✓
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
         </div>
 
@@ -63,8 +63,8 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Agendados') }}</span>
                 <span class="text-xl font-black text-purple-400 mt-1 block">{{ $stats['agendados'] ?? 0 }}</span>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg font-bold border border-purple-500/20">
-                
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
+                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
         </div>
 
@@ -73,8 +73,8 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Processando') }}</span>
                 <span class="text-xl font-black text-amber-400 mt-1 block">{{ $stats['processando'] }}</span>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg font-bold border border-amber-500/20 animate-pulse">
-                
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                <svg class="w-5 h-5 text-amber-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </div>
         </div>
 
@@ -83,8 +83,8 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Falhas / Atenção') }}</span>
                 <span class="text-xl font-black text-rose-400 mt-1 block">{{ $stats['falhas'] }}</span>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg font-bold border border-rose-500/20">
-                
+            <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center border border-rose-500/20">
+                <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             </div>
         </div>
     </div>
@@ -218,7 +218,7 @@
         @else
             <div class="p-12 text-center space-y-3">
                 <div class="w-12 h-12 mx-auto rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 flex items-center justify-center text-xl">
-                    
+                    <svg class="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                 </div>
                 <div class="space-y-1">
                     <h4 class="text-sm font-bold text-white">{{ __('Nenhuma publicação social encontrada') }}</h4>

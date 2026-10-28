@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Cliente;
+use App\Models\Setting;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +17,9 @@ class GoogleAuthenticationTest extends TestCase
     use RefreshDatabase;
 
     protected Tenant $tenant;
+
     protected User $staffUser;
+
     protected Cliente $cliente;
 
     protected function setUp(): void
@@ -59,6 +62,28 @@ class GoogleAuthenticationTest extends TestCase
 
         $response->assertStatus(302);
         $this->assertStringContainsString('accounts.google.com', $response->headers->get('Location'));
+    }
+
+    public function test_google_oauth_prioritizes_dynamic_settings_over_config(): void
+    {
+        Setting::set('google_client_id', 'dynamic-client-id-123.apps.googleusercontent.com', 'oauth');
+        Setting::set('google_client_secret', 'secret-abc', 'oauth');
+
+        $response = $this->get(route('auth.google'));
+
+        $response->assertStatus(302);
+        $this->assertStringContainsString('client_id=dynamic-client-id-123.apps.googleusercontent.com', $response->headers->get('Location'));
+    }
+
+    public function test_google_portal_oauth_prioritizes_dynamic_settings_over_config(): void
+    {
+        Setting::set('google_client_id', 'dynamic-client-id-portal-456.apps.googleusercontent.com', 'oauth');
+        Setting::set('google_client_secret', 'secret-portal-xyz', 'oauth');
+
+        $response = $this->get(route('portal.auth.google', ['tenant_slug' => 'nume']));
+
+        $response->assertStatus(302);
+        $this->assertStringContainsString('client_id=dynamic-client-id-portal-456.apps.googleusercontent.com', $response->headers->get('Location'));
     }
 
     public function test_google_oauth_redirect_for_client_portal(): void
@@ -162,7 +187,7 @@ class GoogleAuthenticationTest extends TestCase
 
         $response->assertRedirect(route('admin.settings.gateways'));
 
-        $this->assertEquals('test-client-id-1234.apps.googleusercontent.com', \App\Models\Setting::get('google_client_id'));
-        $this->assertEquals('test-secret-abcd-5678', \App\Models\Setting::get('google_client_secret'));
+        $this->assertEquals('test-client-id-1234.apps.googleusercontent.com', Setting::get('google_client_id'));
+        $this->assertEquals('test-secret-abcd-5678', Setting::get('google_client_secret'));
     }
 }
