@@ -118,7 +118,8 @@
                 <input type="text" id="sofiUserInput" 
                        placeholder="{{ $isEs ? 'Escribe tu duda o cuéntame tu nicho...' : 'Digite sua dúvida ou conte seu nicho...' }}" 
                        class="sofi-chat-input">
-                <button type="submit" id="sofiSubmitBtn" class="sofi-chat-submit-btn">
+                <button type="submit" id="sofiSubmitBtn" class="sofi-chat-submit-btn" title="{{ __('Enviar') }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </button>
             </form>
             <p class="sofi-footer-tagline">

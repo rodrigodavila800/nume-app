@@ -152,7 +152,7 @@
     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl">
         <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
             <h3 class="text-base font-extrabold text-white flex items-center gap-2">
-                <span class="text-orange-500 font-bold">+</span>
+                <svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 {{ __('Cadastrar Novo Add-on') }}
             </h3>
             <button type="button" onclick="closeCreateAddonModal()" class="text-zinc-400 hover:text-white text-xs">✕</button>
@@ -225,7 +225,7 @@
     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl">
         <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
             <h3 class="text-base font-extrabold text-white flex items-center gap-2">
-                <span class="text-orange-500"></span>
+                <svg class="w-4 h-4 text-orange-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 {{ __('Editar Add-on') }}
             </h3>
             <button type="button" onclick="closeEditAddonModal()" class="text-zinc-400 hover:text-white text-xs">✕</button>

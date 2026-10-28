@@ -93,7 +93,8 @@
                     </a>
                     <a href="{{ route('portal.support.index') }}"
                        class="inline-flex items-center gap-1.5 px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap transition {{ request()->routeIs('portal.support*') ? 'bg-white text-orange-600 shadow-xs border border-zinc-200/60' : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60' }}">
-                        <span class="hidden 2xl:inline"></span> {{ __('Suporte') }}
+                        <svg class="w-3.5 h-3.5 shrink-0 hidden 2xl:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <span>{{ __('Suporte') }}</span>
                     </a>
                 </nav>
 
@@ -195,7 +196,8 @@
                 </a>
                 <a href="{{ route('portal.support.index') }}"
                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('portal.support*') ? 'bg-orange-50 text-orange-700' : 'text-zinc-700 hover:bg-zinc-100' }}">
-                    {{ __('Suporte') }}
+                    <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span>{{ __('Suporte') }}</span>
                 </a>
                 
                 <div class="pt-3 mt-2 border-t border-zinc-100 flex items-center justify-between px-3.5">

@@ -116,14 +116,17 @@
         <!-- Filtros de Formato do Portfólio (Pill Tabs Glassmorphic) -->
         <div class="portfolio-format-tabs" id="portfolio">
             <button type="button" class="portfolio-tab-btn active" data-filter="all" onclick="if(window.filterPortfolio) window.filterPortfolio('all', this)">
+                <svg class="w-4 h-4 shrink-0 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
                 <span>{{ __('Todos os Formatos') }}</span>
             </button>
 
             <button type="button" class="portfolio-tab-btn" data-filter="vertical" onclick="if(window.filterPortfolio) window.filterPortfolio('vertical', this)">
+                <svg class="w-4 h-4 shrink-0 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
                 <span>{{ __('Shorts & Reels (9:16)') }}</span>
             </button>
 
             <button type="button" class="portfolio-tab-btn" data-filter="horizontal" onclick="if(window.filterPortfolio) window.filterPortfolio('horizontal', this)">
+                <svg class="w-4 h-4 shrink-0 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8m-4-4v4"/></svg>
                 <span>{{ __('Vídeos Horizontais (16:9)') }}</span>
             </button>
         </div>
@@ -739,7 +742,10 @@
                                     <label class="storefront-checkout-payment-option method-bizum {{ $storefrontFirstActiveMethod === 'bizum' ? 'selected' : '' }}" data-method="bizum">
                                         <input type="radio" name="payment_method" value="bizum" {{ $storefrontFirstActiveMethod === 'bizum' ? 'checked' : '' }} class="sr-only">
                                         <span class="payment-badge badge-bizum">{{ __('Mais Rápido') }}</span>
-                                        <span class="payment-method-name">Bizum</span>
+                                        <span class="payment-method-name flex items-center justify-center gap-1.5">
+                                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            Bizum
+                                        </span>
                                         <span class="payment-gateway-sub">BBVA</span>
                                     </label>
                                 @endif
@@ -747,7 +753,10 @@
                                     <label class="storefront-checkout-payment-option method-card {{ $storefrontFirstActiveMethod === 'redsys_card' ? 'selected' : '' }}" data-method="redsys_card">
                                         <input type="radio" name="payment_method" value="redsys_card" {{ $storefrontFirstActiveMethod === 'redsys_card' ? 'checked' : '' }} class="sr-only">
                                         <span class="payment-badge badge-card">{{ __('3D Secure') }}</span>
-                                        <span class="payment-method-name">{{ __('Tarjeta') }}</span>
+                                        <span class="payment-method-name flex items-center justify-center gap-1.5">
+                                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                            {{ __('Tarjeta') }}
+                                        </span>
                                         <span class="payment-gateway-sub">BBVA Redsys</span>
                                     </label>
                                 @endif
@@ -755,7 +764,10 @@
                                     <label class="storefront-checkout-payment-option method-stripe {{ $storefrontFirstActiveMethod === 'stripe' ? 'selected' : '' }}" data-method="stripe">
                                         <input type="radio" name="payment_method" value="stripe" {{ $storefrontFirstActiveMethod === 'stripe' ? 'checked' : '' }} class="sr-only">
                                         <span class="payment-badge badge-stripe">{{ __('Global') }}</span>
-                                        <span class="payment-method-name">Stripe</span>
+                                        <span class="payment-method-name flex items-center justify-center gap-1.5">
+                                            <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                                            Stripe
+                                        </span>
                                         <span class="payment-gateway-sub">Apple / Cartões</span>
                                     </label>
                                 @endif
@@ -763,7 +775,9 @@
 
                             <!-- Caixa de Instrução Contextual Dinâmica -->
                             <div id="storefront-checkout-payment-hint" class="storefront-checkout-payment-hint hint-bizum">
-                                <span id="hint-icon"></span>
+                                <span id="hint-icon">
+                                    <svg class="w-4 h-4 shrink-0 inline-block mr-1 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                </span>
                                 <span id="hint-text">
                                     <strong>Bizum (BBVA):</strong> {{ __('Pagamento instantâneo via celular espanhol. Na próxima tela oficial do banco você informará seu número e confirmará a notificação no app com total segurança.') }}
                                 </span>
@@ -771,7 +785,9 @@
                         </div>
 
                         <button type="submit" id="storefront-checkout-submit-btn" class="storefront-checkout-submit-btn btn-bizum">
-                            <span id="submit-btn-icon"></span>
+                            <span id="submit-btn-icon">
+                                <svg class="w-4 h-4 shrink-0 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </span>
                             <span id="submit-btn-text">{{ __('Pagar com Bizum (BBVA)') }}</span>
                             <span id="submit-btn-arrow">→</span>
                         </button>
@@ -985,24 +1001,28 @@
             hintBox.classList.remove('hint-bizum', 'hint-card', 'hint-stripe');
             submitBtn.classList.remove('btn-bizum', 'btn-card', 'btn-stripe');
 
+            const boltSvg = `<svg class="w-4 h-4 shrink-0 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
+            const cardSvg = `<svg class="w-4 h-4 shrink-0 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>`;
+            const globeSvg = `<svg class="w-4 h-4 shrink-0 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`;
+
             if (method === 'bizum') {
                 hintBox.classList.add('hint-bizum');
-                if (hintIcon) hintIcon.textContent = '';
+                if (hintIcon) hintIcon.innerHTML = boltSvg;
                 if (hintText) hintText.innerHTML = '<strong>Bizum (BBVA):</strong> {{ __("Pagamento instantâneo via celular espanhol. Na próxima tela oficial você informará seu número e confirmará a notificação no app com total segurança.") }}';
                 submitBtn.classList.add('btn-bizum');
-                submitBtn.innerHTML = `<span>{{ __("Pagar") }} ${totalStr} {{ __("com Bizum (BBVA)") }}</span> <span>→</span>`;
+                submitBtn.innerHTML = `<span>${boltSvg}</span> <span>{{ __("Pagar") }} ${totalStr} {{ __("com Bizum (BBVA)") }}</span> <span>→</span>`;
             } else if (method === 'redsys_card') {
                 hintBox.classList.add('hint-card');
-                if (hintIcon) hintIcon.textContent = '';
+                if (hintIcon) hintIcon.innerHTML = cardSvg;
                 if (hintText) hintText.innerHTML = '<strong>Tarjeta (BBVA Redsys):</strong> {{ __("Ambiente bancário com 3D Secure 2.2. Aceita cartões de crédito e débito com autenticação biométrica ou SMS oficial.") }}';
                 submitBtn.classList.add('btn-card');
-                submitBtn.innerHTML = `<span>{{ __("Pagar") }} ${totalStr} {{ __("com Tarjeta Segura") }}</span> <span>→</span>`;
+                submitBtn.innerHTML = `<span>${cardSvg}</span> <span>{{ __("Pagar") }} ${totalStr} {{ __("com Tarjeta Segura") }}</span> <span>→</span>`;
             } else if (method === 'stripe') {
                 hintBox.classList.add('hint-stripe');
-                if (hintIcon) hintIcon.textContent = '';
+                if (hintIcon) hintIcon.innerHTML = globeSvg;
                 if (hintText) hintText.innerHTML = '<strong>Stripe Internacional:</strong> {{ __("Checkout universal com conversão automática. Pague com 1 clique via Apple Pay, Google Pay ou cartões globais.") }}';
                 submitBtn.classList.add('btn-stripe');
-                submitBtn.innerHTML = `<span>{{ __("Pagar") }} ${totalStr} {{ __("via Stripe Global") }}</span> <span>→</span>`;
+                submitBtn.innerHTML = `<span>${globeSvg}</span> <span>{{ __("Pagar") }} ${totalStr} {{ __("via Stripe Global") }}</span> <span>→</span>`;
             }
         }
 

@@ -35,41 +35,47 @@
             @if ($video->hasSourceFile())
                 <a href="{{ $video->downloadUrl() }}"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-extrabold shadow-lg shadow-orange-600/20 transition">
-                    {{ __('Baixar arquivo do vídeo') }}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>{{ __('Baixar arquivo do vídeo') }}</span>
                 </a>
             @elseif ($video->video_url)
                 <a href="{{ $video->video_url }}" target="_blank" rel="noopener noreferrer"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold shadow-lg shadow-red-600/20 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     @if ($video->video_type === 'youtube' && $video->is_vertical)
-                        ▶ {{ __('Assistir no YouTube Shorts') }} ↗
+                        <span>{{ __('Assistir no YouTube Shorts') }}</span>
                     @elseif ($video->video_type === 'youtube')
-                        ▶ {{ __('Assistir no YouTube') }} ↗
+                        <span>{{ __('Assistir no YouTube') }}</span>
                     @elseif ($video->video_type === 'vimeo')
-                        ▶ {{ __('Assistir no Vimeo') }} ↗
+                        <span>{{ __('Assistir no Vimeo') }}</span>
                     @else
-                        ▶ {{ __('Abrir Vídeo na Web') }} ↗
+                        <span>{{ __('Abrir Vídeo na Web') }}</span>
                     @endif
+                    <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 </a>
             @endif
 
             @can('update', $video)
                 <a href="{{ route('videos.edit', ['production' => $production, 'video' => $video]) }}"
                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition">
-                    {{ __('Editar') }}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span>{{ __('Editar') }}</span>
                 </a>
 
                 @if ($video->status === 'processing')
                     <form action="{{ route('videos.mark-ready', ['production' => $production, 'video' => $video]) }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition">
-                            {{ __('Marcar como Pronto') }}
+                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>{{ __('Marcar como Pronto') }}</span>
                         </button>
                     </form>
                 @elseif ($video->status === 'ready')
                     <form action="{{ route('videos.publish', ['production' => $production, 'video' => $video]) }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
-                            {{ __('Publicar Vídeo') }}
+                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span>{{ __('Publicar Vídeo') }}</span>
                         </button>
                     </form>
                 @endif
@@ -78,8 +84,9 @@
                     <form action="{{ route('videos.destroy', ['production' => $production, 'video' => $video]) }}" method="POST" class="inline" onsubmit="return confirm('Deseja realmente excluir este vídeo?')">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-950 hover:bg-rose-900 text-rose-300 text-xs font-bold transition">
-                            {{ __('Excluir') }}
+                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-950 hover:bg-rose-900 text-rose-300 text-xs font-bold transition cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span>{{ __('Excluir') }}</span>
                         </button>
                     </form>
                 @endif
@@ -106,7 +113,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white font-extrabold shadow-md shadow-orange-900/30">
-                        
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -139,6 +146,7 @@
                         <input type="hidden" name="channel" value="email">
                         <button type="submit" 
                             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 shadow-md shadow-orange-950/40 transition active:scale-95 cursor-pointer">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             <span>{{ __('Enviar E-mail de Aprovação') }}</span>
                         </button>
                     </form>
@@ -146,12 +154,14 @@
                     <!-- Abertura Direta do WhatsApp -->
                     <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer"
                         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-950/40 transition active:scale-95">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         <span>{{ __('Abrir WhatsApp') }}</span>
                     </a>
 
                     <!-- Botão Copiar Texto Sofi -->
                     <button type="button" onclick="copySofiWhatsAppText()" id="btn-copy-whatsapp"
                         class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition active:scale-95 cursor-pointer">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
                         <span id="label-copy-whatsapp">{{ __('Copiar Mensagem') }}</span>
                     </button>
                 </div>
@@ -601,16 +611,17 @@
                                 @endphp
                                 @if ($destinationUrl)
                                     <a href="{{ $destinationUrl }}" target="_blank" rel="noopener noreferrer"
-                                       class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-orange-400 hover:text-orange-300 text-xs font-bold transition flex items-center gap-1">
-                                        <span>{{ __('Acessar Postagem') }}</span> ↗
+                                       class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-orange-400 hover:text-orange-300 text-xs font-bold transition flex items-center gap-1.5">
+                                        <span>{{ __('Acessar Postagem') }}</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                     </a>
                                 @endif
 
                                 <form action="{{ route('distributions.refresh', $pub) }}" method="POST" class="inline">
                                     @csrf
                                     <button type="submit" title="{{ __('Atualizar status junto à API social') }}"
-                                            class="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition">
-                                        
+                                            class="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-xs font-bold transition flex items-center justify-center cursor-pointer">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                     </button>
                                 </form>
                             </div>

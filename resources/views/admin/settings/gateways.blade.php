@@ -174,8 +174,9 @@
                            placeholder="{{ !empty($stripeSecret) ? '••••••••••••••••••••••••••••••••' : 'sk_test_... ou sk_live_...' }}"
                            class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
                     <button type="button" onclick="togglePasswordVisibility('stripe_secret')"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
-                        
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1"
+                            title="{{ __('Alternar visibilidade') }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     </button>
                 </div>
                 <p class="text-[11px] text-zinc-500">{{ __('Deixe em branco caso deseje manter a chave atual.') }}</p>
@@ -196,8 +197,9 @@
                            placeholder="{{ !empty($stripeWebhook) ? '••••••••••••••••••••••••' : 'whsec_...' }}"
                            class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition placeholder:text-zinc-600">
                     <button type="button" onclick="togglePasswordVisibility('stripe_webhook_secret')"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1">
-                        
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-zinc-300 p-1"
+                            title="{{ __('Alternar visibilidade') }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     </button>
                 </div>
                 <p class="text-[11px] text-zinc-500">{{ __('URL do Webhook:') }} <code class="text-orange-400 bg-zinc-950 px-1.5 py-0.5 rounded font-mono">{{ url('/stripe/webhook') }}</code></p>
@@ -292,8 +294,9 @@
                                placeholder="{{ !empty($googleClientSecret) ? '••••••••••••••••' : 'GOCSPX-xxxx' }}"
                                class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition placeholder:text-zinc-600">
                         <button type="button" onclick="togglePasswordVisibility('google_client_secret')"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs">
-                            
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs p-1"
+                                title="{{ __('Alternar visibilidade') }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         </button>
                     </div>
                     <p class="text-[11px] text-zinc-500">{{ __('Criptografado com AES-256 no banco de dados.') }}</p>
@@ -308,6 +311,7 @@
             </span>
             <button type="submit"
                     class="bg-orange-600 hover:bg-orange-500 active:scale-[0.98] text-white font-extrabold text-xs uppercase tracking-wider px-6 py-3 rounded-xl shadow-lg shadow-orange-900/20 transition-all flex items-center gap-2 cursor-pointer">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                 <span>{{ __('Salvar Configurações') }}</span>
             </button>
         </div>

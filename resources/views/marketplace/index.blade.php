@@ -22,9 +22,9 @@
                 <a href="{{ route('login') }}" class="text-zinc-400 hover:text-white transition">{{ __('Entrar') }}</a>
                 
                 <!-- Language Switcher -->
-                <div class="flex items-center gap-2 border-l border-zinc-800 pl-5 ml-1 text-base">
-                    <a href="{{ route('lang.switch', 'pt_BR') }}" class="px-2 py-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'bg-orange-500/20 border border-orange-500/30 grayscale-0' : 'grayscale hover:grayscale-0 hover:bg-zinc-800' }}" title="Português"></a>
-                    <a href="{{ route('lang.switch', 'es') }}" class="px-2 py-1 rounded transition {{ session('locale') === 'es' ? 'bg-orange-500/20 border border-orange-500/30 grayscale-0' : 'grayscale hover:grayscale-0 hover:bg-zinc-800' }}" title="Español"></a>
+                <div class="flex items-center gap-1.5 border-l border-zinc-800 pl-4 ml-1">
+                    <a href="{{ route('lang.switch', 'pt_BR') }}" class="px-2 py-0.5 rounded-md text-xs font-bold transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'bg-orange-500/20 border border-orange-500/30 text-orange-400' : 'text-zinc-400 hover:text-white hover:bg-zinc-800' }}" title="Português">BR</a>
+                    <a href="{{ route('lang.switch', 'es') }}" class="px-2 py-0.5 rounded-md text-xs font-bold transition {{ session('locale') === 'es' ? 'bg-orange-500/20 border border-orange-500/30 text-orange-400' : 'text-zinc-400 hover:text-white hover:bg-zinc-800' }}" title="Español">ES</a>
                 </div>
 
                 <a href="#pacotes" class="rounded-xl bg-orange-600 px-5 py-2.5 text-white hover:bg-orange-500 shadow-lg shadow-orange-900/20 transition ml-2">{{ __('Começar projeto') }}</a>

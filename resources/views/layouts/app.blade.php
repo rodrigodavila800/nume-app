@@ -41,7 +41,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <a href="{{ route('productions.index') }}" class="logo">
-                <img src="{{ asset('assests/img/logo.png') }}" alt="NUME" class="sidebar-logo-img">
+                <img src="{{ file_exists(public_path('assets/img/logo.png')) ? asset('assets/img/logo.png') : asset('assests/img/logo.png') }}" alt="NUME" class="sidebar-logo-img">
             </a>
 
             <div class="sidebar-nav">

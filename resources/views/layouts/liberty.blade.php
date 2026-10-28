@@ -63,9 +63,9 @@
 
                             <!-- Language Switcher -->
                             <li class="d-flex align-items-center px-2">
-                                <a href="{{ route('lang.switch', 'pt_BR') }}" class="p-1 text-decoration-none {{ session('locale', 'pt_BR') === 'pt_BR' ? 'opacity-100' : 'opacity-50' }}" title="Português"></a>
+                                <a href="{{ route('lang.switch', 'pt_BR') }}" class="p-1 text-decoration-none fw-bold small {{ session('locale', 'pt_BR') === 'pt_BR' ? 'opacity-100 text-white' : 'opacity-50 text-light' }}" title="Português">BR</a>
                                 <span class="text-secondary mx-1">|</span>
-                                <a href="{{ route('lang.switch', 'es') }}" class="p-1 text-decoration-none {{ session('locale') === 'es' ? 'opacity-100' : 'opacity-50' }}" title="Español"></a>
+                                <a href="{{ route('lang.switch', 'es') }}" class="p-1 text-decoration-none fw-bold small {{ session('locale') === 'es' ? 'opacity-100 text-white' : 'opacity-50 text-light' }}" title="Español">ES</a>
                             </li>
 
                             <!-- Portal do Cliente / Login -->

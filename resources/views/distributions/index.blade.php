@@ -118,8 +118,8 @@
             </div>
 
             <div class="sm:col-span-1 flex items-center gap-1">
-                <button type="submit" class="w-full h-full py-2.5 px-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition flex items-center justify-center shadow-md shadow-orange-900/20 cursor-pointer">
-                    
+                <button type="submit" class="w-full h-full py-2.5 px-3 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition flex items-center justify-center shadow-md shadow-orange-900/20 cursor-pointer" title="{{ __('Filtrar') }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
             </div>
         </form>

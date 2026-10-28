@@ -14,9 +14,9 @@
 <body class="h-screen overflow-hidden bg-zinc-950 text-white antialiased selection:bg-orange-500 selection:text-white">
 
     <!-- Language Switcher — Fixed top-right -->
-    <div class="fixed top-4 right-4 z-50 flex items-center gap-2 bg-zinc-900/80 backdrop-blur border border-zinc-800 px-3 py-1.5 rounded-full">
-        <a href="{{ route('lang.switch', 'pt_BR') }}" class="text-lg px-1 rounded transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Português"></a>
-        <a href="{{ route('lang.switch', 'es') }}" class="text-lg px-1 rounded transition {{ session('locale') === 'es' ? 'grayscale-0' : 'grayscale opacity-40 hover:opacity-70 hover:grayscale-0' }}" title="Español"></a>
+    <div class="fixed top-4 right-4 z-50 flex items-center gap-1.5 bg-zinc-900/90 backdrop-blur border border-zinc-800 p-1 rounded-full">
+        <a href="{{ route('lang.switch', 'pt_BR') }}" class="text-[11px] font-bold px-2.5 py-1 rounded-full transition {{ session('locale', 'pt_BR') === 'pt_BR' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white' }}" title="Português">BR</a>
+        <a href="{{ route('lang.switch', 'es') }}" class="text-[11px] font-bold px-2.5 py-1 rounded-full transition {{ session('locale') === 'es' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white' }}" title="Español">ES</a>
     </div>
 
     <div class="h-screen flex">
