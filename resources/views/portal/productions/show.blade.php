@@ -131,6 +131,13 @@
             </div>
         </div>
 
+        @php
+            $portalCliente = auth('cliente')->user();
+            $connectedPlatforms = $portalCliente?->connectedPlatforms() ?? [];
+            $hasSocialConnection = $connectedPlatforms !== [];
+            $modalPlatforms = array_values(array_diff($connectedPlatforms, $composerPlatforms));
+        @endphp
+
         <div class="grid grid-cols-1 gap-6">
             @forelse ($videos as $video)
                 <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-sm space-y-5">
@@ -156,7 +163,8 @@
                                     ])">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $video->latestPublication->isSuccess() ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
                                     <span>Distribuído ({{ ucfirst($video->latestPublication->status) }})</span>
-                                            @endif
+                                </a>
+                            @endif
 
                             @php
                                 $isLocked = $video->isAssetLocked();
@@ -169,6 +177,10 @@
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
                                     {{ __('Custódia Ativa (Saldo Pendente)') }}
                                 </span>
+                                <button type="button" onclick="openApproveModal({{ $video->id }})"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm transition active:scale-95">
+                                    <span>{{ __('Aprovar Corte & Liberar (:amount :curr)', ['amount' => number_format($balanceDue, 2, ',', '.'), 'curr' => $currencySymbol]) }}</span>
+                                </button>
                             @else
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
                                     {{ $video->status === 'published' ? 'Entregue / Publicado' : ($video->status === 'ready' ? 'Aprovado' : $video->status) }}
@@ -185,33 +197,6 @@
                                 <a href="{{ $video->delivery_url }}" target="_blank" rel="noopener noreferrer"
                                     class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition">
                                     {{ __('Arquivo final (Drive)') }} ↗
-                                </a>
-                            @endif
-
-                            @if($isLocked)
-                                <button type="button" onclick="openApproveModal({{ $video->id }})"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-sm transition active:scale-95">
-                                    <span>{{ __('Aprovar Corte & Liberar (:amount :curr)', ['amount' => number_format($balanceDue, 2, ',', '.'), 'curr' => $currencySymbol]) }}</span>
-                                </button>
-                                <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed" title="{{ __('Liberação após aprovação do corte final') }}">
-                                    <span>{{ __('Download Bloqueado') }}</span>
-                                </span>
-                            @elseif($video->hasPlayableSource())
-                                <button type="button" onclick="openDistributeModal({{ $video->id }})" 
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition active:scale-95">
-                                    <span>{{ __('Publicar nas Redes') }}</span>
-                                </button>
-                                @if($video->hasSourceFile())
-                                    @foreach($composerPlatforms as $composerPlatform)
-                                        <a href="{{ route('portal.videos.'.$composerPlatform, $video) }}"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-zinc-950 hover:bg-zinc-800 shadow-xs transition active:scale-95">
-                                            <span>{{ __('Publicar no :rede', ['rede' => \App\Enums\PlataformaAlvo::from($composerPlatform)->label()]) }}</span>
-                                        </a>
-                                    @endforeach
-                                @endif
-                                <a href="{{ $video->downloadUrl() }}" target="_blank" rel="noopener" 
-                                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-950 hover:bg-orange-600 text-white transition">
-                                    <span>Download</span> ↗
                                 </a>
                             @endif
                         </div>
@@ -254,6 +239,146 @@
                             @endif
                         </div>
                     @endif
+
+                    <!-- Opções de Entrega & Publicação (Dual Flow: Manual vs Automação Direta) -->
+                    <div class="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-5 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-200/70">
+                            <div>
+                                <h4 class="text-xs font-black uppercase tracking-wider text-zinc-900 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-orange-600"></span>
+                                    {{ __('Como você deseja publicar este vídeo?') }}
+                                </h4>
+                                <p class="text-xs text-zinc-500 mt-0.5">
+                                    {{ __('Escolha a melhor opção para a sua rotina: baixe para postar manualmente ou publique direto pelo portal.') }}
+                                </p>
+                            </div>
+                            <span class="text-[11px] font-bold text-zinc-400 bg-white px-2.5 py-1 rounded-full border border-zinc-200 self-start sm:self-auto">
+                                2 opções disponíveis
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- OPÇÃO 1: Download & Postagem Externa / Manual -->
+                            <div class="bg-white rounded-xl p-4 border border-zinc-200 shadow-xs flex flex-col justify-between space-y-3 hover:border-zinc-300 transition">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-zinc-100 text-zinc-700 border border-zinc-200">
+                                            {{ __('Opção 1 · Independente') }}
+                                        </span>
+                                        <span class="text-[11px] text-zinc-400 font-medium">Sem conexões</span>
+                                    </div>
+                                    <h5 class="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        {{ __('Baixar Arquivo & Postar por Fora') }}
+                                    </h5>
+                                    <p class="text-xs text-zinc-500 leading-relaxed">
+                                        {{ __('Baixe o arquivo master (.mp4) em alta resolução e copie a copy estratégica da Sofi para postar diretamente pelo seu celular ou agendador de preferência.') }}
+                                    </p>
+                                </div>
+
+                                <div class="pt-2 border-t border-zinc-100 flex flex-wrap gap-2">
+                                    @if($isLocked)
+                                        <button type="button" onclick="openApproveModal({{ $video->id }})"
+                                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-extrabold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-xs transition active:scale-95">
+                                            <span>{{ __('Aprovar Corte para Liberar Download') }}</span>
+                                        </button>
+                                    @elseif($video->hasPlayableSource())
+                                        <a href="{{ $video->downloadUrl() }}" target="_blank" rel="noopener"
+                                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-white bg-zinc-900 hover:bg-zinc-800 shadow-xs transition active:scale-95">
+                                            <svg class="w-3.5 h-3.5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                            <span>{{ __('Baixar Master (.mp4)') }}</span> ↗
+                                        </a>
+
+                                        <button type="button" onclick="copySeoPack({{ $video->id }})"
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 transition active:scale-95 cursor-pointer">
+                                            <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                            <span id="quick-copy-{{ $video->id }}">{{ __('Copiar Título & Legenda') }}</span>
+                                        </button>
+
+                                        @if($video->delivery_url)
+                                            <a href="{{ $video->delivery_url }}" target="_blank" rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition">
+                                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"/></svg>
+                                                <span>{{ __('Pasta no Drive') }}</span> ↗
+                                            </a>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- OPÇÃO 2: Publicação Integrada Direta (Estilo Metricool) -->
+                            <div class="bg-white rounded-xl p-4 border border-orange-200 shadow-xs flex flex-col justify-between space-y-3 hover:border-orange-300 transition">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-orange-100 text-orange-900 border border-orange-200">
+                                            {{ __('Opção 2 · Automação Direta') }}
+                                        </span>
+                                        <span class="text-[11px] text-orange-600 font-bold">Estilo Metricool</span>
+                                    </div>
+                                    <h5 class="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        {{ __('Publicar Direto nas Redes Conectadas') }}
+                                    </h5>
+                                    <p class="text-xs text-zinc-500 leading-relaxed">
+                                        {{ __('O vídeo é publicado direto do nosso servidor para os seus perfis com as tags e copy já calibradas pela Sofi, com suporte a agendamento.') }}
+                                    </p>
+                                </div>
+
+                                <div class="pt-2 border-t border-zinc-100 space-y-2">
+                                    @if($isLocked)
+                                        <span class="text-xs text-zinc-400 font-medium block">
+                                            {{ __('A publicação automática será liberada junto com a aprovação final do corte.') }}
+                                        </span>
+                                    @elseif($hasSocialConnection)
+                                        <div class="flex items-center justify-between flex-wrap gap-2">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="text-[11px] font-medium text-zinc-500">{{ __('Canais ativos:') }}</span>
+                                                <div class="flex items-center gap-1">
+                                                    @foreach($connectedPlatforms as $plat)
+                                                        <span class="inline-flex items-center p-1 rounded-md bg-zinc-100 border border-zinc-200" title="{{ ucfirst($plat) }}">
+                                                            @include('portal.profile._social-icon', ['platform' => $plat, 'iconClass' => 'w-3.5 h-3.5'])
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                            <a href="{{ route('portal.social.index') }}" class="text-[11px] font-bold text-orange-600 hover:text-orange-700 hover:underline">
+                                                {{ __('Gerenciar redes') }} →
+                                            </a>
+                                        </div>
+
+                                        <div class="flex flex-wrap items-center gap-2 pt-1">
+                                            <button type="button" onclick="openDistributeModal({{ $video->id }})" 
+                                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition active:scale-95">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                                <span>{{ __('Publicar ou Agendar Agora') }}</span>
+                                            </button>
+
+                                            @if($video->hasSourceFile())
+                                                @foreach($composerPlatforms as $composerPlatform)
+                                                    <a href="{{ route('portal.videos.'.$composerPlatform, $video) }}"
+                                                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white bg-zinc-900 hover:bg-zinc-800 shadow-xs transition active:scale-95">
+                                                        @include('portal.profile._social-icon', ['platform' => $composerPlatform, 'iconClass' => 'w-3.5 h-3.5 text-white'])
+                                                        <span>{{ __('Publicar no :rede', ['rede' => \App\Enums\PlataformaAlvo::from($composerPlatform)->label()]) }}</span>
+                                                    </a>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <span class="text-xs text-zinc-500">
+                                                {{ __('Nenhuma rede conectada ainda.') }}
+                                            </span>
+                                            <a href="{{ route('portal.social.index') }}" 
+                                                class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition active:scale-95">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                <span>{{ __('Conectar Minhas Redes Sociais') }}</span> →
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Sofi AI SEO Pack (Estratégia de Postagem e Retenção Orgânica) -->
                     <div class="bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-zinc-50 rounded-xl p-5 border border-orange-200/60 space-y-4">
@@ -335,10 +460,16 @@
 
             navigator.clipboard.writeText(fullText).then(() => {
                 const btn = document.getElementById('copy-btn-' + videoId);
+                const quickBtn = document.getElementById('quick-copy-' + videoId);
                 if (btn) {
                     const original = btn.textContent;
                     btn.textContent = 'Copiado! ✓';
                     setTimeout(() => btn.textContent = original, 2000);
+                }
+                if (quickBtn) {
+                    const originalQuick = quickBtn.textContent;
+                    quickBtn.textContent = 'Copiado! ✓';
+                    setTimeout(() => quickBtn.textContent = originalQuick, 2000);
                 }
             });
         }
@@ -367,15 +498,6 @@
 </div>
 
 <!-- Modais de Distribuição Multiplataforma para cada Vídeo -->
-@php
-    $portalCliente = auth('cliente')->user();
-    // Redes conectadas pelo Upload-Post ou direto pela NUME. As de tela própria (TikTok direto)
-    // não entram no modal: têm botão "Publicar no TikTok".
-    $connectedPlatforms = $portalCliente?->connectedPlatforms() ?? [];
-    $hasSocialConnection = $connectedPlatforms !== [];
-    $modalPlatforms = array_values(array_diff($connectedPlatforms, $composerPlatforms));
-@endphp
-
 @foreach($videos as $video)
     @if($video->hasPlayableSource())
         <div id="distribute-modal-{{ $video->id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">

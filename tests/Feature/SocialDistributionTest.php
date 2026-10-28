@@ -369,13 +369,51 @@ class SocialDistributionTest extends TestCase
         $adminView->assertDontSee('meta_super_secret_456');
         $adminView->assertSee('OAuth Ativo');
 
-        // Agora no Portal do Cliente, Instagram, Facebook e TikTok exibem o botão "Conectar"
+        // Agora no Portal do Cliente, Instagram, Facebook e TikTok exibem o botão "Conectar Conta"
         $portalView = $this->actingAs($this->cliente, 'cliente')
             ->get(route('portal.social.index'));
 
         $portalView->assertStatus(200);
-        $portalView->assertSee('Conectar Instagram');
-        $portalView->assertSee('Conectar Facebook');
-        $portalView->assertSee('Conectar TikTok');
+        $portalView->assertSee('Conectar Conta');
+        $portalView->assertSee(route('portal.social.oauth.redirect', 'meta'));
+        $portalView->assertSee(route('portal.social.oauth.redirect', 'tiktok'));
+    }
+
+    public function test_production_page_displays_dual_flow_options_for_manual_download_and_direct_posting(): void
+    {
+        $production = Production::create([
+            'tenant_id' => $this->tenant->id,
+            'cliente_id' => $this->cliente->id,
+            'created_by' => $this->staff->id,
+            'title' => 'Campanha Dual Flow Teste',
+            'uuid' => (string) Str::uuid(),
+            'status' => 'approved',
+        ]);
+
+        $video = Video::create([
+            'tenant_id' => $this->tenant->id,
+            'production_id' => $production->id,
+            'title' => 'Corte Master Para Publicação',
+            'video_url' => 'https://storage.nume.app/videos/master-01.mp4',
+            'status' => 'ready',
+            'sofi_seo_title' => 'Título Estratégico Sofi de Alta Retenção',
+            'sofi_seo_description' => 'Legenda completa com chamada para ação.',
+            'sofi_hashtags' => ['#Viral', '#Estrategia'],
+        ]);
+
+        $response = $this->actingAs($this->cliente, 'cliente')
+            ->get(route('portal.productions.show', $production));
+
+        $response->assertStatus(200);
+        // Opção 1: Download & Postagem manual externa
+        $response->assertSee('Baixar Arquivo &amp; Postar por Fora', false);
+        $response->assertSee('Baixar Master (.mp4)');
+        $response->assertSee('Copiar Título &amp; Legenda', false);
+        // Opção 2: Publicação Integrada / Direta estilo Metricool
+        $response->assertSee('Publicar Direto nas Redes Conectadas');
+        $response->assertSee('Conectar Minhas Redes Sociais');
+        // Sofi AI SEO Pack
+        $response->assertSee('Sofi SEO Pack: Estratégia de Postagem Recomendada');
+        $response->assertSee('Título Estratégico Sofi de Alta Retenção');
     }
 }

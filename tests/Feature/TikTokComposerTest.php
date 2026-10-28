@@ -170,7 +170,14 @@ class TikTokComposerTest extends TestCase
 
     public function test_access_rules_match_the_portal_publishing_rules(): void
     {
-        $outro = Cliente::create(['tenant_id' => $this->tenant->id, 'name' => 'B', 'email' => 'b@ficticio.test', 'password' => bcrypt('secret123')]);
+        $outro = Cliente::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'B',
+            'email' => 'b@ficticio.test',
+            'password' => bcrypt('secret123'),
+            'brand_niche' => 'Saude',
+            'website' => 'https://outro.test',
+        ]);
         $this->actingAs($outro, 'cliente')->get(route('portal.videos.tiktok', $this->video))->assertForbidden();
 
         $purchase = PackPurchase::create([
@@ -178,11 +185,11 @@ class TikTokComposerTest extends TestCase
             'videos_used' => 0, 'billing_mode' => 'split_50_50', 'balance_amount' => 500, 'balance_status' => 'pending',
         ]);
         $this->production->update(['pack_purchase_id' => $purchase->id]);
-        $this->actingAs($this->cliente, 'cliente')->get(route('portal.videos.tiktok', $this->video))->assertForbidden();
+        $this->flushSession()->actingAs($this->cliente, 'cliente')->get(route('portal.videos.tiktok', $this->video))->assertForbidden();
 
         $this->production->update(['pack_purchase_id' => null]);
         $this->connection->update(['status' => SocialConnection::STATUS_REVOKED]);
-        $this->actingAs($this->cliente->fresh(), 'cliente')->get(route('portal.videos.tiktok', $this->video))->assertNotFound();
+        $this->flushSession()->actingAs($this->cliente->fresh(), 'cliente')->get(route('portal.videos.tiktok', $this->video))->assertNotFound();
 
         Http::assertNothingSent();
     }

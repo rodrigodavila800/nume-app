@@ -132,9 +132,10 @@ class PinterestComposerTest extends TestCase
             ->post(route('portal.videos.distribute', $this->video), ['titulo' => 'Lancamento', 'plataformas' => ['pinterest']])
             ->assertRedirect(route('portal.videos.pinterest', $this->video));
 
-        $this->actingAs($this->staff)
-            ->post(route('videos.distribute', [$this->production, $this->video]), ['plataformas' => ['pinterest']])
-            ->assertSessionHas('warning', 'O Pinterest desta conta é conectado direto: o cliente escolhe a pasta e publica pelo portal, em "Publicar no Pinterest".');
+        $response = $this->flushSession()
+            ->actingAs($this->staff)
+            ->post(route('videos.distribute', [$this->production, $this->video]), ['plataformas' => ['pinterest']]);
+        $response->assertSessionHas('warning', 'O Pinterest desta conta é conectado direto: o cliente escolhe a pasta e publica pelo portal, em "Publicar no Pinterest".');
 
         $this->assertSame(0, VideoPublication::forTenant($this->tenant->id)->count());
     }
