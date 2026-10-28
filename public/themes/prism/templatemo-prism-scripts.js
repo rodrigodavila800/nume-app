@@ -492,7 +492,9 @@ https://templatemo.com/tm-600-prism-flux
                 
                 if (targetSection) {
                     const headerHeight = header ? header.offsetHeight : 70;
-                    const targetPosition = targetSection.offsetTop - headerHeight;
+                    const targetPosition = targetId === 'home'
+                        ? 0
+                        : (targetSection.getBoundingClientRect().top + window.pageYOffset - headerHeight - 14);
                     
                     window.scrollTo({
                         top: targetPosition,
@@ -509,23 +511,35 @@ https://templatemo.com/tm-600-prism-flux
 
         // Update active navigation on scroll
         function updateActiveNav() {
-            const scrollPosition = window.scrollY + 100;
+            const headerEl = document.getElementById('header');
+            const headerHeight = headerEl ? headerEl.offsetHeight : 70;
+            const scrollPosition = window.scrollY + headerHeight + 50;
             
+            if (window.scrollY < 180) {
+                navLinks.forEach(link => {
+                    const isHome = link.getAttribute('href') === '#home';
+                    link.classList.toggle('active', isHome);
+                });
+                return;
+            }
+
+            let currentActiveId = null;
             sections.forEach(section => {
-                const sectionTop = section.offsetTop;
+                const sectionTop = section.getBoundingClientRect().top + window.pageYOffset;
                 const sectionHeight = section.offsetHeight;
                 const sectionId = section.getAttribute('id');
                 
-                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                    navLinks.forEach(link => {
-                        link.classList.remove('active');
-                        const href = link.getAttribute('href').substring(1);
-                        if (href === sectionId) {
-                            link.classList.add('active');
-                        }
-                    });
+                if (scrollPosition >= sectionTop - 35 && scrollPosition < sectionTop + sectionHeight) {
+                    currentActiveId = sectionId;
                 }
             });
+
+            if (currentActiveId) {
+                navLinks.forEach(link => {
+                    const href = link.getAttribute('href').substring(1);
+                    link.classList.toggle('active', href === currentActiveId);
+                });
+            }
         }
 
         window.addEventListener('scroll', updateActiveNav);
