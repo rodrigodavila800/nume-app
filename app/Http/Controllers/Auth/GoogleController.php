@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Facades\Socialite;
 
 class GoogleController extends Controller
@@ -44,6 +45,17 @@ class GoogleController extends Controller
         }
 
         Auth::guard('web')->login($user, true);
+
+        request()->session()->regenerate();
+
+        try {
+            DB::table(config('session.table', 'sessions'))
+                ->where('user_id', $user->id)
+                ->where('id', '!=', request()->session()->getId())
+                ->delete();
+        } catch (\Throwable $e) {
+            // Fallback silencioso
+        }
 
         return redirect()->intended(route('productions.index'));
     }

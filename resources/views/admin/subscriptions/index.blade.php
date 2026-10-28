@@ -62,7 +62,7 @@
         <div class="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 shadow-xl">
             <div class="flex items-center justify-between text-zinc-400 text-xs font-bold uppercase tracking-wider">
                 <span>{{ __('Cota de Vídeos / Ciclo') }}</span>
-                <span class="text-orange-400 font-mono text-xs"></span>
+                <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
             </div>
             <div class="mt-3 flex items-baseline gap-1">
                 <span class="text-3xl font-extrabold text-white">{{ $kpis['total_quota'] }}</span>

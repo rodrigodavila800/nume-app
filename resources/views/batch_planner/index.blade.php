@@ -35,7 +35,7 @@
     <!-- Feedback Alerts -->
     @if(session('success'))
         <div class="rounded-2xl bg-emerald-950/40 border border-emerald-500/40 p-4 text-emerald-300 text-xs font-semibold flex items-start gap-3">
-            <span class="text-lg"></span>
+            <svg class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <div>
                 <p class="font-bold text-emerald-200">{{ __('Sucesso!') }}</p>
                 <p class="mt-0.5">{{ session('success') }}</p>

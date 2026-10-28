@@ -34,7 +34,7 @@
         <!-- Feedback Alerts -->
         @if(session('success'))
             <div class="rounded-2xl bg-emerald-950/40 border border-emerald-500/40 p-4 text-emerald-300 text-xs font-semibold flex items-start gap-3">
-                <span class="text-lg"></span>
+                <svg class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div>
                     <p class="font-bold text-emerald-200">{{ __('Ação Registrada com Sucesso!') }}</p>
                     <p class="mt-0.5">{{ session('success') }}</p>
@@ -44,7 +44,7 @@
 
         @if(session('info'))
             <div class="rounded-2xl bg-purple-950/40 border border-purple-500/40 p-4 text-purple-300 text-xs font-semibold flex items-start gap-3">
-                <span class="text-lg"></span>
+                <svg class="w-5 h-5 text-purple-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div>
                     <p class="font-bold text-purple-200">{{ __('Aviso') }}</p>
                     <p class="mt-0.5">{{ session('info') }}</p>

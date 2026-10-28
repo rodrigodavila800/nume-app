@@ -34,15 +34,15 @@
     <div class="bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/10 border border-orange-200/80 rounded-2xl p-4 sm:p-6 text-center max-w-4xl mx-auto">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-semibold text-zinc-800">
             <div class="flex items-center justify-center gap-2">
-                <span class="text-base text-orange-600"></span>
+                <svg class="w-4 h-4 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <span>{{ __('Previsibilidade de Produção e Postagens') }}</span>
             </div>
             <div class="flex items-center justify-center gap-2">
-                <span class="text-base text-orange-600"></span>
+                <svg class="w-4 h-4 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 <span>{{ __('Sofi Copilot Integrado nos Roteiros') }}</span>
             </div>
             <div class="flex items-center justify-center gap-2">
-                <span class="text-base text-orange-600"></span>
+                <svg class="w-4 h-4 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 <span>{{ __('Contratos com Renovação de Cota a cada 30 Dias') }}</span>
             </div>
         </div>

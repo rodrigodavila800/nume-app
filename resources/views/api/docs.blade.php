@@ -125,7 +125,7 @@ Accept: application/json</code></pre>
                     <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 flex flex-col justify-between">
                         <div class="space-y-2">
                             <div class="flex items-center space-x-2">
-                                <span class="text-lg"></span>
+                                <svg class="w-5 h-5 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                 <h3 class="text-base font-bold text-white">Make.com (Integromat)</h3>
                             </div>
                             <p class="text-xs text-slate-400">
@@ -144,7 +144,7 @@ Accept: application/json</code></pre>
                     <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 flex flex-col justify-between">
                         <div class="space-y-2">
                             <div class="flex items-center space-x-2">
-                                <span class="text-lg"></span>
+                                <svg class="w-5 h-5 text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                                 <h3 class="text-base font-bold text-white">n8n (Self-hosted / Cloud)</h3>
                             </div>
                             <p class="text-xs text-slate-400">

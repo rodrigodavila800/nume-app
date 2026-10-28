@@ -123,7 +123,7 @@
                 <!-- Bizum -->
                 <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <span class="text-lg"></span>
+                        <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                         <div>
                             <div class="text-xs font-bold text-white">Bizum (BBVA)</div>
                             <div class="text-[10px] text-zinc-500">{{ $gatewaysBreakdown['bizum']['count'] }} {{ __('vendas') }}</div>
@@ -137,7 +137,7 @@
                 <!-- Tarjeta Redsys -->
                 <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <span class="text-lg"></span>
+                        <svg class="w-5 h-5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                         <div>
                             <div class="text-xs font-bold text-white">Tarjeta (BBVA)</div>
                             <div class="text-[10px] text-zinc-500">{{ $gatewaysBreakdown['redsys_card']['count'] }} {{ __('vendas') }}</div>
@@ -151,7 +151,7 @@
                 <!-- Stripe -->
                 <div class="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <span class="text-lg"></span>
+                        <svg class="w-5 h-5 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
                         <div>
                             <div class="text-xs font-bold text-white">Stripe / Global</div>
                             <div class="text-[10px] text-zinc-500">{{ $gatewaysBreakdown['stripe']['count'] }} {{ __('vendas') }}</div>

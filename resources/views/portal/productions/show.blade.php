@@ -259,7 +259,7 @@
                     <div class="bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-zinc-50 rounded-xl p-5 border border-orange-200/60 space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span class="text-base"></span>
+                                <svg class="w-5 h-5 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                 <div>
                                     <h4 class="text-xs font-bold uppercase tracking-wider text-orange-950">
                                         {{ __('Sofi SEO Pack: Estratégia de Postagem Recomendada') }}
@@ -270,7 +270,8 @@
                                 </div>
                             </div>
                             <button type="button" onclick="copySeoPack({{ $video->id }})" 
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-sm transition active:scale-95">
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-sm transition active:scale-95 cursor-pointer">
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
                                 <span id="copy-btn-{{ $video->id }}">{{ __('Copiar Tudo') }}</span>
                             </button>
                         </div>
@@ -381,7 +382,7 @@
             <div class="bg-white rounded-2xl max-w-lg w-full p-6 border border-zinc-200 shadow-xl space-y-5 animate-in fade-in zoom-in-95">
                 <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
                     <div class="flex items-center gap-2">
-                        <span class="text-xl"></span>
+                        <svg class="w-5 h-5 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         <h3 class="text-base font-extrabold text-zinc-900">
                             {{ __('Publicar Vídeo nas Redes') }}
                         </h3>
@@ -394,7 +395,7 @@
                 @if(! $hasSocialConnection)
                     <div class="space-y-4 text-center py-4">
                         <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-2xl mx-auto border border-amber-100 shadow-xs">
-                            
+                            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                         </div>
                         <div class="space-y-1">
                             <h4 class="text-sm font-bold text-zinc-800">{{ __('Nenhuma Rede Social Conectada') }}</h4>
@@ -404,13 +405,13 @@
                         </div>
                         <a href="{{ route('portal.social.index') }}" 
                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-sm transition">
-                            {{ __('Conectar Minhas Redes Sociais Agora') }} →
+                            <span>{{ __('Conectar Minhas Redes Sociais Agora') }}</span> →
                         </a>
                     </div>
                 @elseif(! $portalCliente->canDistributeSocial())
                     <div class="space-y-4 text-center py-4">
                         <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-2xl mx-auto border border-purple-100 shadow-xs">
-                            
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                         </div>
                         <div class="space-y-1">
                             <h4 class="text-sm font-bold text-zinc-800">{{ __('Limite de Publicações Atingido') }}</h4>
@@ -501,7 +502,7 @@
             <div class="bg-white rounded-2xl max-w-lg w-full p-6 border border-zinc-200 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
                 <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
                     <div class="flex items-center gap-2">
-                        <span class="text-xl"></span>
+                        <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <h3 class="text-base font-extrabold text-zinc-900">
                             {{ __('Aprovar Corte Final & Liberar Ativos') }}
                         </h3>
@@ -531,15 +532,15 @@
                     <div class="space-y-1.5 text-xs text-zinc-600">
                         <p class="font-bold text-zinc-800">Ao confirmar a aprovação você recebe:</p>
                         <div class="flex items-center gap-2 text-[11px] text-zinc-700">
-                            <span class="text-emerald-500 font-bold">✓</span>
+                            <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             <span>Arquivo original limpo (sem marca d'água de prévia)</span>
                         </div>
                         <div class="flex items-center gap-2 text-[11px] text-zinc-700">
-                            <span class="text-emerald-500 font-bold">✓</span>
+                            <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             <span>Disparo automático e agendamento para YouTube, Instagram e TikTok</span>
                         </div>
                         <div class="flex items-center gap-2 text-[11px] text-zinc-700">
-                            <span class="text-emerald-500 font-bold">✓</span>
+                            <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             <span>Estratégia completa de SEO e Copywriting da Sofi</span>
                         </div>
                     </div>
@@ -565,7 +566,7 @@
 <div class="mt-8 p-6 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-orange-950/40 border border-orange-500/30 text-white space-y-4 shadow-xl">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-start gap-3">
-            <span class="text-2xl"></span>
+            <svg class="w-7 h-7 text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             <div>
                 <h3 class="text-sm sm:text-base font-extrabold text-white">
                     {{ __('Mantenha a Constância da sua Marca com a Sofi') }}

@@ -345,13 +345,14 @@
         <div class="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-orange-950/20 border border-orange-500/20 space-y-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="text-lg"></span>
+                    <svg class="w-5 h-5 text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     <div>
                         <h3 class="text-sm font-extrabold text-white">{{ __('Sofi SEO Pack: Estratégia de Postagem') }}</h3>
                         <p class="text-[11px] text-zinc-400">{{ __('Metadados otimizados para indexação orgânica e retenção de público.') }}</p>
                     </div>
                 </div>
-                <button type="button" onclick="copySeoPack()" class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition flex items-center gap-1">
+                <button type="button" onclick="copySeoPack()" class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
                     <span id="copy-btn-text">{{ __('Copiar Tudo') }}</span>
                 </button>
             </div>
@@ -406,7 +407,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800 pb-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <span class="text-xl"></span>
+                    <svg class="w-5 h-5 text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                     <h2 class="text-base sm:text-lg font-extrabold text-white">{{ __('Fluxo de Entrega & Distribuição Social Multiplataforma') }}</h2>
                 </div>
                 <p class="text-xs text-zinc-400 mt-1">
@@ -631,7 +632,7 @@
             </div>
         @else
             <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-start gap-3">
-                <span class="text-lg"></span>
+                <svg class="w-5 h-5 text-zinc-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div>
                     <p class="text-xs font-bold text-white">{{ __('Nenhum disparo social direto registrado para este vídeo ainda') }}</p>
                     <p class="text-[11px] text-zinc-400 mt-0.5">

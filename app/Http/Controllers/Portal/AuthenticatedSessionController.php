@@ -8,6 +8,7 @@ use App\Models\Pack;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -36,6 +37,18 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        // DevSecOps: Força sessão única do cliente no portal
+        Auth::guard('cliente')->logoutOtherDevices($request->input('password'));
+
+        try {
+            DB::table(config('session.table', 'sessions'))
+                ->where('user_id', Auth::guard('cliente')->id())
+                ->where('id', '!=', $request->session()->getId())
+                ->delete();
+        } catch (\Throwable $e) {
+            // Fallback silencioso
+        }
 
         if (session('intended_pack_slug')) {
             $packSlug = session()->pull('intended_pack_slug');
