@@ -269,6 +269,10 @@
                         <span class="text-zinc-500">{{ __('URI de redirecionamento (Portal Cliente):') }}</span>
                         <code class="text-emerald-400 ml-1">{{ route('portal.auth.google.callback') }}</code>
                     </div>
+                    <div>
+                        <span class="text-zinc-500">{{ __('URI de redirecionamento (YouTube Shorts & Vídeos):') }}</span>
+                        <code class="text-red-400 ml-1">{{ route('portal.social.oauth.callback', 'youtube') }}</code>
+                    </div>
                 </div>
             </div>
 

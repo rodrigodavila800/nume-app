@@ -119,7 +119,11 @@ class YouTubeOAuthConnectTest extends TestCase
         $state = $this->startConnection();
         $outro = Cliente::create(['tenant_id' => $this->cliente->tenant_id, 'name' => 'Cliente B', 'email' => 'b@ficticio.test', 'password' => bcrypt('secret123')]);
 
-        $this->actingAs($outro, 'cliente')->get($this->callbackUrl($state))->assertSessionHas('error');
+        session()->put('password_hash_cliente', $outro->getAuthPassword());
+
+        $this->actingAs($outro, 'cliente')->get($this->callbackUrl($state))
+            ->assertRedirect(route('portal.social.index'))
+            ->assertSessionHas('error');
         Http::assertNothingSent();
     }
 

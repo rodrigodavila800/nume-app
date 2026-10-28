@@ -2,6 +2,7 @@
 
 namespace App\Services\SocialPublishing\OAuth;
 
+use App\Models\Setting;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -23,9 +24,19 @@ class GoogleOAuthClient
 
     public const CHANNELS_URL = 'https://www.googleapis.com/youtube/v3/channels';
 
+    public function clientId(): string
+    {
+        return trim((string) (Setting::get('google_client_id') ?: config('services.google.client_id')));
+    }
+
+    public function clientSecret(): string
+    {
+        return trim((string) (Setting::get('google_client_secret') ?: config('services.google.client_secret')));
+    }
+
     public function isConfigured(): bool
     {
-        return filled(config('services.google.client_id')) && filled(config('services.google.client_secret'));
+        return filled($this->clientId()) && filled($this->clientSecret());
     }
 
     public function redirectUri(): string
@@ -44,7 +55,7 @@ class GoogleOAuthClient
     public function authorizationUrl(string $state, string $codeChallenge): string
     {
         return self::AUTHORIZE_URL.'?'.http_build_query([
-            'client_id' => config('services.google.client_id'),
+            'client_id' => $this->clientId(),
             'redirect_uri' => $this->redirectUri(),
             'response_type' => 'code',
             'scope' => implode(' ', $this->scopes()),
@@ -132,8 +143,8 @@ class GoogleOAuthClient
     {
         try {
             $response = Http::asForm()->acceptJson()->timeout(15)->post(self::TOKEN_URL, array_merge([
-                'client_id' => config('services.google.client_id'),
-                'client_secret' => config('services.google.client_secret'),
+                'client_id' => $this->clientId(),
+                'client_secret' => $this->clientSecret(),
             ], $params));
         } catch (ConnectionException) {
             throw new OAuthException('network');

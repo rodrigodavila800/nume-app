@@ -84,8 +84,8 @@
     <!-- Status Bar Card -->
     <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-xl border border-orange-100 shadow-xs">
-                
+            <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100 shadow-xs shrink-0">
+                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Status Geral') }}</span>
@@ -99,8 +99,8 @@
         </div>
 
         <div class="flex items-center gap-4 border-t sm:border-t-0 sm:border-l border-zinc-100 sm:pl-6">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl border border-blue-100 shadow-xs">
-                
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shadow-xs shrink-0">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
             </div>
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Redes Vinculadas') }}</span>
@@ -111,8 +111,8 @@
         </div>
 
         <div class="flex items-center gap-4 border-t lg:border-t-0 lg:border-l border-zinc-100 lg:pl-6">
-            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xl border border-purple-100 shadow-xs">
-                
+            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100 shadow-xs shrink-0">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
             </div>
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Cota de Publicações') }}</span>
@@ -134,8 +134,8 @@
         </div>
 
         <div class="flex items-center gap-4 border-t lg:border-t-0 lg:border-l border-zinc-100 lg:pl-6">
-            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl border border-amber-100 shadow-xs">
-                
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100 shadow-xs shrink-0">
+                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
             <div>
                 <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">{{ __('Privacidade') }}</span>
@@ -168,7 +168,9 @@
                 <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs flex flex-col justify-between transition hover:border-zinc-300">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-2xl">{{ $platform->icon() }}</span>
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center border border-zinc-200/80 bg-zinc-50 shadow-xs shrink-0">
+                                @include('portal.profile._social-icon', ['platform' => $platform->value, 'iconClass' => 'w-5 h-5'])
+                            </div>
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider
                                 {{ $isConnected ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-zinc-100 text-zinc-500 border border-zinc-200' }}">
                                 <span class="w-1.5 h-1.5 rounded-full mr-1.5 {{ $isConnected ? 'bg-emerald-500' : 'bg-zinc-400' }}"></span>
@@ -237,8 +239,9 @@
                                 {{ $platform->value }}
                             </span>
                             <a href="{{ route('portal.social.oauth.redirect', $canConnectNative) }}"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
-                                {{ __('Conectar :rede', ['rede' => $platform->label()]) }}
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                <span>{{ __('Conectar Conta') }}</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </a>
                         @else
                             <span class="text-[10px] font-mono font-medium text-zinc-400 uppercase">
