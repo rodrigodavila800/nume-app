@@ -144,10 +144,15 @@ class YouTubeConnector implements SocialConnector
     {
         return match ($reason) {
             'access_denied' => __('Você cancelou a autorização no Google. Nada foi conectado.'),
-            'scope_not_granted' => __('Para publicar, autorize o envio de vídeos ao seu canal na tela do Google.'),
-            'no_channel' => __('Esta conta Google não tem um canal do YouTube. Crie o canal e tente de novo.'),
+            'scope_not_granted' => __('Para publicar, você precisa marcar a caixinha permitindo gerenciar vídeos no YouTube na tela do Google.'),
+            'no_channel' => __('Esta conta Google não possui um canal no YouTube. Acesse o YouTube com essa conta, clique em "Criar canal" e tente novamente.'),
+            'missing_refresh_token' => __('O Google não enviou o token de acesso offline. Acesse as permissões da sua Conta Google, remova a permissão da NUME e tente conectar novamente.'),
+            'accessNotConfigured', 'SERVICE_DISABLED', 'service_disabled' => __('A API do YouTube ("YouTube Data API v3") precisa ser ativada no seu projeto do Google Cloud Console.'),
+            'redirect_uri_mismatch' => __('A URL de redirecionamento cadastrada no Google Cloud Console não coincide com a do sistema.'),
+            'invalid_client' => __('As credenciais do Google OAuth (Client ID ou Client Secret) estão incorretas no painel da NUME.'),
+            'invalid_grant' => __('A autorização expirou ou já foi utilizada. Tente conectar novamente.'),
             'invalid_state' => null,
-            default => __('Não foi possível conectar o YouTube agora. Tente novamente em alguns minutos.'),
+            default => __('Não foi possível conectar o YouTube agora (detalhe: :reason). Tente novamente em instantes.', ['reason' => $reason]),
         };
     }
 }

@@ -169,7 +169,7 @@ class GoogleOAuthClient
     {
         $error = $response->json('error');
         if (is_array($error)) {
-            $error = $error['errors'][0]['reason'] ?? $error['status'] ?? null;
+            $error = $error['details'][0]['reason'] ?? $error['errors'][0]['reason'] ?? $error['status'] ?? null;
         }
 
         return is_string($error) && preg_match('/^[A-Za-z0-9_.-]{1,60}$/', $error) ? $error : $fallback;
