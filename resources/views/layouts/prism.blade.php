@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="GWfdvsDaKOduOzhrNH8iA_7r3R1ubFF7Ug2H5NQsQzg" />
     <title>@yield('title', 'NUME Creative | ' . __('Vídeos Estratégicos que Escalam Marcas'))</title>
     
     @yield('meta')
