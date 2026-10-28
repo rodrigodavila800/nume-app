@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class GoogleController extends Controller
 {
@@ -54,8 +55,18 @@ class GoogleController extends Controller
     {
         try {
             $googleUser = $this->getGoogleProvider(route('auth.google.callback'))->user();
-        } catch (\Exception $e) {
-            return redirect()->route('login')->withErrors(['email' => 'Falha na autenticação com o Google: '.$e->getMessage()]);
+        } catch (InvalidStateException $e) {
+            try {
+                $googleUser = $this->getGoogleProvider(route('auth.google.callback'))->stateless()->user();
+            } catch (\Throwable $fallbackError) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Falha na autenticação com o Google: '.($fallbackError->getMessage() ?: 'Sessão expirada. Tente novamente.'),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Falha na autenticação com o Google: '.($e->getMessage() ?: 'Erro de comunicação com o provedor.'),
+            ]);
         }
 
         $user = User::where('email', $googleUser->getEmail())->first();

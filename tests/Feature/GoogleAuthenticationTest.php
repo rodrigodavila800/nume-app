@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery;
 use Tests\TestCase;
@@ -139,6 +140,33 @@ class GoogleAuthenticationTest extends TestCase
         $provider = Mockery::mock('Laravel\Socialite\Two\GoogleProvider');
         $provider->shouldReceive('redirectUrl')->andReturnSelf();
         $provider->shouldReceive('user')->andReturn($abstractUser);
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $response = $this->get(route('portal.auth.google.callback'));
+
+        $response->assertRedirect(route('portal.dashboard'));
+        $this->assertAuthenticatedAs($this->cliente, 'cliente');
+    }
+
+    public function test_google_portal_callback_recovers_from_invalid_state_exception(): void
+    {
+        $abstractUser = Mockery::mock(SocialiteUser::class);
+        $abstractUser->shouldReceive('getEmail')->andReturn('cliente.existente@empresa.es');
+        $abstractUser->shouldReceive('getName')->andReturn('Cliente Existente');
+
+        $provider = Mockery::mock('Laravel\Socialite\Two\GoogleProvider');
+        $provider->shouldReceive('redirectUrl')->andReturnSelf();
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $callCount = 0;
+        $provider->shouldReceive('user')->andReturnUsing(function () use (&$callCount, $abstractUser) {
+            $callCount++;
+            if ($callCount === 1) {
+                throw new InvalidStateException;
+            }
+
+            return $abstractUser;
+        });
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 

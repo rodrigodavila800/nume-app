@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class GooglePortalController extends Controller
 {
@@ -48,9 +49,7 @@ class GooglePortalController extends Controller
         $tenantSlug = request('tenant_slug') ?: session('portal_tenant_slug', 'nume');
         session(['portal_tenant_slug' => $tenantSlug]);
 
-        return $this->getGoogleProvider(route('portal.auth.google.callback'))
-            ->with(['state' => $tenantSlug])
-            ->redirect();
+        return $this->getGoogleProvider(route('portal.auth.google.callback'))->redirect();
     }
 
     /**
@@ -60,8 +59,18 @@ class GooglePortalController extends Controller
     {
         try {
             $googleUser = $this->getGoogleProvider(route('portal.auth.google.callback'))->user();
-        } catch (\Exception $e) {
-            return redirect()->route('portal.login')->withErrors(['email' => 'Falha na autenticação com o Google: '.$e->getMessage()]);
+        } catch (InvalidStateException $e) {
+            try {
+                $googleUser = $this->getGoogleProvider(route('portal.auth.google.callback'))->stateless()->user();
+            } catch (\Throwable $fallbackError) {
+                return redirect()->route('portal.login')->withErrors([
+                    'email' => 'Falha na autenticação com o Google: '.($fallbackError->getMessage() ?: 'Sessão expirada. Tente novamente.'),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            return redirect()->route('portal.login')->withErrors([
+                'email' => 'Falha na autenticação com o Google: '.($e->getMessage() ?: 'Erro de comunicação com o provedor.'),
+            ]);
         }
 
         $email = $googleUser->getEmail();
@@ -69,7 +78,7 @@ class GooglePortalController extends Controller
 
         // Se o cliente ainda não existir, realiza o auto-cadastro vinculado à produtora indicada
         if (! $cliente) {
-            $tenantSlug = request('state') ?: session('portal_tenant_slug', 'nume');
+            $tenantSlug = session('portal_tenant_slug') ?: request('state') ?: 'nume';
             $tenant = Tenant::where('slug', $tenantSlug)->first() ?: Tenant::first();
 
             if (! $tenant) {
