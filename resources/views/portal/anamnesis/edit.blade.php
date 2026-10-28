@@ -92,11 +92,14 @@
 
         <fieldset>
             <legend class="{{ $label }}">{{ __('Redes prioritárias') }} *</legend>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2.5">
                 @foreach (\App\Enums\PlataformaAlvo::cases() as $network)
-                    <label class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-zinc-200 text-xs font-semibold text-zinc-700 cursor-pointer has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50">
+                    <label class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-700 cursor-pointer transition-all hover:border-zinc-300 hover:bg-zinc-50/60 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/70 has-[:checked]:text-orange-950 shadow-xs">
                         <input type="checkbox" name="priority_networks[]" value="{{ $network->value }}" @checked(in_array($network->value, $selectedNetworks, true)) class="rounded border-zinc-300 text-orange-600 focus:ring-orange-500">
-                        <span>{{ $network->icon() }} {{ $network->label() }}</span>
+                        <span class="inline-flex items-center justify-center shrink-0">
+                            @include('portal.profile._social-icon', ['platform' => $network->value, 'iconClass' => 'w-4 h-4'])
+                        </span>
+                        <span>{{ $network->label() }}</span>
                     </label>
                 @endforeach
             </div>
