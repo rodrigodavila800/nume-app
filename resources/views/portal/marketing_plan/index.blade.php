@@ -69,13 +69,71 @@
 
         <!-- Aprovação do plano pelo cliente -->
         @if($plan->isApproved())
-            <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span class="font-bold">✓ {{ __('Plano aprovado em :date. Os vídeos já podem seguir para orçamento e produção.', ['date' => $plan->approved_at?->format('d/m/Y')]) }}</span>
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('portal.anamnesis.edit') }}" class="text-xs font-bold text-emerald-800 hover:underline">{{ __('Ver anamnese') }}</a>
-                    <a href="{{ route('portal.quotes.request') }}" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 transition">{{ __('Pedir orçamento') }}</a>
+            @if(isset($relatedQuote) && $relatedQuote?->status === 'sent')
+                <!-- Proposta comercial pronta aguardando aprovação do cliente -->
+                <div class="mb-6 p-5 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-100/50 border border-orange-300 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-orange-600 text-white shadow-xs">
+                                {{ __('Proposta Pronta') }}
+                            </span>
+                            <span class="text-xs font-bold text-orange-950 font-mono">
+                                #{{ $relatedQuote->number }}
+                            </span>
+                        </div>
+                        <h4 class="text-sm font-extrabold text-zinc-900">
+                            {{ __('Sua proposta comercial está disponível para aprovação (:amount € com IVA)', ['amount' => number_format((float) $relatedQuote->total_amount, 2, ',', '.')]) }}
+                        </h4>
+                        <p class="text-xs text-zinc-600 max-w-2xl">
+                            {{ __('A equipe da produtora concluiu os cálculos desta grade (:videos vídeos). Aprove a proposta e liquide o sinal de 50% para liberar a elaboração dos roteiros e início das gravações.', ['videos' => $plan->items->count()]) }}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="{{ url('/orcamento/'.$relatedQuote->approval_token) }}" 
+                           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-sm transition active:scale-95">
+                            <span>{{ __('Revisar & Aprovar Orçamento') }}</span> →
+                        </a>
+                    </div>
                 </div>
-            </div>
+            @elseif(isset($relatedQuote) && $relatedQuote?->status === 'requested')
+                <!-- Orçamento solicitado em análise pela equipe da produtora -->
+                <div class="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <span class="font-bold block text-xs sm:text-sm">
+                                {{ __('Plano aprovado · Solicitação de orçamento #:num em análise', ['num' => $relatedQuote->number]) }}
+                            </span>
+                            <span class="text-xs text-amber-800">
+                                {{ __('Nossa equipe está calculando a esteira desta grade (:videos vídeos). Em breve você receberá a proposta aqui para aprovação.', ['videos' => $plan->items->count()]) }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <a href="{{ route('portal.anamnesis.edit') }}" class="text-xs font-bold text-amber-900 hover:underline">{{ __('Ver anamnese') }}</a>
+                        <a href="{{ route('portal.quotes.index') }}" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold text-amber-900 bg-white border border-amber-300 hover:bg-amber-100 transition">{{ __('Ver meus orçamentos') }}</a>
+                    </div>
+                </div>
+            @elseif(isset($relatedQuote) && $relatedQuote?->status === 'accepted')
+                <!-- Orçamento aceito e pago -->
+                <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="font-bold text-xs sm:text-sm">
+                            ✓ {{ __('Orçamento #:num aprovado e sinal liquidado. Vídeos liberados na esteira de produção.', ['num' => $relatedQuote->number]) }}
+                        </span>
+                    </div>
+                    <a href="{{ route('portal.quotes.index') }}" class="text-xs font-bold text-emerald-800 hover:underline">{{ __('Fatura e recibo') }} →</a>
+                </div>
+            @else
+                <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span class="font-bold">✓ {{ __('Plano aprovado em :date. Os vídeos já podem seguir para orçamento e produção.', ['date' => $plan->approved_at?->format('d/m/Y')]) }}</span>
+                    <div class="flex items-center gap-3">
+                        <a href="{{ route('portal.anamnesis.edit') }}" class="text-xs font-bold text-emerald-800 hover:underline">{{ __('Ver anamnese') }}</a>
+                        <a href="{{ route('portal.quotes.request') }}" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 transition">{{ __('Pedir orçamento') }}</a>
+                    </div>
+                </div>
+            @endif
         @else
             <div class="mb-6 p-5 rounded-2xl bg-amber-50 border border-amber-200 space-y-4 print:hidden">
                 <div>
@@ -244,10 +302,26 @@
                                 </a>
                             @elseif (! $plan->isApproved())
                                 <p class="text-xs text-zinc-500 text-center">{{ __('Aprove o plano para enviar este vídeo à produção.') }}</p>
-                            @else
+                            @elseif (isset($relatedQuote) && $relatedQuote?->status === 'sent')
+                                <a href="{{ url('/orcamento/'.$relatedQuote->approval_token) }}"
+                                   class="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-xs transition active:scale-95">
+                                    <span>{{ __('Aprovar Proposta para Iniciar Produção') }}</span>
+                                    <span>→</span>
+                                </a>
+                            @elseif (isset($relatedQuote) && $relatedQuote?->status === 'requested')
+                                <div class="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                    <span>{{ __('Aguardando proposta da produtora para produzir') }}</span>
+                                </div>
+                            @elseif (($plan->pack_purchase_id !== null) || (isset($relatedQuote) && $relatedQuote?->status === 'accepted'))
                                 <div class="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-zinc-50 text-zinc-600 border border-zinc-200">
                                     <span>{{ __('Aguardando elaboração do roteiro pela produtora') }}</span>
                                 </div>
+                            @else
+                                <a href="{{ route('portal.quotes.request') }}"
+                                   class="w-full inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 shadow-xs transition active:scale-95">
+                                    <span>{{ __('Pedir Orçamento Desta Grade') }}</span>
+                                    <span>→</span>
+                                </a>
                             @endif
                         </div>
                     </div>

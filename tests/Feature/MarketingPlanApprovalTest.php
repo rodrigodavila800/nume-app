@@ -6,6 +6,7 @@ use App\Ai\Agents\SofiMarketingPlanAgent;
 use App\Models\AiUsageLog;
 use App\Models\Cliente;
 use App\Models\MarketingPlan;
+use App\Models\Quote;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\MarketingPlanGeneratorService;
@@ -135,10 +136,43 @@ class MarketingPlanApprovalTest extends TestCase
         $this->assertTrue($plan->fresh()->isApproved());
         $this->assertSame($this->cliente->id, $plan->fresh()->approved_by_cliente_id);
 
+        // Como o cliente não tem pacote ativo, ao aprovar o plano foi gerado automaticamente o Quote em requested
+        $quote = Quote::forTenant($this->tenant->id)->where('marketing_plan_id', $plan->id)->first();
+        $this->assertNotNull($quote);
+        $this->assertSame(Quote::STATUS_REQUESTED, $quote->status);
+
+        // Sem orçamento aceito nem pacote ativo, o item não pode ser convertido
+        $this->actingAs($this->cliente, 'cliente')->post(route('portal.marketing-plan.convert-item', $item))
+            ->assertRedirect(route('portal.marketing-plan.index'))
+            ->assertSessionHas('warning');
+        $this->assertNull($item->fresh()->production_id);
+
+        // Após a proposta ser aceita, a conversão é liberada
+        $quote->update(['status' => 'accepted']);
         $this->actingAs($this->cliente, 'cliente')->post(route('portal.marketing-plan.convert-item', $item))->assertRedirect();
         $production = $item->fresh()->production;
         $this->assertSame($item->video_type_id, $production->video_type_id);
         $this->assertSame('Vendas (30 s)', $production->roteiros()->first()->structure['name']);
+    }
+
+    public function test_sync_plan_quotes_command_generates_requested_quote_for_approved_plans_without_quote(): void
+    {
+        $this->answerAnamnesis();
+        SofiMarketingPlanAgent::fake([['strategic_goal' => 'Meta Sync', 'items' => [$this->aiItem('Video 1')]]])->preventStrayPrompts();
+        $plan = app(MarketingPlanGeneratorService::class)->generate($this->cliente, 1);
+        $plan->approveBy($this->cliente);
+
+        // Deleta qualquer quote para simular clientes antigos criados antes da automação
+        Quote::forTenant($this->tenant->id)->where('marketing_plan_id', $plan->id)->delete();
+        $this->assertSame(0, Quote::forTenant($this->tenant->id)->where('marketing_plan_id', $plan->id)->count());
+
+        $this->artisan('nume:sync-plan-quotes')
+            ->assertSuccessful();
+
+        $quote = Quote::forTenant($this->tenant->id)->where('marketing_plan_id', $plan->id)->first();
+        $this->assertNotNull($quote);
+        $this->assertSame(Quote::STATUS_REQUESTED, $quote->status);
+        $this->assertSame($this->cliente->id, $quote->cliente_id);
     }
 
     public function test_adjustment_request_regenerates_the_plan_with_the_request_as_data(): void

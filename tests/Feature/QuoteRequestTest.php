@@ -135,7 +135,7 @@ class QuoteRequestTest extends TestCase
         $this->actingAs($this->cliente, 'cliente')->post(route('portal.quotes.request.store'), ['videos' => 4, 'social_networks' => 2]);
         $editor = User::create(['tenant_id' => $this->tenant->id, 'name' => 'Editor', 'email' => 'editor@ficticio.test', 'password' => 'secret12345', 'role' => 'editor']);
 
-        $this->actingAs($editor)->get(route('quotes.index', ['status' => 'requested']))
+        $this->flushSession()->actingAs($editor)->get(route('quotes.index', ['status' => 'requested']))
             ->assertOk()->assertSee('Pedidos de clientes (1)')->assertSee('Pedido do cliente')->assertSee('Padaria Ficticia');
     }
 

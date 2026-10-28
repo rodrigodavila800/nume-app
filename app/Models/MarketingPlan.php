@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MarketingPlan extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use BelongsToTenant, HasFactory;
 
     public const STATUS_DRAFT = 'draft';
 
@@ -76,5 +76,10 @@ class MarketingPlan extends Model
     public function items(): HasMany
     {
         return $this->hasMany(MarketingPlanItem::class)->orderBy('week_number', 'asc')->orderBy('id', 'asc');
+    }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class);
     }
 }

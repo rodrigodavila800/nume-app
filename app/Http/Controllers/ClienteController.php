@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\MarketingPlan;
 use App\Models\MarketingPlanItem;
 use App\Models\Production;
+use App\Models\Quote;
 use App\Models\Roteiro;
 use App\Models\SupportTicket;
 use App\Services\Crm\LeadAutomation;
@@ -132,6 +133,23 @@ class ClienteController extends Controller
         if (! $plan->isApproved()) {
             return redirect()->route('clientes.show', $cliente)
                 ->with('error', __('O plano de marketing precisa ser aprovado pelo cliente antes de converter itens em produção.'));
+        }
+
+        // Validação de cobertura comercial: pacote ativo OU orçamento aceito (ou liberação explícita da equipe)
+        $hasActivePack = $cliente->packPurchases()
+            ->whereIn('status', ['paid', 'active'])
+            ->whereColumn('videos_used', '<', 'video_quantity')
+            ->exists();
+
+        $hasAcceptedQuote = Quote::forTenant($cliente->tenant_id)
+            ->where('cliente_id', $cliente->id)
+            ->where('marketing_plan_id', $plan->id)
+            ->where('status', 'accepted')
+            ->exists();
+
+        if (! $hasActivePack && ! $hasAcceptedQuote && ! $request->boolean('force_without_payment')) {
+            return redirect()->route('clientes.show', $cliente)
+                ->with('error', __('Este cliente ainda não possui orçamento aceito nem pacote ativo. Envie e aprove a proposta em Orçamentos antes de iniciar a produção.'));
         }
 
         $videoType = $item->videoType()->where('tenant_id', $cliente->tenant_id)->first();

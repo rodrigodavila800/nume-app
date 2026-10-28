@@ -7,8 +7,10 @@ use App\Models\Cliente;
 use App\Models\MarketingPlan;
 use App\Models\MarketingPlanItem;
 use App\Models\Production;
+use App\Models\Quote;
 use App\Models\Roteiro;
 use App\Services\MarketingPlanGeneratorService;
+use App\Services\Quotes\QuoteRequestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -61,7 +63,16 @@ class MarketingPlanController extends Controller
             ->orderBy('month_year', 'desc')
             ->get();
 
-        return view('portal.marketing_plan.index', compact('plan', 'allPlans'));
+        $relatedQuote = $plan
+            ? Quote::forTenant($cliente->tenant_id)
+                ->where('cliente_id', $cliente->id)
+                ->where('marketing_plan_id', $plan->id)
+                ->where('kind', Quote::KIND_PRODUCTION)
+                ->latest('id')
+                ->first()
+            : null;
+
+        return view('portal.marketing_plan.index', compact('plan', 'allPlans', 'relatedQuote'));
     }
 
     /**
@@ -114,7 +125,7 @@ class MarketingPlanController extends Controller
     /**
      * Cliente aprova o plano: a partir daqui os itens podem virar produção e roteiro.
      */
-    public function approve(Request $request, int $plan): RedirectResponse
+    public function approve(Request $request, int $plan, QuoteRequestService $quoteRequests): RedirectResponse
     {
         $cliente = $request->user('cliente');
         $model = $this->ownPlan($cliente, $plan);
@@ -123,8 +134,23 @@ class MarketingPlanController extends Controller
             $model->approveBy($cliente);
         }
 
+        // Se o cliente não tem pacote ativo que cubra a cota, gera automaticamente a solicitação de orçamento
+        $hasActivePack = $cliente->packPurchases()
+            ->whereIn('status', ['paid', 'active'])
+            ->whereColumn('videos_used', '<', 'video_quantity')
+            ->exists();
+
+        if (! $hasActivePack) {
+            $quote = $quoteRequests->ensureRequestForPlan($cliente, $model);
+            $msg = $quote
+                ? __('Plano aprovado com sucesso! A solicitação de orçamento #:num foi gerada e enviada para a equipe da produtora.', ['num' => $quote->number])
+                : __('Plano aprovado! Agora os vídeos podem seguir para orçamento e produção.');
+
+            return redirect()->route('portal.marketing-plan.index')->with('status', $msg);
+        }
+
         return redirect()->route('portal.marketing-plan.index')
-            ->with('status', __('Plano aprovado! Agora os vídeos podem seguir para orçamento e produção.'));
+            ->with('status', __('Plano aprovado! Seus vídeos foram liberados para a esteira de produção.'));
     }
 
     /**
@@ -176,6 +202,23 @@ class MarketingPlanController extends Controller
         if (! $plan->isApproved()) {
             return redirect()->route('portal.marketing-plan.index')
                 ->with('warning', __('Aprove o plano de marketing antes de enviar vídeos para produção.'));
+        }
+
+        // Validação de cobertura comercial: pacote ativo OU orçamento aprovado/aceito
+        $hasActivePack = $cliente->packPurchases()
+            ->whereIn('status', ['paid', 'active'])
+            ->whereColumn('videos_used', '<', 'video_quantity')
+            ->exists();
+
+        $hasAcceptedQuote = Quote::forTenant($cliente->tenant_id)
+            ->where('cliente_id', $cliente->id)
+            ->where('marketing_plan_id', $plan->id)
+            ->where('status', 'accepted')
+            ->exists();
+
+        if (! $hasActivePack && ! $hasAcceptedQuote) {
+            return redirect()->route('portal.marketing-plan.index')
+                ->with('warning', __('Para enviar vídeos para a esteira de produção, é necessário que o orçamento esteja aprovado e o sinal liquidado (ou a contratação de um pacote de vídeos).'));
         }
 
         // Responsável da produtora que figura como criador da produção (de preferência um admin).

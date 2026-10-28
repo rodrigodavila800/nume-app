@@ -6,6 +6,8 @@ use App\Models\Cliente;
 use App\Models\MarketingPlan;
 use App\Models\Quote;
 use App\Models\VideoType;
+use App\Services\MarketingPlanGeneratorService;
+use App\Support\Anamnesis;
 
 /**
  * Transforma a solicitação do cliente (feita no portal, a partir do plano aprovado) num orçamento
@@ -17,6 +19,54 @@ class QuoteRequestService
         protected QuoteCalculatorService $calculator,
         protected SofiQuoteEstimatorService $estimator,
     ) {}
+
+    /**
+     * Garante que exista uma solicitação de orçamento vinculada a um plano aprovado.
+     * Se já existir qualquer Quote para este plano (requested, draft, sent, accepted), retorna ele.
+     * Caso contrário, cria o Quote production em requested (e o de ads se o cliente desejar).
+     */
+    public function ensureRequestForPlan(Cliente $cliente, MarketingPlan $plan): ?Quote
+    {
+        $existing = Quote::forTenant($cliente->tenant_id)
+            ->where('cliente_id', $cliente->id)
+            ->where('marketing_plan_id', $plan->id)
+            ->where('kind', Quote::KIND_PRODUCTION)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $itemsCount = $plan->items()->count();
+        $monthlyVideos = Anamnesis::monthlyVideos($cliente->anamnesis) ?? 4;
+        $videoQty = $itemsCount > 0 ? $itemsCount : $monthlyVideos;
+
+        $mainType = $plan->items()->pluck('video_type_id')->filter()->countBy()->sortDesc()->keys()->first();
+        $videoType = $mainType ? VideoType::forTenant($cliente->tenant_id)->active()->find($mainType) : null;
+
+        $socialNetworks = max(1, count($cliente->anamnesis['priority_networks'] ?? []));
+        $wantsAds = (bool) ($cliente->anamnesis['wants_ads'] ?? false);
+        $adsBudget = $cliente->anamnesis['ads_monthly_budget'] ?? null;
+
+        $data = [
+            'videos' => (int) $videoQty,
+            'video_type_id' => $videoType?->id,
+            'social_networks' => $socialNetworks,
+            'wants_ads' => $wantsAds,
+            'ads_budget' => $adsBudget,
+            'message' => null,
+        ];
+
+        $isEs = MarketingPlanGeneratorService::isSpanishLocale($cliente);
+
+        $quote = $this->createFromPortal($cliente, $plan, $data, $videoType, $isEs);
+
+        if ($wantsAds && ! $this->openRequest($cliente, $plan, Quote::KIND_ADS)) {
+            $this->createAdsFromPortal($cliente, $plan, $data, $isEs);
+        }
+
+        return $quote;
+    }
 
     /**
      * Pedido em aberto do mesmo plano e tipo (evita duplicar ao clicar duas vezes).
