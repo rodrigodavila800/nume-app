@@ -115,4 +115,11 @@ return [
         'fallback_models' => ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash'],
     ],
 
+    'whatsapp' => [
+        'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'nume_whatsapp_verify_token'),
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
+    ],
+
 ];

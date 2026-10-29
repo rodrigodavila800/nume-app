@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
 use App\Models\Roteiro;
+use App\Services\Ai\SofiMemoryDistillationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class RoteiroController extends Controller
 {
+    public function __construct(
+        protected SofiMemoryDistillationService $distillationService
+    ) {}
+
     public function show(Request $request, Roteiro $roteiro): View
     {
         $this->authorizeCliente($request, $roteiro);
@@ -21,9 +26,12 @@ class RoteiroController extends Controller
     {
         $this->authorizeCliente($request, $roteiro);
 
-        if (!$roteiro->approveByCliente($request->user('cliente'))) {
+        if (! $roteiro->approveByCliente($request->user('cliente'))) {
             return back()->with('error', 'Este roteiro não está mais aguardando aprovação.');
         }
+
+        // Destilação do aprendizado positivo da Sofi
+        $this->distillationService->distillFromScriptFeedback($roteiro, null, true);
 
         return back()->with('success', 'Roteiro aprovado com sucesso!');
     }
@@ -36,9 +44,12 @@ class RoteiroController extends Controller
             'rejection_reason' => 'required|string|min:10|max:500',
         ]);
 
-        if (!$roteiro->rejectByCliente($request->user('cliente'), $validated['rejection_reason'])) {
+        if (! $roteiro->rejectByCliente($request->user('cliente'), $validated['rejection_reason'])) {
             return back()->with('error', 'Este roteiro não está mais aguardando aprovação.');
         }
+
+        // Destilação do anti-pattern da Sofi a partir do feedback do cliente
+        $this->distillationService->distillFromScriptFeedback($roteiro, $validated['rejection_reason'], false);
 
         return back()->with('success', 'Roteiro rejeitado. A produtora foi notificada.');
     }

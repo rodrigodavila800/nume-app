@@ -161,6 +161,11 @@ class Cliente extends Authenticatable
         return $this->hasMany(SofiConversation::class)->orderBy('updated_at', 'desc');
     }
 
+    public function aiMemory(): HasOne
+    {
+        return $this->hasOne(ClientAiMemory::class);
+    }
+
     public function marketingPlans(): HasMany
     {
         return $this->hasMany(MarketingPlan::class)->orderBy('month_year', 'desc');

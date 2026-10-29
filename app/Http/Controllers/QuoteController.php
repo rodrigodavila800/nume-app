@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\QuoteProposalMail;
 use App\Models\Cliente;
 use App\Models\Quote;
+use App\Services\Notification\SofiQuoteNotificationService;
 use App\Services\Quotes\QuoteCalculatorService;
 use App\Services\Quotes\QuotePdfService;
 use App\Services\Quotes\SofiQuoteEstimatorService;
@@ -24,7 +25,8 @@ class QuoteController extends Controller
     public function __construct(
         protected QuoteCalculatorService $calculator,
         protected QuotePdfService $pdfService,
-        protected SofiQuoteEstimatorService $estimator
+        protected SofiQuoteEstimatorService $estimator,
+        protected SofiQuoteNotificationService $quoteNotification
     ) {}
 
     /**
@@ -153,8 +155,13 @@ class QuoteController extends Controller
         }
 
         $defaults = $this->calculator->getDefaults($quote->tenant);
+        $whatsappQuoteMessage = $this->quoteNotification->getWhatsAppMessage($quote);
+        $whatsappQuoteUrl = $this->quoteNotification->getWhatsAppShareUrl($quote);
+        $quoteApprovalUrl = $this->quoteNotification->getPublicApprovalUrl($quote);
 
-        return view('quotes.edit', compact('quote', 'clientes', 'defaults'));
+        return view('quotes.edit', compact(
+            'quote', 'clientes', 'defaults', 'whatsappQuoteMessage', 'whatsappQuoteUrl', 'quoteApprovalUrl'
+        ));
     }
 
     /**
@@ -311,6 +318,26 @@ class QuoteController extends Controller
 
             return back()->with('error', __('Falha ao enviar e-mail: :error', ['error' => $e->getMessage()]));
         }
+    }
+
+    /**
+     * Registra que a proposta foi compartilhada via WhatsApp, atualiza o status para 'sent' e avança o Lead no CRM.
+     */
+    public function recordWhatsApp(Request $request, Quote $quote): JsonResponse|RedirectResponse
+    {
+        $this->authorize('send', $quote);
+
+        $this->quoteNotification->recordWhatsAppDispatch($quote);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Envio via WhatsApp registrado no CRM com sucesso!'),
+                'whatsapp_url' => $this->quoteNotification->getWhatsAppShareUrl($quote),
+            ]);
+        }
+
+        return back()->with('success', __('Envio via WhatsApp registrado no CRM com sucesso!'));
     }
 
     /**

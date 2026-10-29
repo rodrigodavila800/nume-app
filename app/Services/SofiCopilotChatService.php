@@ -9,6 +9,7 @@ use App\Models\Cliente;
 use App\Models\Production;
 use App\Models\SofiConversation;
 use App\Models\SofiMessage;
+use App\Services\Ai\SofiMemoryDistillationService;
 use Illuminate\Support\Facades\Log;
 
 class SofiCopilotChatService
@@ -58,6 +59,12 @@ class SofiCopilotChatService
         // Atualiza timestamp da conversa
         $conversation->touch();
 
+        // Destila aprendizado da conversa para a memória cognitiva da Sofi
+        try {
+            app(SofiMemoryDistillationService::class)->distillFromChat($conversation);
+        } catch (\Throwable) {
+        }
+
         return $sofiMsg;
     }
 
@@ -90,6 +97,11 @@ class SofiCopilotChatService
                       .'DIFERENCIAIS: '.($cliente->key_differentials ?: 'Qualidade, atendimento ágil e autoridade')."\n"
                       .'WEBSITE: '.($cliente->website ?: 'Não informado')."\n"
                       .'CANAIS ATIVOS: '.$this->describeSocialChannels($cliente);
+
+        $memoryPrompt = app(SofiMemoryDistillationService::class)->getMemoryPromptForCliente($cliente, $cliente->tenant_id);
+        if (! empty($memoryPrompt)) {
+            $brandContext .= "\n\nMEMÓRIA COGNITIVA & PREFERÊNCIAS APRENDIDAS:\n{$memoryPrompt}";
+        }
 
         $productionContext = 'NENHUMA PRODUÇÃO SELECIONADA.';
         if ($production) {

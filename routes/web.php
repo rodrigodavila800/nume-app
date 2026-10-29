@@ -39,6 +39,7 @@ use App\Http\Controllers\VideoMediaController;
 use App\Http\Controllers\VideoTypeController;
 use App\Http\Controllers\Webhooks\RedsysWebhookController;
 use App\Http\Controllers\Webhooks\UploadPostWebhookController;
+use App\Http\Controllers\Webhooks\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/lang/{locale}', function ($locale) {
@@ -179,6 +180,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/orcamentos/{quote}/enviar', [QuoteController::class, 'send'])
         ->middleware('throttle:10,1')
         ->name('quotes.send');
+    Route::post('/orcamentos/{quote}/registrar-whatsapp', [QuoteController::class, 'recordWhatsApp'])
+        ->name('quotes.record-whatsapp');
     Route::patch('/orcamentos/{quote}/status', [QuoteController::class, 'updateStatus'])
         ->name('quotes.update-status');
     Route::resource('orcamentos', QuoteController::class)
@@ -217,6 +220,8 @@ Route::middleware('auth')->group(function () {
         ->name('productions.mark-approved');
     Route::patch('productions/{production}/status', [ProductionController::class, 'updateStatus'])
         ->name('productions.update-status');
+    Route::post('productions/{production}/notify-cliente', [ProductionController::class, 'notifyCliente'])
+        ->name('productions.notify-cliente');
     Route::get('productions/{production}/status', function ($production) {
         $uuid = $production instanceof \App\Models\Production ? $production->uuid : (string) $production;
         return redirect()->to('/productions/' . $uuid);
@@ -325,6 +330,8 @@ Route::get('/media/videos/{video}', [VideoMediaController::class, 'show'])
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 Route::post('/webhooks/redsys', [RedsysWebhookController::class, 'handle'])->name('redsys.webhook');
 Route::post('/webhooks/upload-post', [UploadPostWebhookController::class, 'handle'])->name('upload-post.webhook');
+Route::get('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'verify'])->name('whatsapp.webhook.verify');
+Route::post('/webhooks/whatsapp', [WhatsAppWebhookController::class, 'handle'])->name('whatsapp.webhook');
 Route::get('/pagamento/redsys/sucesso', [StorefrontController::class, 'redsysSuccess'])->name('redsys.success');
 Route::get('/pagamento/redsys/cancelado', [StorefrontController::class, 'redsysCancel'])->name('redsys.cancel');
 

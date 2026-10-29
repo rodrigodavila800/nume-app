@@ -9,12 +9,17 @@ use App\Models\Quote;
 use App\Models\Roteiro;
 use App\Models\SupportTicket;
 use App\Models\Video;
+use App\Services\Notification\SofiProductionNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ProductionController extends Controller
 {
+    public function __construct(
+        protected SofiProductionNotificationService $notificationService
+    ) {}
+
     /**
      * Listar todas as productions do tenant autenticado
      */
@@ -142,7 +147,10 @@ class ProductionController extends Controller
         $roteiros = $production->roteiros()->paginate(10, ['*'], 'roteiros_page');
         $videos = $production->videos()->paginate(10, ['*'], 'videos_page');
 
-        return view('productions.show', compact('production', 'roteiros', 'videos'));
+        $whatsappStatusMessage = $this->notificationService->getWhatsAppMessage($production, $production->status);
+        $whatsappStatusUrl = $this->notificationService->getWhatsAppShareUrl($production, $production->status);
+
+        return view('productions.show', compact('production', 'roteiros', 'videos', 'whatsappStatusMessage', 'whatsappStatusUrl'));
     }
 
     /**
@@ -216,16 +224,57 @@ class ProductionController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:draft,submitted,in_production,pending_review,ready,approved,published,archived',
+            'notify_cliente' => 'nullable|boolean',
         ]);
 
-        $production->update(['status' => $validated['status']]);
+        $oldStatus = $production->status;
+        $newStatus = $validated['status'];
+        $production->update(['status' => $newStatus]);
+
+        if ($request->boolean('notify_cliente') && $oldStatus !== $newStatus) {
+            $this->notificationService->sendProductionStatusEmail($production, $newStatus, $oldStatus);
+        }
 
         // Se veio com parâmetro de retorno explícito ou do kanban, redireciona graciosamente
-        if ($request->header('referer') && !str_ends_with($request->header('referer'), '/status')) {
+        if ($request->header('referer') && ! str_ends_with($request->header('referer'), '/status')) {
             return redirect()->back()->with('success', __('Status da produção atualizado com sucesso.'));
         }
 
         return redirect()->route('productions.index', ['view' => 'pipeline'])
             ->with('success', __('Status da produção atualizado com sucesso.'));
+    }
+
+    /**
+     * Disparar notificação de status da produção (E-mail e/ou WhatsApp) para o cliente
+     */
+    public function notifyCliente(Request $request, Production $production): RedirectResponse
+    {
+        $this->authorize('update', $production);
+
+        $channel = $request->input('channel', 'email'); // 'email', 'all'
+        $cliente = $production->cliente;
+
+        if (! $cliente) {
+            return redirect()->back()->with('error', __('Esta produção não possui um cliente associado para notificação.'));
+        }
+
+        $emailSent = false;
+        if (in_array($channel, ['email', 'all'])) {
+            $emailSent = $this->notificationService->sendProductionStatusEmail($production, $production->status);
+        }
+
+        $whatsAppUrl = $this->notificationService->getWhatsAppShareUrl($production, $production->status);
+
+        if ($channel === 'email') {
+            if ($emailSent) {
+                return redirect()->back()->with('success', __('E-mail de status (:status) enviado para :email!', ['status' => ucfirst(str_replace('_', ' ', $production->status)), 'email' => $cliente->email]));
+            } else {
+                return redirect()->back()->with('error', __('Não foi possível enviar o e-mail de notificação. Verifique o endereço de e-mail do cliente.'));
+            }
+        }
+
+        return redirect()->back()
+            ->with('success', __('Notificação de status processada com sucesso!'))
+            ->with('whatsapp_redirect_url', $whatsAppUrl);
     }
 }

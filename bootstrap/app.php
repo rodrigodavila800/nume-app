@@ -36,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'stripe/webhook',
             'webhooks/redsys',
             'webhooks/upload-post',
+            'webhooks/whatsapp',
             'api/*',
         ]);
         $middleware->redirectUsersTo(function () {

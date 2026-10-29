@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SofiConversation extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use BelongsToTenant, HasFactory;
 
     protected $fillable = [
         'tenant_id',
@@ -18,6 +18,8 @@ class SofiConversation extends Model
         'production_id',
         'title',
         'status',
+        'channel',
+        'contact_phone',
     ];
 
     public function cliente(): BelongsTo

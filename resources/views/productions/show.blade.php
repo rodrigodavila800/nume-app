@@ -96,6 +96,83 @@
         @endforeach
     </div>
 
+    <!-- Card Sofi: Central de Notificação & Acompanhamento de Status da Produção -->
+    @if ($production->cliente)
+        <div class="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-orange-950/30 border border-orange-500/30 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white font-extrabold shadow-md shadow-orange-900/30">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm font-extrabold text-white tracking-tight">
+                                {{ __('Sofi Agente: Atualização da Esteira para o Cliente') }}
+                            </h3>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                {{ ucfirst(str_replace('_', ' ', $production->status)) }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-zinc-400 mt-0.5">
+                            Destinatário: <strong class="text-zinc-200">{{ $production->cliente->name }}</strong> ({{ $production->cliente->email }})
+                            @if ($production->cliente->phone)
+                                · WhatsApp: <span class="text-zinc-300 font-mono">{{ $production->cliente->phone }}</span>
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Disparo de E-mail via Sofi -->
+                    <form action="{{ route('productions.notify-cliente', $production) }}" method="POST" class="inline">
+                        @csrf
+                        <input type="hidden" name="channel" value="email">
+                        <button type="submit" 
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 shadow-md shadow-orange-950/40 transition active:scale-95 cursor-pointer">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <span>{{ __('Enviar E-mail de Status') }}</span>
+                        </button>
+                    </form>
+
+                    <!-- Abertura Direta do WhatsApp -->
+                    <a href="{{ $whatsappStatusUrl }}" target="_blank" rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-950/40 transition active:scale-95">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <span>{{ __('Abrir WhatsApp') }}</span>
+                    </a>
+
+                    <!-- Botão Copiar Mensagem -->
+                    <button type="button" onclick="copySofiStatusWhatsAppText()" id="btn-copy-status-whatsapp"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition active:scale-95 cursor-pointer">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                        <span id="label-copy-status-whatsapp">{{ __('Copiar Mensagem') }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preview da Mensagem Sofi Gerada -->
+            <div class="rounded-xl bg-zinc-950/60 border border-zinc-800/80 p-3.5 space-y-2">
+                <div class="flex items-center justify-between text-[11px] text-zinc-400">
+                    <span class="font-bold uppercase tracking-wider text-orange-400/90">{{ __('Prévia da Mensagem Contextualizada:') }}</span>
+                    <span class="text-zinc-500">{{ __('Link direto do portal embutido') }}</span>
+                </div>
+                <pre id="sofi-status-whatsapp-text" class="text-xs text-zinc-300 font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto p-2 rounded-lg bg-zinc-900/50 border border-zinc-800/50">{{ $whatsappStatusMessage }}</pre>
+            </div>
+        </div>
+
+        <script>
+            function copySofiStatusWhatsAppText() {
+                const text = document.getElementById('sofi-status-whatsapp-text').innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    const label = document.getElementById('label-copy-status-whatsapp');
+                    const original = label.innerText;
+                    label.innerText = '{{ __('Copiado!') }}';
+                    setTimeout(() => { label.innerText = original; }, 2000);
+                });
+            }
+        </script>
+    @endif
+
     <!-- Metadata Row -->
     <div class="market-stats">
         <div class="card p-4 flex items-center justify-between gap-2">

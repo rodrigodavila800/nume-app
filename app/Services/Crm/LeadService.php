@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\User;
+use App\Services\Ai\SofiMemoryDistillationService;
 use Illuminate\Support\Str;
 
 /**
@@ -78,6 +79,14 @@ class LeadService
             'stage_changed_at' => now(),
             'lost_reason' => $stage === 'perdido' ? ($reason ? mb_substr($reason, 0, 255) : $lead->lost_reason) : null,
         ])->save();
+
+        if ($stage === 'perdido' && ($reason || $lead->lost_reason)) {
+            try {
+                app(SofiMemoryDistillationService::class)->distillFromLeadLost($lead, $reason ?: $lead->lost_reason);
+            } catch (\Throwable) {
+                // Fallback silencioso para não impactar o fluxo de CRM
+            }
+        }
 
         $labels = Lead::stageLabels();
         $this->log($lead, 'stage_change', __(':from → :to', ['from' => $labels[$from] ?? $from, 'to' => $labels[$stage] ?? $stage])

@@ -2,6 +2,7 @@
 
 namespace App\Services\Notification;
 
+use App\Mail\ProducerVideoApprovedMail;
 use App\Mail\VideoReadyForApprovalMail;
 use App\Models\PackPurchase;
 use App\Models\Video;
@@ -19,6 +20,7 @@ class SofiVideoNotificationService
 
         if (! $cliente || empty($cliente->email)) {
             Log::warning("[SofiNotification] Vídeo #{$video->id} não possui cliente com e-mail válido.");
+
             return false;
         }
 
@@ -27,9 +29,11 @@ class SofiVideoNotificationService
             Mail::to($cliente->email)->send(new VideoReadyForApprovalMail($video, $magicUrl));
 
             Log::info("[SofiNotification] E-mail de corte final enviado com sucesso para {$cliente->email} (Vídeo #{$video->id}).");
+
             return true;
         } catch (\Throwable $e) {
-            Log::error("[SofiNotification] Erro ao enviar e-mail de corte final para {$cliente->email}: " . $e->getMessage());
+            Log::error("[SofiNotification] Erro ao enviar e-mail de corte final para {$cliente->email}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -51,28 +55,28 @@ class SofiVideoNotificationService
         $currency = strtoupper($purchase?->pack?->currency ?? 'EUR');
 
         $lines = [
-            "🎬 *Olá, {$clienteName}! Aqui é a Sofi da " . ($video->tenant?->name ?? 'NUME Creative') . ".*",
-            "",
+            "🎬 *Olá, {$clienteName}! Aqui é a Sofi da ".($video->tenant?->name ?? 'NUME Creative').'.*',
+            '',
             "O corte final da sua produção *{$title}* acabou de sair da ilha de edição e está pronto para sua revisão!",
-            "",
-            "✨ *O que preparamos para você:*",
-            "• Roteiro e montagem com gancho inicial (0-3s) de alta retenção.",
-            "• Estratégia de SEO pronta para YouTube Shorts, Reels e TikTok.",
+            '',
+            '✨ *O que preparamos para você:*',
+            '• Roteiro e montagem com gancho inicial (0-3s) de alta retenção.',
+            '• Estratégia de SEO pronta para YouTube Shorts, Reels e TikTok.',
         ];
 
         if ($isLocked && $balanceAmount > 0) {
             $formattedBalance = number_format($balanceAmount, 2, ',', '.');
-            $lines[] = "";
-            $lines[] = "🔒 *Prévia de Aprovação:*";
+            $lines[] = '';
+            $lines[] = '🔒 *Prévia de Aprovação:*';
             $lines[] = "Você pode assistir à prévia diretamente no link abaixo. Ao confirmar sua aprovação, o saldo restante ({$formattedBalance} {$currency}) é quitado com 1 clique e os arquivos em 4K e a publicação automática nas redes são liberados na hora!";
         } else {
-            $lines[] = "";
-            $lines[] = "🚀 *Aprovação Rápida:*";
-            $lines[] = "Basta acessar o link para aprovar e liberar o download original e o agendamento nas suas redes.";
+            $lines[] = '';
+            $lines[] = '🚀 *Aprovação Rápida:*';
+            $lines[] = 'Basta acessar o link para aprovar e liberar o download original e o agendamento nas suas redes.';
         }
 
-        $lines[] = "";
-        $lines[] = "👉 *Toque no link seguro para assistir e aprovar (sem precisar de senha):*";
+        $lines[] = '';
+        $lines[] = '👉 *Toque no link seguro para assistir e aprovar (sem precisar de senha):*';
         $lines[] = $magicUrl;
 
         return implode("\n", $lines);
@@ -94,7 +98,7 @@ class SofiVideoNotificationService
             $params['phone'] = $phone;
         }
 
-        return $baseUrl . '?' . http_build_query($params);
+        return $baseUrl.'?'.http_build_query($params);
     }
 
     /**
@@ -145,10 +149,10 @@ class SofiVideoNotificationService
         $sentCount = 0;
         foreach ($uniqueEmails as $email) {
             try {
-                Mail::to($email)->send(new \App\Mail\ProducerVideoApprovedMail($video, $purchase));
+                Mail::to($email)->send(new ProducerVideoApprovedMail($video, $purchase));
                 $sentCount++;
             } catch (\Throwable $e) {
-                Log::error("[SofiNotification] Falha ao enviar alerta de vídeo aprovado para equipe ({$email}): " . $e->getMessage());
+                Log::error("[SofiNotification] Falha ao enviar alerta de vídeo aprovado para equipe ({$email}): ".$e->getMessage());
             }
         }
 

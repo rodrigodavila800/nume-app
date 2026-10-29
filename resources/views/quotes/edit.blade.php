@@ -225,6 +225,78 @@
                     <div id="toast-envio" class="min-h-[16px]"></div>
                 </div>
 
+                <!-- Card Sofi: Disparo de Proposta no WhatsApp (1 Clique & CRM) -->
+                <div class="p-4 rounded-2xl bg-zinc-900 border border-emerald-500/30 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <h3 class="text-xs font-bold text-white uppercase tracking-wider">{{ __('Envio via WhatsApp (Sofi)') }}</h3>
+                        </div>
+                        <span class="text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/30 px-2 py-0.5 rounded">{{ __('1 Clique + CRM') }}</span>
+                    </div>
+
+                    <p class="text-[11px] text-zinc-400">
+                        {{ __('Abre o WhatsApp com a mensagem persuasiva e link de aprovação online. O envio avança o lead no CRM para a etapa "Proposta".') }}
+                    </p>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <a href="{{ $whatsappQuoteUrl }}" target="_blank" rel="noopener noreferrer" onclick="recordQuoteWhatsAppSent()"
+                           class="flex-1 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-md shadow-emerald-950/40">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            <span>{{ __('Abrir WhatsApp da Proposta') }}</span>
+                        </a>
+
+                        <button type="button" onclick="copySofiQuoteWhatsAppText()" id="btn-copy-quote-whatsapp"
+                                class="py-2 px-3 rounded-xl border border-zinc-700 hover:bg-zinc-800 text-zinc-300 font-bold text-xs transition">
+                            <span id="label-copy-quote-whatsapp">{{ __('Copiar Mensagem') }}</span>
+                        </button>
+                    </div>
+
+                    <div class="rounded-xl bg-zinc-950 border border-zinc-800 p-3 space-y-1.5">
+                        <div class="flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase">
+                            <span>{{ __('Link Público Seguro:') }}</span>
+                            <button type="button" onclick="copyApprovalLink()" class="text-orange-400 hover:underline">
+                                {{ __('Copiar Link') }}
+                            </button>
+                        </div>
+                        <input type="text" readonly value="{{ $quoteApprovalUrl }}" id="input-approval-link"
+                               class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1 text-[11px] text-zinc-300 font-mono focus:outline-none">
+                    </div>
+
+                    <!-- Prévia da Mensagem -->
+                    <pre id="sofi-quote-whatsapp-text" class="text-xs text-zinc-300 font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">{{ $whatsappQuoteMessage }}</pre>
+                </div>
+
+                <script>
+                    function copySofiQuoteWhatsAppText() {
+                        const text = document.getElementById('sofi-quote-whatsapp-text').innerText;
+                        navigator.clipboard.writeText(text).then(() => {
+                            const label = document.getElementById('label-copy-quote-whatsapp');
+                            const original = label.innerText;
+                            label.innerText = '{{ __('Copiado!') }}';
+                            setTimeout(() => { label.innerText = original; }, 2000);
+                        });
+                    }
+
+                    function copyApprovalLink() {
+                        const input = document.getElementById('input-approval-link');
+                        navigator.clipboard.writeText(input.value).then(() => {
+                            alert('{{ __('Link de aprovação copiado!') }}');
+                        });
+                    }
+
+                    function recordQuoteWhatsAppSent() {
+                        fetch('{{ route('quotes.record-whatsapp', $quote) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        }).catch(e => console.error('Erro ao registrar envio WhatsApp:', e));
+                    }
+                </script>
+
                 <!-- Preview visual da proposta formatada -->
                 <div class="space-y-2">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{{ __('Pré-visualização da Proposta (A4):') }}</span>
