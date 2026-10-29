@@ -81,7 +81,6 @@
                     <li><a href="{{ route('portal.dashboard') }}" class="portal-btn">{{ __('Portal do Cliente') }}</a></li>
                 @elseif(auth('web')->check())
                     <li><a href="{{ route('productions.index') }}" class="portal-btn">{{ __('Área da Produtora') }}</a></li>
-                    <li><a href="{{ route('portal.login') }}" class="portal-btn">{{ __('Portal do Cliente') }}</a></li>
                 @else
                     <li><a href="{{ route('portal.login') }}" class="portal-btn">{{ __('Portal do Cliente') }}</a></li>
                 @endif
