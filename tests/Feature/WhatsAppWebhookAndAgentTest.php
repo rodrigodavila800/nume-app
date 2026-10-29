@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Ai\Tools\QualifyLeadTool;
 use App\Models\Cliente;
 use App\Models\Lead;
 use App\Models\SofiConversation;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Ai\Tools\Request;
 use Tests\TestCase;
 
 class WhatsAppWebhookAndAgentTest extends TestCase
@@ -152,6 +154,41 @@ class WhatsAppWebhookAndAgentTest extends TestCase
         $this->assertSame('qualificado', $lead->stage);
 
         // Atividade registrada no mesmo lead
+        $this->assertDatabaseHas('lead_activities', [
+            'lead_id' => $lead->id,
+            'type' => 'whatsapp',
+        ]);
+    }
+
+    public function test_qualify_lead_tool_moves_lead_to_qualificado_and_updates_data(): void
+    {
+        $lead = Lead::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Carlos Silva',
+            'phone' => '34664274151',
+            'source' => 'whatsapp',
+        ]);
+
+        $tool = new QualifyLeadTool($this->tenant->id, $lead->id, '34664274151');
+        $request = new Request([
+            'company' => 'Clínica Dental Zaragoza',
+            'niche' => 'Saúde & Odontologia',
+            'video_goal' => 'Reels semanais para captação de pacientes',
+            'pack_name' => 'Pack Impulso Local',
+            'estimated_budget' => 490.00,
+            'notes' => 'Quer iniciar gravações já na próxima quinzena.',
+        ]);
+
+        $result = $tool->handle($request);
+
+        $this->assertStringContainsString('qualificado com sucesso', (string) $result);
+
+        $lead->refresh();
+        $this->assertSame('qualificado', $lead->stage);
+        $this->assertSame('Clínica Dental Zaragoza', $lead->company);
+        $this->assertEquals(490.00, $lead->estimated_value);
+        $this->assertStringContainsString('próxima quinzena', $lead->notes);
+
         $this->assertDatabaseHas('lead_activities', [
             'lead_id' => $lead->id,
             'type' => 'whatsapp',

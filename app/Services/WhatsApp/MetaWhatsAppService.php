@@ -167,7 +167,7 @@ class MetaWhatsAppService
             ->all();
 
         // 6. Executa a Sofi (Agent via Laravel AI SDK ou resposta heurística)
-        $replyText = $this->generateSofiResponse($tenantId, $cliente?->id, $brandContext, $isSpanish, $recentMessages, $messageBody);
+        $replyText = $this->generateSofiResponse($tenantId, $cliente?->id, $brandContext, $isSpanish, $recentMessages, $messageBody, $lead->id, $from);
 
         // 7. Salva a resposta da Sofi
         SofiMessage::create([
@@ -254,11 +254,13 @@ class MetaWhatsAppService
         string $context,
         bool $isSpanish,
         array $history,
-        string $userMessage
+        string $userMessage,
+        ?int $leadId = null,
+        ?string $contactPhone = null
     ): string {
         try {
             if ($this->sofiProvider->isConfigured()) {
-                $agent = new SofiWhatsAppAgent($tenantId, $clienteId, $context, $isSpanish, $history);
+                $agent = new SofiWhatsAppAgent($tenantId, $clienteId, $context, $isSpanish, $history, $leadId, $contactPhone);
                 $result = $agent->prompt($userMessage);
 
                 if (filled($result)) {

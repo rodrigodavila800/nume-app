@@ -119,6 +119,7 @@ return [
         'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'nume_whatsapp_verify_token'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'contact_number' => env('WHATSAPP_CONTACT_NUMBER', '34664274151'),
         'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
     ],
 
