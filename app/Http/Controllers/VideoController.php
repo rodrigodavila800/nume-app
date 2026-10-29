@@ -6,16 +6,17 @@ use App\Enums\PlataformaAlvo;
 use App\Models\Production;
 use App\Models\Video;
 use App\Services\Notification\SofiVideoNotificationService;
+use App\Services\SocialPublishing\PublishingLimitException;
 use App\Services\SocialPublishing\SocialPublicationService;
 use App\Services\SofiCopywriterService;
 use App\Services\UploadPost\SocialDistributionService;
 use App\Services\Video\VideoUploadService;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class VideoController extends Controller
 {
@@ -45,16 +46,10 @@ class VideoController extends Controller
     /**
      * Exibir formulário para criar novo vídeo
      */
-    public function create(Production $production): View|RedirectResponse
+    public function create(Production $production): View
     {
         $this->authorize('create', Video::class);
         $this->authorize('view', $production);
-
-        // Apenas se production tem roteiro aprovado
-        if (!$production->roteiros()->where('status', 'approved')->exists()) {
-            return redirect()->route('productions.show', $production)
-                ->with('error', 'Production precisa de um roteiro aprovado para adicionar vídeos.');
-        }
 
         return view('videos.create', compact('production'));
     }
@@ -233,7 +228,7 @@ class VideoController extends Controller
     {
         $this->authorize('update', $video);
 
-        if (!$video->markAsReady()) {
+        if (! $video->markAsReady()) {
             return redirect()->back()
                 ->with('error', 'Vídeo deve estar em "processing" para ser marcado como pronto.');
         }
@@ -249,7 +244,7 @@ class VideoController extends Controller
     {
         $this->authorize('update', $video);
 
-        if (!$video->publish()) {
+        if (! $video->publish()) {
             return redirect()->back()
                 ->with('error', 'Vídeo deve estar "ready" para ser publicado.');
         }
@@ -263,7 +258,7 @@ class VideoController extends Controller
                 'sofi_seo_generated_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            Log::warning('Falha ao gerar SEO Sofi para o vídeo: ' . $e->getMessage());
+            Log::warning('Falha ao gerar SEO Sofi para o vídeo: '.$e->getMessage());
         }
 
         return redirect()->back()
@@ -297,19 +292,19 @@ class VideoController extends Controller
 
         $validated = $request->validate([
             'plataformas' => 'required|array|min:1',
-            'plataformas.*' => 'string|in:' . implode(',', PlataformaAlvo::values()),
+            'plataformas.*' => 'string|in:'.implode(',', PlataformaAlvo::values()),
             'scheduled_at' => 'nullable|date|after:now',
             'titulo' => 'nullable|string|max:255',
             'video_url' => 'nullable|url',
         ]);
 
         $cliente = $production->cliente;
-        if (!$cliente) {
+        if (! $cliente) {
             return redirect()->back()->with('error', __('Esta produção não possui um cliente associado para distribuição social.'));
         }
 
         $title = $validated['titulo'] ?? ($video->sofi_seo_title ?: $video->title);
-        $scheduledAt = !empty($validated['scheduled_at']) ? new \DateTimeImmutable($validated['scheduled_at']) : null;
+        $scheduledAt = ! empty($validated['scheduled_at']) ? new \DateTimeImmutable($validated['scheduled_at']) : null;
 
         try {
             // Com arquivo próprio da NUME, a URL de busca é gerada no serviço (assinada, temporária);
@@ -342,14 +337,14 @@ class VideoController extends Controller
             $msg = $scheduledAt
                 ? __('Postagem agendada com sucesso para :date nas plataformas: :platforms!', [
                     'date' => $scheduledAt->format('d/m/Y H:i'),
-                    'platforms' => implode(', ', $sent)
+                    'platforms' => implode(', ', $sent),
                 ])
                 : __('Vídeo enviado com sucesso para a esteira de postagem nas redes sociais (:platforms)!', [
-                    'platforms' => implode(', ', $sent)
+                    'platforms' => implode(', ', $sent),
                 ]);
 
             return redirect()->back()->with('success', $msg.$tiktokNote);
-        } catch (\App\Services\SocialPublishing\PublishingLimitException $e) {
+        } catch (PublishingLimitException $e) {
             return redirect()->back()->with('error', $e->getMessage());
         } catch (\DomainException $e) {
             return redirect()->back()->with('error', __('O vídeo não possui uma URL válida para envio às redes sociais.'));

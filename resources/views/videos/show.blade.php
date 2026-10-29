@@ -673,7 +673,9 @@
                                     <input type="checkbox" name="plataformas[]" value="{{ $platformCase->value }}"
                                            {{ $isConnected ? 'checked' : '' }}
                                            class="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 bg-zinc-950 border-zinc-700">
-                                    <span class="text-sm">{{ $platformCase->icon() }}</span>
+                                    <span class="inline-flex items-center justify-center shrink-0">
+                                        @include('portal.profile._social-icon', ['platform' => $platformCase->value, 'iconClass' => 'w-4 h-4 shrink-0'])
+                                    </span>
                                     <div class="leading-tight">
                                         <span class="text-xs font-bold text-white block">{{ ucfirst($platformCase->value) }}</span>
                                         @if ($isConnected)

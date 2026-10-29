@@ -197,19 +197,23 @@
                 <h2 class="card-title">{{ __('Vídeos e Entregáveis') }}</h2>
                 <p class="card-description">{{ __('Arquivos finais, links de entrega e status de publicação.') }}</p>
             </div>
-            @if ($production->roteiros->contains('status', 'approved'))
+            @can('create', \App\Models\Video::class)
                 <a href="{{ route('videos.create', $production) }}" class="btn primary text-xs py-2 px-4">
                     + {{ __('Novo Vídeo') }}
                 </a>
-            @endif
+            @endcan
         </div>
 
         @if ($videos->isEmpty())
-            <div class="py-8 text-center text-sm text-zinc-500">
-                {{ __('Nenhum vídeo cadastrado ainda.') }}
-                @if (!$production->roteiros->contains('status', 'approved'))
-                    <span class="block text-xs text-zinc-500 mt-1">{{ __('(Necessário ter ao menos 1 roteiro aprovado para cadastrar o vídeo final)') }}</span>
-                @endif
+            <div class="py-8 text-center text-sm text-zinc-500 space-y-3">
+                <p>{{ __('Nenhum vídeo cadastrado nesta produção ainda.') }}</p>
+                @can('create', \App\Models\Video::class)
+                    <div>
+                        <a href="{{ route('videos.create', $production) }}" class="btn primary text-xs py-2 px-4 inline-flex items-center gap-1.5">
+                            + {{ __('Cadastrar Vídeo para Aprovação do Cliente') }}
+                        </a>
+                    </div>
+                @endcan
             </div>
         @else
             <div class="divide-y divide-zinc-800">

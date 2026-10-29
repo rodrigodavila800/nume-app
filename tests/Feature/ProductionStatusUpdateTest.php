@@ -80,3 +80,4 @@ class ProductionStatusUpdateTest extends TestCase
         $response->assertRedirect('/productions/' . $production->uuid);
     }
 }
+

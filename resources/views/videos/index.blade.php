@@ -17,16 +17,12 @@
         </div>
 
         <div>
-            @if ($production->roteiros->contains('status', 'approved'))
+            @can('create', \App\Models\Video::class)
                 <a href="{{ route('videos.create', $production) }}" 
                    class="inline-flex items-center gap-2 font-bold rounded-xl text-xs sm:text-sm px-4 py-2.5 bg-orange-600 hover:bg-orange-500 active:scale-[0.98] text-white shadow-lg shadow-orange-900/20 transition-all">
                     <span>+ {{ __('Cadastrar Novo Vídeo') }}</span>
                 </a>
-            @else
-                <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-500">
-                    {{ __('Requer 1 roteiro aprovado') }}
-                </span>
-            @endif
+            @endcan
         </div>
     </div>
 
@@ -44,13 +40,13 @@
             </div>
             <p class="text-sm font-bold text-white">{{ __('Nenhum vídeo cadastrado nesta produção ainda.') }}</p>
             <p class="text-xs text-zinc-500 max-w-md mx-auto">{{ __('Assim que o roteiro for aprovado e as peças forem gravadas, cadastre os links do YouTube, Shorts ou MP4 aqui.') }}</p>
-            @if ($production->roteiros->contains('status', 'approved'))
+            @can('create', \App\Models\Video::class)
                 <div class="pt-2">
                     <a href="{{ route('videos.create', $production) }}" class="inline-block text-xs font-bold text-orange-500 hover:text-orange-400">
                         + {{ __('Cadastrar Primeiro Vídeo') }}
                     </a>
                 </div>
-            @endif
+            @endcan
         </div>
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

@@ -44,12 +44,11 @@ class VideoHostedViewsTest extends TestCase
         $this->production = Production::create(['tenant_id' => $tenant->id, 'cliente_id' => $this->cliente->id, 'title' => 'Producao Ficticia', 'status' => 'draft', 'created_by' => $this->staff->id]);
     }
 
-    public function test_create_form_without_approved_script_redirects_instead_of_500(): void
+    public function test_create_form_is_accessible_without_approved_script(): void
     {
-        // Antes: o tipo de retorno View fazia este redirecionamento estourar com erro 500.
         $this->actingAs($this->staff)->get(route('videos.create', $this->production))
-            ->assertRedirect(route('productions.show', $this->production))
-            ->assertSessionHas('error');
+            ->assertOk()
+            ->assertSee('Cadastrar Novo Vídeo');
     }
 
     public function test_create_form_accepts_a_file_and_the_link_is_optional(): void
@@ -102,7 +101,7 @@ class VideoHostedViewsTest extends TestCase
             ->assertOk()
             ->assertSee('/media/videos/'.$video->id, false)
             ->assertSee('download=1', false)
-            ->assertSee('Publicar nas Redes');
+            ->assertSee('Publicar Direto nas Redes Conectadas');
     }
 
     public function test_portal_keeps_preview_but_hides_download_while_in_escrow(): void
@@ -118,7 +117,7 @@ class VideoHostedViewsTest extends TestCase
         $this->actingAs($this->cliente, 'cliente')->get(route('portal.productions.show', $this->production->uuid))
             ->assertOk()
             ->assertSee('/media/videos/'.$video->id, false)
-            ->assertSee('Download Bloqueado')
+            ->assertSee('Aprovar Corte para Liberar Download')
             ->assertDontSee('download=1', false);
     }
 
