@@ -217,7 +217,10 @@ Route::middleware('auth')->group(function () {
         ->name('productions.mark-approved');
     Route::patch('productions/{production}/status', [ProductionController::class, 'updateStatus'])
         ->name('productions.update-status');
-    Route::get('productions/{production}/status', fn (\App\Models\Production $production) => redirect()->route('productions.show', $production));
+    Route::get('productions/{production}/status', function ($production) {
+        $uuid = $production instanceof \App\Models\Production ? $production->uuid : (string) $production;
+        return redirect()->to('/productions/' . $uuid);
+    });
 
     // Monitoramento e Auditoria de Distribuição Social
     Route::get('/productions-distribuicoes', [SocialDistributionManagementController::class, 'index'])
