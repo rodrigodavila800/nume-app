@@ -168,14 +168,30 @@ https://templatemo.com/tm-600-prism-flux
                 </div>
             `;
 
+            // Clique seguro: mede distância do ponteiro para distinguir clique de arraste
+            let pointerStartX = 0;
+            let pointerStartY = 0;
+
+            panel.addEventListener('pointerdown', (e) => {
+                pointerStartX = e.clientX;
+                pointerStartY = e.clientY;
+            });
+
+            panel.addEventListener('pointerup', (e) => {
+                const dist = Math.hypot(e.clientX - pointerStartX, e.clientY - pointerStartY);
+                // Se o ponteiro moveu menos de 18px, é um clique intencional!
+                if (dist < 18) {
+                    if (window.openVideoModal) {
+                        window.openVideoModal(videoUrl, data.title, isVertical, embedUrl);
+                    }
+                }
+            });
+
+            // Previne clique padrão se tiver arrastado o anel
             panel.addEventListener('click', (e) => {
-                if (orbitalDragDistance > 8) {
+                if (orbitalDragDistance > 18) {
                     e.preventDefault();
                     e.stopPropagation();
-                    return;
-                }
-                if (window.openVideoModal) {
-                    window.openVideoModal(videoUrl, data.title, isVertical, embedUrl);
                 }
             });
 

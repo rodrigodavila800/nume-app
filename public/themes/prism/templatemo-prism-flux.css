@@ -314,20 +314,22 @@ body::after {
 .nav-menu {
 	display: flex;
 	list-style: none;
-	gap: 10px;
+	gap: clamp(4px, 0.8vw, 12px);
 	align-items: center;
+	flex-wrap: nowrap;
 }
 
 .nav-menu a {
 	color: var(--text-secondary);
 	text-decoration: none;
-	padding: 12px 25px;
+	padding: 8px clamp(8px, 1.1vw, 16px);
 	transition: all 0.3s ease;
 	position: relative;
 	text-transform: uppercase;
-	font-weight: 500;
-	letter-spacing: 1px;
-	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	font-size: 13px;
+	white-space: nowrap;
 }
 
 .nav-menu a::before {
@@ -4682,7 +4684,7 @@ body.nav-menu-open {
    ======================================================== */
 :root {
 	--orbital-ease: cubic-bezier(0.16, 1, 0.3, 1);
-	--orbital-radius: 400px;
+	--orbital-radius: 350px;
 	--orbital-vermilion: #c42b14;
 	--orbital-orange: #ea580c;
 	--orbital-amber: #fb923c;
@@ -4691,8 +4693,9 @@ body.nav-menu-open {
 .orbital-carousel-wrapper {
 	position: relative;
 	width: 100%;
-	height: 480px;
-	margin: 10px auto 15px;
+	height: 520px;
+	min-height: 500px;
+	margin: 10px auto 20px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -4733,7 +4736,7 @@ body.nav-menu-open {
 	top: 0;
 	left: 0;
 	transform-style: preserve-3d;
-	transform: rotateX(var(--tiltX, -3deg)) scale3d(var(--zoom, 1), var(--zoom, 1), var(--zoom, 1));
+	transform: rotateX(var(--tiltX, -8deg)) scale3d(var(--zoom, 1), var(--zoom, 1), var(--zoom, 1));
 	transition: transform 0.8s var(--orbital-ease);
 }
 
@@ -4749,22 +4752,21 @@ body.nav-menu-open {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 216px;
-	height: 360px;
-	margin-left: -108px;
-	margin-top: -180px;
-	border-radius: 20px;
+	width: 174px;
+	height: 288px;
+	margin-left: -87px;
+	margin-top: -144px;
+	border-radius: 18px;
 	backface-visibility: hidden;
 	-webkit-backface-visibility: hidden;
+	transform-style: preserve-3d;
 	background: rgba(18, 18, 22, 0.72);
 	backdrop-filter: blur(10px);
 	-webkit-backdrop-filter: blur(10px);
-	box-shadow: inset 0 0 34px rgba(196, 43, 20, 0.2), 0 12px 42px rgba(0, 0, 0, 0.55);
+	box-shadow: inset 0 0 30px rgba(196, 43, 20, 0.2), 0 10px 36px rgba(0, 0, 0, 0.6);
 	transform: rotateY(var(--ry, 0deg)) translateZ(var(--tz, 340px)) rotateZ(var(--rz, 0deg)) scale(var(--s, 1));
 	transition: transform 0.7s var(--orbital-ease), box-shadow 0.7s var(--orbital-ease);
 	cursor: pointer;
-	backface-visibility: hidden;
-	-webkit-backface-visibility: hidden;
 }
 
 .orbital-panel::after {
@@ -4823,6 +4825,8 @@ body.nav-menu-open {
 	position: absolute;
 	inset: 0;
 	border-radius: inherit;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
 	transition: opacity 0.8s var(--orbital-ease);
 	transition-delay: calc(var(--i, 0) * 0.04s);
 }
@@ -4953,10 +4957,12 @@ body.nav-menu-open {
 	align-items: flex-start;
 	gap: 12px;
 	background: rgba(12, 12, 15, 0.72);
-	border: 1px solid rgba(255, 255, 255, 0.09);
 	backdrop-filter: blur(12px);
-	padding: 12px 16px;
-	border-radius: 16px;
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 14px;
+	padding: 14px 16px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 .orbital-ctrl {
@@ -5139,7 +5145,7 @@ body.nav-menu-open {
 		bottom: 8px;
 	}
 }
-
+
 
 /* ========================================================
    CINEMA SHOWCASE SLIDER (Design Editorial 9:16 Responsivo)

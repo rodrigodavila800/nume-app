@@ -131,54 +131,46 @@
             </button>
         </div>
 
-        <!-- Cinema Showcase de Portfólio (Design Editorial Responsivo & 9:16 Real) -->
-        <div class="showcase-carousel-wrapper" id="showcaseWrapper">
-            <!-- Seta Anterior -->
-            <button type="button" class="showcase-nav-btn prev" onclick="scrollShowcase(-1)" aria-label="{{ __('Vídeos anteriores') }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-
-            <!-- Track de Vídeos com Snap Horizontal -->
-            <div class="showcase-track" id="showcaseTrack">
-                @forelse($videos as $index => $v)
-                    @php
-                        $isVertical = $v->is_vertical !== false;
-                        $formatClass = $isVertical ? 'format-vertical' : 'format-horizontal';
-                        $formatBadge = $isVertical ? '9:16 SHORTS' : '16:9 WIDE';
-                        $thumb = $v->effective_thumbnail_url ?: ($v->thumbnail_url ?: asset('themes/prism/images/neural-network.jpg'));
-                    @endphp
-                    <div class="showcase-card {{ $formatClass }}" 
-                         data-format="{{ $isVertical ? 'vertical' : 'horizontal' }}"
-                         onclick="openVideoModal('{{ $v->video_url }}', '{{ addslashes($v->translated_title ?? $v->title) }}', {{ $isVertical ? 'true' : 'false' }}, '{{ $v->embed_url }}')">
-                        <div class="showcase-card-inner">
-                            <img src="{{ $thumb }}" alt="{{ $v->translated_title ?? $v->title }}" class="showcase-card-img" loading="lazy">
-                            <div class="showcase-card-scrim"></div>
-                            
-                            <span class="showcase-card-badge {{ $isVertical ? 'badge-orange' : 'badge-dark' }}">
-                                {{ $formatBadge }}
-                            </span>
-
-                            <div class="showcase-card-play">
-                                <svg class="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            </div>
-
-                            <div class="showcase-card-info">
-                                <span class="showcase-card-category">{{ $v->category?->name ?? __('Showcase') }} · {{ __('Retenção 94%') }}</span>
-                                <h3 class="showcase-card-title">{{ $v->translated_title ?? $v->title }}</h3>
-                            </div>
+        <!-- 3D Orbital Ring Carousel (Tooplate 2167 Orbital Engine) -->
+        <div class="orbital-carousel-wrapper visuals-on" id="orbitalWrapper">
+            <div class="orbital-stage" id="orbitalStage">
+                <div class="orbital-parallax" id="orbitalParallax">
+                    <div class="orbital-ring-tilt" id="orbitalRingTilt">
+                        <div class="orbital-ring" id="carousel">
+                            <!-- Painéis 3D gerados dinamicamente pelo motor do 2167 Orbital -->
                         </div>
                     </div>
-                @empty
-                    <div class="showcase-empty-state">
-                        <p class="text-zinc-400 text-sm">{{ __('Nenhum vídeo em destaque no momento.') }}</p>
-                    </div>
-                @endforelse
+                </div>
             </div>
 
-            <!-- Seta Próxima -->
-            <button type="button" class="showcase-nav-btn next" onclick="scrollShowcase(1)" aria-label="{{ __('Próximos vídeos') }}">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-            </button>
+            <!-- Controles HUD Orbital 2167 (VISUALS, ZOOM, SPACING) -->
+            <div class="orbital-controls">
+                <div class="orbital-ctrl">
+                    <span class="orbital-ctrl-label">{{ __('VISUALS') }}</span>
+                    <button class="orbital-switch" id="visualsSwitch" type="button" role="switch" aria-checked="true" aria-label="{{ __('Alternar imagens e fichas técnicas') }}">
+                        <span class="orbital-knob"></span>
+                    </button>
+                </div>
+                <div class="orbital-ctrl">
+                    <span class="orbital-ctrl-label">{{ __('ZOOM') }}</span>
+                    <button class="orbital-switch" id="zoomSwitch" type="button" role="switch" aria-checked="false" aria-label="{{ __('Aproximar anel 3D') }}">
+                        <span class="orbital-knob"></span>
+                    </button>
+                </div>
+                <div class="orbital-ctrl">
+                    <span class="orbital-ctrl-label">{{ __('SPACING') }}</span>
+                    <div class="orbital-spacing" role="group" aria-label="{{ __('Espaçamento dos cards') }}">
+                        <button type="button" class="orbital-spacing-step" data-space="0" aria-label="{{ __('Espaçamento compacto') }}"><i></i></button>
+                        <button type="button" class="orbital-spacing-step is-active" data-space="1" aria-label="{{ __('Espaçamento normal') }}"><i></i></button>
+                        <button type="button" class="orbital-spacing-step" data-space="2" aria-label="{{ __('Espaçamento expandido') }}"><i></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dica de Interatividade no rodapé -->
+            <div class="orbital-drag-hint">
+                <span>{{ __('↔ Arraste para girar o anel 3D · Clique em qualquer vídeo para assistir') }}</span>
+            </div>
         </div>
 
         <!-- Conversão Imediata (Abaixo do Carrossel) -->
@@ -1108,28 +1100,7 @@
             return targetUrl;
         }
 
-        function scrollShowcase(direction) {
-            const track = document.getElementById('showcaseTrack');
-            if (!track) return;
-            const scrollAmount = track.clientWidth * 0.75 * direction;
-            track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-        }
-        window.scrollShowcase = scrollShowcase;
 
-        function filterPortfolio(format, btn) {
-            document.querySelectorAll('.portfolio-tab-btn').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-
-            const cards = document.querySelectorAll('.showcase-card');
-            cards.forEach(card => {
-                if (format === 'all' || card.dataset.format === format) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-        window.filterPortfolio = filterPortfolio;
 
         function openVideoModal(url, title, isVertical, embedUrl) {
             const modal = document.getElementById('storefront-video-modal');
