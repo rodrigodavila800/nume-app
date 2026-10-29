@@ -2295,47 +2295,74 @@ a.contract-btn:hover {
    NUME DESIGN SYSTEM — Regra de Ouro (Zero CSS Inline)
    ======================================================== */
 
-/* Abas de Navegação / Filtros do Carrossel */
+/* Abas de Navegação / Filtros de Formato */
 .portfolio-format-tabs {
 	scroll-margin-top: 95px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	gap: 10px;
-	margin-top: 25px;
-	margin-bottom: 25px;
+	margin: 16px auto 20px;
 	position: relative;
 	z-index: 25;
 	flex-wrap: wrap;
 }
 
 .portfolio-tab-btn {
-	padding: 10px 22px;
+	height: 38px;
+	padding: 0 18px;
 	font-size: 13px;
-	font-weight: 800;
+	font-weight: 700;
+	letter-spacing: 0.3px;
+	white-space: nowrap;
 	border-radius: 9999px;
 	cursor: pointer;
-	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	background: rgba(18, 18, 20, 0.75);
+	transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	background: rgba(18, 18, 22, 0.85);
 	color: #a1a1aa;
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.12);
 	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: 8px;
+	line-height: 1;
+	box-sizing: border-box;
+}
+
+.portfolio-tab-btn svg,
+.portfolio-tab-icon {
+	width: 15px !important;
+	height: 15px !important;
+	min-width: 15px !important;
+	min-height: 15px !important;
+	max-width: 15px !important;
+	max-height: 15px !important;
+	display: inline-block !important;
+	flex-shrink: 0 !important;
+	vertical-align: middle !important;
+	stroke-width: 2.2 !important;
 }
 
 .portfolio-tab-btn:hover {
 	color: #ffffff;
-	border-color: rgba(234, 88, 12, 0.4);
-	background: rgba(24, 24, 28, 0.9);
+	border-color: rgba(234, 88, 12, 0.45);
+	background: rgba(26, 26, 32, 0.95);
+	transform: translateY(-1px);
 }
 
 .portfolio-tab-btn.active {
-	background: linear-gradient(135deg, #ea580c, #f97316);
+	background: linear-gradient(135deg, #c42b14, #ea580c);
 	color: #ffffff;
-	border-color: rgba(255, 255, 255, 0.25);
-	box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
+	border-color: rgba(251, 146, 60, 0.6);
+	box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4);
+}
+
+.portfolio-tab-btn.active svg,
+.portfolio-tab-btn.active .portfolio-tab-icon {
+	color: #ffffff !important;
+	stroke: #ffffff !important;
 }
 
 /* Conversão Imediata (Hero CTA) */

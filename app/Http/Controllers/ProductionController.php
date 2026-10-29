@@ -220,7 +220,12 @@ class ProductionController extends Controller
 
         $production->update(['status' => $validated['status']]);
 
-        return redirect()->back()
+        // Se veio com parâmetro de retorno explícito ou do kanban, redireciona graciosamente
+        if ($request->header('referer') && !str_ends_with($request->header('referer'), '/status')) {
+            return redirect()->back()->with('success', __('Status da produção atualizado com sucesso.'));
+        }
+
+        return redirect()->route('productions.index', ['view' => 'pipeline'])
             ->with('success', __('Status da produção atualizado com sucesso.'));
     }
 }

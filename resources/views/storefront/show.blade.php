@@ -116,17 +116,17 @@
         <!-- Filtros de Formato do Portfólio (Pill Tabs Glassmorphic) -->
         <div class="portfolio-format-tabs" id="portfolio">
             <button type="button" class="portfolio-tab-btn active" data-filter="all" onclick="if(window.filterPortfolio) window.filterPortfolio('all', this)">
-                <svg class="w-4 h-4 shrink-0 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                <svg width="15" height="15" class="portfolio-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
                 <span>{{ __('Todos os Formatos') }}</span>
             </button>
 
             <button type="button" class="portfolio-tab-btn" data-filter="vertical" onclick="if(window.filterPortfolio) window.filterPortfolio('vertical', this)">
-                <svg class="w-4 h-4 shrink-0 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                <svg width="15" height="15" class="portfolio-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
                 <span>{{ __('Shorts & Reels (9:16)') }}</span>
             </button>
 
             <button type="button" class="portfolio-tab-btn" data-filter="horizontal" onclick="if(window.filterPortfolio) window.filterPortfolio('horizontal', this)">
-                <svg class="w-4 h-4 shrink-0 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8m-4-4v4"/></svg>
+                <svg width="15" height="15" class="portfolio-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8m-4-4v4"/></svg>
                 <span>{{ __('Vídeos Horizontais (16:9)') }}</span>
             </button>
         </div>

@@ -217,6 +217,7 @@ Route::middleware('auth')->group(function () {
         ->name('productions.mark-approved');
     Route::patch('productions/{production}/status', [ProductionController::class, 'updateStatus'])
         ->name('productions.update-status');
+    Route::get('productions/{production}/status', fn (\App\Models\Production $production) => redirect()->route('productions.show', $production));
 
     // Monitoramento e Auditoria de Distribuição Social
     Route::get('/productions-distribuicoes', [SocialDistributionManagementController::class, 'index'])

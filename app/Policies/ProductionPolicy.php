@@ -33,8 +33,7 @@ class ProductionPolicy
      */
     public function update(User $user, Production $production): bool
     {
-        return $user->tenant_id === $production->tenant_id && 
-               ($user->isAdmin() || $user->id === $production->created_by);
+        return (int) $user->tenant_id === (int) $production->tenant_id && $user->isEditor();
     }
 
     /**
