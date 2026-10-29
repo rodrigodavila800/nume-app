@@ -131,44 +131,54 @@
             </button>
         </div>
 
-        <!-- 3D Orbital Ring Carousel (Template 2167 Orbital Engine) -->
-        <div class="orbital-carousel-wrapper visuals-on" id="orbitalWrapper">
-            <div class="orbital-stage" id="orbitalStage">
-                <div class="orbital-parallax" id="orbitalParallax">
-                    <div class="orbital-ring-tilt" id="orbitalRingTilt">
-                        <div class="orbital-ring" id="carousel">
-                            <!-- Orbital panels dynamically built by Orbital 3D Engine -->
+        <!-- Cinema Showcase de Portfólio (Design Editorial Responsivo & 9:16 Real) -->
+        <div class="showcase-carousel-wrapper" id="showcaseWrapper">
+            <!-- Seta Anterior -->
+            <button type="button" class="showcase-nav-btn prev" onclick="scrollShowcase(-1)" aria-label="{{ __('Vídeos anteriores') }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+
+            <!-- Track de Vídeos com Snap Horizontal -->
+            <div class="showcase-track" id="showcaseTrack">
+                @forelse($videos as $index => $v)
+                    @php
+                        $isVertical = $v->is_vertical !== false;
+                        $formatClass = $isVertical ? 'format-vertical' : 'format-horizontal';
+                        $formatBadge = $isVertical ? '9:16 SHORTS' : '16:9 WIDE';
+                        $thumb = $v->effective_thumbnail_url ?: ($v->thumbnail_url ?: asset('themes/prism/images/neural-network.jpg'));
+                    @endphp
+                    <div class="showcase-card {{ $formatClass }}" 
+                         data-format="{{ $isVertical ? 'vertical' : 'horizontal' }}"
+                         onclick="openVideoModal('{{ $v->video_url }}', '{{ addslashes($v->translated_title ?? $v->title) }}', {{ $isVertical ? 'true' : 'false' }}, '{{ $v->embed_url }}')">
+                        <div class="showcase-card-inner">
+                            <img src="{{ $thumb }}" alt="{{ $v->translated_title ?? $v->title }}" class="showcase-card-img" loading="lazy">
+                            <div class="showcase-card-scrim"></div>
+                            
+                            <span class="showcase-card-badge {{ $isVertical ? 'badge-orange' : 'badge-dark' }}">
+                                {{ $formatBadge }}
+                            </span>
+
+                            <div class="showcase-card-play">
+                                <svg class="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+
+                            <div class="showcase-card-info">
+                                <span class="showcase-card-category">{{ $v->category?->name ?? __('Showcase') }} · {{ __('Retenção 94%') }}</span>
+                                <h3 class="showcase-card-title">{{ $v->translated_title ?? $v->title }}</h3>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="orbital-controls">
-                <div class="orbital-ctrl">
-                    <span class="orbital-ctrl-label">{{ __('VISUALS') }}</span>
-                    <button class="orbital-switch" id="visualsSwitch" type="button" role="switch" aria-checked="true" aria-label="{{ __('Alternar miniaturas e fichas técnicas') }}">
-                        <span class="orbital-knob"></span>
-                    </button>
-                </div>
-                <div class="orbital-ctrl">
-                    <span class="orbital-ctrl-label">{{ __('ZOOM') }}</span>
-                    <button class="orbital-switch" id="zoomSwitch" type="button" role="switch" aria-checked="false" aria-label="{{ __('Alternar zoom do anel orbital') }}">
-                        <span class="orbital-knob"></span>
-                    </button>
-                </div>
-                <div class="orbital-ctrl">
-                    <span class="orbital-ctrl-label">{{ __('SPACING') }}</span>
-                    <div class="orbital-spacing" role="group" aria-label="{{ __('Espaçamento do anel') }}">
-                        <button class="orbital-spacing-step" type="button" data-space="0" aria-label="Compacto"><i></i></button>
-                        <button class="orbital-spacing-step is-active" type="button" data-space="1" aria-label="Padrão"><i></i></button>
-                        <button class="orbital-spacing-step" type="button" data-space="2" aria-label="Amplo"><i></i></button>
+                @empty
+                    <div class="showcase-empty-state">
+                        <p class="text-zinc-400 text-sm">{{ __('Nenhum vídeo em destaque no momento.') }}</p>
                     </div>
-                </div>
+                @endforelse
             </div>
 
-            <div class="orbital-drag-hint">
-                <span>⟷ {{ __('Arraste para girar o anel 3D · Clique em qualquer vídeo para assistir') }}</span>
-            </div>
+            <!-- Seta Próxima -->
+            <button type="button" class="showcase-nav-btn next" onclick="scrollShowcase(1)" aria-label="{{ __('Próximos vídeos') }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
         </div>
 
         <!-- Conversão Imediata (Abaixo do Carrossel) -->
@@ -598,6 +608,7 @@
             
             <div id="storefront-modal-iframe-box" class="storefront-modal-iframe-wrapper">
                 <iframe id="storefront-modal-iframe" class="storefront-modal-iframe-el" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <video id="storefront-modal-video" class="storefront-modal-iframe-el hidden" controls playsinline preload="auto"></video>
             </div>
 
             <div class="storefront-modal-cta-wrapper">
@@ -1097,33 +1108,73 @@
             return targetUrl;
         }
 
+        function scrollShowcase(direction) {
+            const track = document.getElementById('showcaseTrack');
+            if (!track) return;
+            const scrollAmount = track.clientWidth * 0.75 * direction;
+            track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+        window.scrollShowcase = scrollShowcase;
+
+        function filterPortfolio(format, btn) {
+            document.querySelectorAll('.portfolio-tab-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            const cards = document.querySelectorAll('.showcase-card');
+            cards.forEach(card => {
+                if (format === 'all' || card.dataset.format === format) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        window.filterPortfolio = filterPortfolio;
+
         function openVideoModal(url, title, isVertical, embedUrl) {
             const modal = document.getElementById('storefront-video-modal');
             const modalCard = document.getElementById('storefront-modal-card');
             const iframeBox = document.getElementById('storefront-modal-iframe-box');
             const iframe = document.getElementById('storefront-modal-iframe');
+            const videoEl = document.getElementById('storefront-modal-video');
             const titleEl = document.getElementById('storefront-modal-title');
             const badgeEl = document.getElementById('storefront-modal-format-badge');
             
-            if (!modal || !iframe) return;
+            if (!modal) return;
 
-            const resolvedUrl = resolveEmbedUrl(url, embedUrl);
-            iframe.src = resolvedUrl;
+            const targetUrl = (embedUrl && embedUrl.trim()) ? embedUrl : url;
+            const isMp4 = targetUrl && (targetUrl.endsWith('.mp4') || targetUrl.includes('.mp4?') || targetUrl.includes('/videos/') || targetUrl.includes('/storage/'));
+
+            if (isMp4) {
+                if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
+                if (videoEl) {
+                    videoEl.style.display = 'block';
+                    videoEl.src = targetUrl;
+                    videoEl.play().catch(() => {});
+                }
+            } else {
+                if (videoEl) { videoEl.style.display = 'none'; videoEl.pause(); videoEl.src = ''; }
+                if (iframe) {
+                    iframe.style.display = 'block';
+                    iframe.src = resolveEmbedUrl(url, embedUrl);
+                }
+            }
+
             if (titleEl) titleEl.textContent = title || 'NUME Showcase';
 
             const vertical = (isVertical !== false);
             if (vertical) {
                 if (modalCard) {
-                    modalCard.style.maxWidth = '360px';
-                    modalCard.style.padding = '12px 14px';
+                    modalCard.style.maxWidth = '380px';
+                    modalCard.style.padding = '14px 16px';
                 }
                 if (iframeBox) {
                     iframeBox.style.paddingBottom = '0';
-                    iframeBox.style.height = 'min(56vh, 440px)';
+                    iframeBox.style.height = 'min(72vh, 560px)';
                     iframeBox.style.width = '100%';
-                    iframeBox.style.maxWidth = '250px';
+                    iframeBox.style.maxWidth = '315px';
                     iframeBox.style.aspectRatio = '9/16';
-                    iframeBox.style.maxHeight = '56vh';
+                    iframeBox.style.maxHeight = '72vh';
                 }
                 if (badgeEl) {
                     badgeEl.textContent = '9:16 SHORTS';
@@ -1131,7 +1182,7 @@
                 }
             } else {
                 if (modalCard) {
-                    modalCard.style.maxWidth = '780px';
+                    modalCard.style.maxWidth = '840px';
                     modalCard.style.padding = '16px 20px';
                 }
                 if (iframeBox) {
@@ -1140,7 +1191,7 @@
                     iframeBox.style.width = '100%';
                     iframeBox.style.maxWidth = '100%';
                     iframeBox.style.aspectRatio = '16/9';
-                    iframeBox.style.maxHeight = '56vh';
+                    iframeBox.style.maxHeight = '65vh';
                 }
                 if (badgeEl) {
                     badgeEl.textContent = '16:9 CINEMA';
@@ -1155,7 +1206,9 @@
         function closeVideoModal() {
             const modal = document.getElementById('storefront-video-modal');
             const iframe = document.getElementById('storefront-modal-iframe');
+            const videoEl = document.getElementById('storefront-modal-video');
             if (iframe) iframe.src = '';
+            if (videoEl) { videoEl.pause(); videoEl.src = ''; }
             if (modal) modal.style.display = 'none';
             document.body.style.overflow = '';
         }
