@@ -98,6 +98,60 @@ class WhatsAppWebhookAndAgentTest extends TestCase
         // Verifica se o lead existe no CRM com a atividade registrada
         $lead = Lead::where('phone', '5511999998888')->first();
         $this->assertNotNull($lead);
+        $this->assertSame('whatsapp', $lead->source);
+        $this->assertDatabaseHas('lead_activities', [
+            'lead_id' => $lead->id,
+            'type' => 'whatsapp',
+        ]);
+    }
+
+    public function test_incoming_whatsapp_message_reuses_existing_open_lead_without_creating_duplicate(): void
+    {
+        // Cria um lead já existente em 'qualificado' com telefone local formatado
+        $lead = new Lead([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Rodrigo Dávila',
+            'company' => 'Desenvolvimento de Sistemas',
+            'phone' => '(91) 8258-6886',
+            'source' => 'quote_request',
+        ]);
+        $lead->forceFill(['stage' => 'qualificado'])->save();
+
+        $payload = [
+            'entry' => [
+                [
+                    'changes' => [
+                        [
+                            'value' => [
+                                'metadata' => ['phone_number_id' => '1234567890'],
+                                'contacts' => [
+                                    ['profile' => ['name' => 'Rodrigo D’ávila'], 'wa_id' => '559182586886'],
+                                ],
+                                'messages' => [
+                                    [
+                                        'from' => '559182586886',
+                                        'id' => 'wamid.HBgL123...',
+                                        'timestamp' => '1730222010',
+                                        'type' => 'text',
+                                        'text' => ['body' => 'Olá Sofi, como está meu projeto?'],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $response = $this->postJson('/webhooks/whatsapp', $payload);
+        $response->assertStatus(200);
+
+        // Deve manter o mesmo lead em 'qualificado' e NÃO criar um novo em 'novo'
+        $this->assertSame(1, Lead::where('tenant_id', $this->tenant->id)->count());
+        $lead->refresh();
+        $this->assertSame('qualificado', $lead->stage);
+
+        // Atividade registrada no mesmo lead
         $this->assertDatabaseHas('lead_activities', [
             'lead_id' => $lead->id,
             'type' => 'whatsapp',

@@ -21,21 +21,65 @@ class LeadService
     public function findOrCreate(int $tenantId, array $attributes, string $source, ?Cliente $cliente = null): Lead
     {
         $email = filled($attributes['email'] ?? null) ? Str::lower(trim($attributes['email'])) : null;
+        $rawPhone = $attributes['phone'] ?? $cliente?->phone;
+        $cleanPhone = $rawPhone ? preg_replace('/\D/', '', (string) $rawPhone) : null;
+        $phoneSuffix = ($cleanPhone && strlen($cleanPhone) >= 8) ? substr($cleanPhone, -8) : null;
+        $hyphenPattern = $phoneSuffix ? substr($phoneSuffix, 0, 4).'-'.substr($phoneSuffix, 4) : null;
 
         $lead = Lead::forTenant($tenantId)
             ->whereNull('anonymized_at')
-            ->where(function ($q) use ($email, $cliente) {
+            ->where(function ($q) use ($email, $cliente, $cleanPhone, $phoneSuffix, $hyphenPattern) {
                 $q->when($cliente, fn ($q) => $q->orWhere('cliente_id', $cliente->id))
-                    ->when($email, fn ($q) => $q->orWhere('email', $email));
+                    ->when($email, fn ($q) => $q->orWhere('email', $email))
+                    ->when($cleanPhone, fn ($q) => $q->orWhere('phone', 'like', "%{$cleanPhone}%"))
+                    ->when($phoneSuffix, fn ($q) => $q->orWhere('phone', 'like', "%{$phoneSuffix}%"))
+                    ->when($hyphenPattern, fn ($q) => $q->orWhere('phone', 'like', "%{$hyphenPattern}%"));
             })
-            ->when(! $cliente && ! $email, fn ($q) => $q->whereRaw('1 = 0'))
+            ->when(! $cliente && ! $email && ! $cleanPhone, fn ($q) => $q->whereRaw('1 = 0'))
             ->orderByRaw("stage in ('ganho','perdido')")
             ->latest('id')
             ->first();
 
+        // Se não localizou por SQL direto mas temos telefone, faz busca resiliente a formatação (ex: (91) 8258-6886 vs 559182586886)
+        if (! $lead && $phoneSuffix) {
+            $candidates = Lead::forTenant($tenantId)
+                ->whereNull('anonymized_at')
+                ->whereNotNull('phone')
+                ->whereIn('stage', Lead::OPEN_STAGES)
+                ->latest('id')
+                ->get();
+
+            foreach ($candidates as $candidate) {
+                $candidateClean = preg_replace('/\D/', '', (string) $candidate->phone);
+                if (
+                    $candidateClean === $cleanPhone ||
+                    ($candidateClean && str_ends_with($candidateClean, $phoneSuffix)) ||
+                    ($cleanPhone && str_ends_with($cleanPhone, $candidateClean))
+                ) {
+                    $lead = $candidate;
+                    break;
+                }
+            }
+        }
+
         if ($lead) {
+            $updates = [];
             if ($cliente && ! $lead->cliente_id) {
-                $lead->forceFill(['cliente_id' => $cliente->id])->save();
+                $updates['cliente_id'] = $cliente->id;
+            }
+            if ($cliente && ($lead->name === 'Sem nome' || str_starts_with($lead->name, 'Contato WhatsApp'))) {
+                $updates['name'] = $cliente->name;
+            } elseif (! empty($attributes['name']) && (str_starts_with($lead->name, 'Contato WhatsApp') || $lead->name === 'Sem nome') && ! str_starts_with($attributes['name'], 'Contato WhatsApp')) {
+                $updates['name'] = $attributes['name'];
+            }
+            if ($cliente?->company_name && empty($lead->company)) {
+                $updates['company'] = $cliente->company_name;
+            }
+            if ($cliente?->email && empty($lead->email)) {
+                $updates['email'] = $cliente->email;
+            }
+            if (! empty($updates)) {
+                $lead->forceFill($updates)->save();
             }
 
             return $lead;

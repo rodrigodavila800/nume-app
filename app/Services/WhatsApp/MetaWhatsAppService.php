@@ -65,18 +65,47 @@ class MetaWhatsAppService
         $tenant = Tenant::first() ?? new Tenant(['id' => 1]);
         $tenantId = $tenant->id;
 
-        // 2. Localiza se já existe um Cliente cadastrado com esse telefone
+        // 2. Localiza se já existe um Cliente cadastrado com esse telefone (resiliente a DDI, DDD, parênteses e traços)
         $cleanPhone = preg_replace('/\D/', '', $from);
+        $phoneSuffix = strlen($cleanPhone) >= 8 ? substr($cleanPhone, -8) : $cleanPhone;
+        $hyphenPattern = strlen($phoneSuffix) >= 8 ? substr($phoneSuffix, -8, 4).'-'.substr($phoneSuffix, -4) : null;
+
         $cliente = Cliente::withoutGlobalScope('tenant')
             ->where('tenant_id', $tenantId)
-            ->where('phone', 'like', "%{$cleanPhone}%")
+            ->where(function ($query) use ($cleanPhone, $phoneSuffix, $hyphenPattern) {
+                $query->where('phone', 'like', "%{$cleanPhone}%")
+                    ->orWhere('phone', 'like', "%{$phoneSuffix}%")
+                    ->when($hyphenPattern, fn ($q) => $q->orWhere('phone', 'like', "%{$hyphenPattern}%"));
+            })
             ->first();
 
-        // 3. Registra ou localiza o Lead no CRM
+        if (! $cliente && $phoneSuffix) {
+            $candidates = Cliente::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenantId)
+                ->whereNotNull('phone')
+                ->get();
+
+            foreach ($candidates as $cand) {
+                $candClean = preg_replace('/\D/', '', (string) $cand->phone);
+                if (
+                    $candClean === $cleanPhone ||
+                    ($candClean && str_ends_with($candClean, $phoneSuffix)) ||
+                    ($cleanPhone && str_ends_with($cleanPhone, $candClean))
+                ) {
+                    $cliente = $cand;
+                    break;
+                }
+            }
+        }
+
+        // Extrai nome do perfil do WhatsApp, se enviado pela Meta
+        $contactName = $changes['contacts'][0]['profile']['name'] ?? null;
+
+        // 3. Registra ou localiza o Lead no CRM (evita duplicatas e reaproveita lead existente)
         $lead = $this->leadService->findOrCreate(
             $tenantId,
             [
-                'name' => $cliente?->name ?? "Contato WhatsApp {$from}",
+                'name' => $cliente?->name ?? ($contactName ? "{$contactName}" : "Contato WhatsApp {$from}"),
                 'phone' => $from,
                 'email' => $cliente?->email,
                 'company' => $cliente?->company_name,

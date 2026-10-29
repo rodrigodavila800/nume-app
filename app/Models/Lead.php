@@ -19,7 +19,7 @@ class Lead extends Model
 
     public const OPEN_STAGES = ['novo', 'contato', 'qualificado', 'proposta', 'negociacao'];
 
-    public const SOURCES = ['manual', 'portal_register', 'storefront', 'quote_request', 'sales_chat', 'referral', 'api', 'social'];
+    public const SOURCES = ['manual', 'portal_register', 'storefront', 'quote_request', 'sales_chat', 'referral', 'api', 'social', 'whatsapp'];
 
     public const LEGAL_BASES = ['consent', 'contract', 'legitimate_interest'];
 
@@ -85,6 +85,7 @@ class Lead extends Model
             'referral' => __('Indicação'),
             'api' => __('API'),
             'social' => __('Redes sociais'),
+            'whatsapp' => __('WhatsApp'),
         ];
     }
 
