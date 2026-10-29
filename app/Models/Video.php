@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
+use App\Traits\HasEmbeddableVideo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,15 +11,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
-use App\Traits\BelongsToTenant;
-use App\Traits\HasEmbeddableVideo;
+use Illuminate\Support\Str;
 
 class Video extends Model
 {
-    use HasFactory, BelongsToTenant, HasEmbeddableVideo;
+    use BelongsToTenant, HasEmbeddableVideo, HasFactory;
 
     protected $fillable = [
         'tenant_id',
+        'uuid',
         'production_id',
         'title',
         'description',
@@ -48,19 +50,30 @@ class Video extends Model
     protected function casts(): array
     {
         return [
-            'published_at'          => 'datetime',
-            'sofi_hashtags'         => 'array',
+            'published_at' => 'datetime',
+            'sofi_hashtags' => 'array',
             'sofi_seo_generated_at' => 'datetime',
-            'source_purged_at'      => 'datetime',
+            'source_purged_at' => 'datetime',
         ];
     }
 
     protected static function booted(): void
     {
+        static::creating(function (Video $video) {
+            if (empty($video->uuid)) {
+                $video->uuid = (string) Str::uuid();
+            }
+        });
+
         // O arquivo só é apagado depois que o registro saiu do banco.
         static::deleted(function (Video $video) {
             $video->deleteSourceFile();
         });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
     }
 
     /**
@@ -198,13 +211,14 @@ class Video extends Model
 
     /**
      * Gera Magic Link assinado para aprovação do vídeo final sem login/senha.
+     * Utiliza sempre UUID para não expor IDs numéricos sequenciais.
      */
     public function getMagicApprovalUrl(int $days = 14): string
     {
-        return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+        return URL::temporarySignedRoute(
             'magic.videos.show',
             now()->addDays($days),
-            ['video' => $this->id]
+            ['video' => $this->uuid ?: $this->id]
         );
     }
 
@@ -219,7 +233,7 @@ class Video extends Model
 
         $text = "Olá {$clienteName}! O corte final do vídeo *{$title}* está disponível para visualização e aprovação com 1 clique:\n\n{$url}";
 
-        return 'https://api.whatsapp.com/send?text=' . urlencode($text);
+        return 'https://api.whatsapp.com/send?text='.urlencode($text);
     }
 
     /**

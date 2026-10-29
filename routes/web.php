@@ -40,6 +40,7 @@ use App\Http\Controllers\VideoTypeController;
 use App\Http\Controllers\Webhooks\RedsysWebhookController;
 use App\Http\Controllers\Webhooks\UploadPostWebhookController;
 use App\Http\Controllers\Webhooks\WhatsAppWebhookController;
+use App\Models\Production;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/lang/{locale}', function ($locale) {
@@ -223,8 +224,9 @@ Route::middleware('auth')->group(function () {
     Route::post('productions/{production}/notify-cliente', [ProductionController::class, 'notifyCliente'])
         ->name('productions.notify-cliente');
     Route::get('productions/{production}/status', function ($production) {
-        $uuid = $production instanceof \App\Models\Production ? $production->uuid : (string) $production;
-        return redirect()->to('/productions/' . $uuid);
+        $uuid = $production instanceof Production ? $production->uuid : (string) $production;
+
+        return redirect()->to('/productions/'.$uuid);
     });
 
     // Monitoramento e Auditoria de Distribuição Social
@@ -348,6 +350,8 @@ Route::prefix('magic')->name('magic.')->middleware('signed')->group(function () 
         ->name('videos.approval-legacy');
     Route::post('/videos/{video}/approve', [MagicApprovalController::class, 'approveVideo'])
         ->name('videos.approve');
+    Route::post('/videos/{video}/reject', [MagicApprovalController::class, 'rejectVideo'])
+        ->name('videos.reject');
 });
 
 // Aprovação e Checkout Público de Orçamento via Token

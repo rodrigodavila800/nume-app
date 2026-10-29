@@ -113,8 +113,8 @@
 
             <!-- Painel de Ações do Cliente -->
             @if($video->status !== 'ready' && $video->status !== 'published')
-                <div class="border-t border-zinc-800 pt-5">
-                    <form method="POST" action="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('magic.videos.approve', now()->addMinutes(60), ['video' => $video->id]) }}">
+                <div class="border-t border-zinc-800 pt-5 space-y-3">
+                    <form method="POST" action="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('magic.videos.approve', now()->addMinutes(60), ['video' => $video->uuid ?: $video->id]) }}">
                         @csrf
                         <button type="submit"
                                 class="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 hover:scale-[1.01] active:scale-[0.99] transition-all">
@@ -124,6 +124,24 @@
                             <span>{{ __('Aprovar Vídeo Final (1-Clique)') }}</span>
                         </button>
                     </form>
+
+                    <!-- Botão / Formulário para solicitar ajuste -->
+                    <details class="group rounded-2xl border border-zinc-800 bg-zinc-950/50 p-4 transition-all">
+                        <summary class="flex cursor-pointer items-center justify-between text-xs font-bold text-zinc-400 hover:text-zinc-200">
+                            <span>{{ __('Precisa de algum ajuste no vídeo?') }}</span>
+                            <span class="transition-transform group-open:rotate-180">▼</span>
+                        </summary>
+                        <form method="POST" action="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('magic.videos.reject', now()->addMinutes(60), ['video' => $video->uuid ?: $video->id]) }}" class="mt-4 space-y-3">
+                            @csrf
+                            <textarea name="notes" rows="3" required minlength="5" maxlength="1000"
+                                      placeholder="{{ __('Descreva os ajustes necessários com minutagem (ex: ajuste no áudio em 00:15)...') }}"
+                                      class="w-full rounded-xl bg-zinc-900 border border-zinc-700 p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"></textarea>
+                            <button type="submit"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs transition-colors">
+                                {{ __('Enviar Solicitação de Ajuste') }}
+                            </button>
+                        </form>
+                    </details>
                 </div>
             @else
                 <div class="border-t border-zinc-800 pt-4 text-center">
