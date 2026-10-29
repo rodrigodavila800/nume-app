@@ -69,10 +69,7 @@ class MetaWhatsAppService
         $cleanPhone = preg_replace('/\D/', '', $from);
         $cliente = Cliente::withoutGlobalScope('tenant')
             ->where('tenant_id', $tenantId)
-            ->where(function ($q) use ($cleanPhone) {
-                $q->where('phone', 'like', "%{$cleanPhone}%")
-                    ->orWhere('whatsapp', 'like', "%{$cleanPhone}%");
-            })
+            ->where('phone', 'like', "%{$cleanPhone}%")
             ->first();
 
         // 3. Registra ou localiza o Lead no CRM
@@ -249,4 +246,3 @@ class MetaWhatsAppService
             : 'Olá! Sou a Sofi da NUME Creative. Recebi sua mensagem e já registrei no nosso sistema. Em breve nossa equipe retornará com todos os detalhes!';
     }
 }
-
