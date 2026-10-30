@@ -6,13 +6,15 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Login do Facebook (Facebook Login for Business) para Páginas e Instagram profissional.
  *
  * Fluxo: código -> token curto -> token longo do usuário (60 dias) -> tokens das Páginas
  * (sem validade fixa). Tokens vão no header Authorization e toda chamada leva appsecret_proof.
- * Nada aqui grava log; erros saem como OAuthException com código curto.
+ * O único log é o da chamada que falhou (nome e códigos da Meta); erros saem como
+ * OAuthException com código curto.
  */
 class MetaOAuthClient
 {
@@ -91,31 +93,44 @@ class MetaOAuthClient
      */
     public function pages(string $userToken): array
     {
-        $response = $this->get($userToken, 'me/accounts', [
+        // Lotes pequenos: a Meta responde com o erro 1 ("reduza a quantidade de dados") quando se pede
+        // muitas Páginas de uma vez com Instagram e foto aninhados.
+        $query = [
             'fields' => 'id,name,access_token,tasks,picture{url},instagram_business_account{id,username,profile_picture_url}',
-            'limit' => 100,
-        ]);
+            'limit' => max(1, (int) config('social.meta.pages_batch_size', 25)),
+        ];
 
         $pages = [];
-        foreach ($response->json('data', []) as $page) {
-            if (! is_array($page) || empty($page['id']) || ! is_string($page['access_token'] ?? null)) {
-                continue;
+        for ($batch = 0, $maxBatches = max(1, (int) config('social.meta.pages_max_batches', 8)); $batch < $maxBatches; $batch++) {
+            $response = $this->get($userToken, 'me/accounts', $query);
+
+            foreach ($response->json('data', []) as $page) {
+                if (! is_array($page) || empty($page['id']) || ! is_string($page['access_token'] ?? null)) {
+                    continue;
+                }
+
+                $instagram = $page['instagram_business_account'] ?? null;
+
+                $pages[] = [
+                    'id' => (string) $page['id'],
+                    'name' => isset($page['name']) ? (string) $page['name'] : null,
+                    'access_token' => $page['access_token'],
+                    'tasks' => array_values(array_filter($page['tasks'] ?? [], 'is_string')),
+                    'picture' => $page['picture']['data']['url'] ?? null,
+                    'instagram' => is_array($instagram) && ! empty($instagram['id']) ? [
+                        'id' => (string) $instagram['id'],
+                        'username' => $instagram['username'] ?? null,
+                        'picture' => $instagram['profile_picture_url'] ?? null,
+                    ] : null,
+                ];
             }
 
-            $instagram = $page['instagram_business_account'] ?? null;
+            $after = $response->json('paging.cursors.after');
+            if (! is_string($after) || $after === '' || ! is_string($response->json('paging.next'))) {
+                break;
+            }
 
-            $pages[] = [
-                'id' => (string) $page['id'],
-                'name' => isset($page['name']) ? (string) $page['name'] : null,
-                'access_token' => $page['access_token'],
-                'tasks' => array_values(array_filter($page['tasks'] ?? [], 'is_string')),
-                'picture' => $page['picture']['data']['url'] ?? null,
-                'instagram' => is_array($instagram) && ! empty($instagram['id']) ? [
-                    'id' => (string) $instagram['id'],
-                    'username' => $instagram['username'] ?? null,
-                    'picture' => $instagram['profile_picture_url'] ?? null,
-                ] : null,
-            ];
+            $query['after'] = $after;
         }
 
         return $pages;
@@ -156,6 +171,15 @@ class MetaOAuthClient
         }
 
         if (! $response->successful()) {
+            // Só o nome da chamada e os códigos da Meta (nunca token, corpo ou mensagem), para saber
+            // em qual etapa do login a conexão falhou.
+            Log::warning('social.meta.graph_failed', [
+                'step' => $path,
+                'http_status' => $response->status(),
+                'code' => $response->json('error.code'),
+                'subcode' => $response->json('error.error_subcode'),
+            ]);
+
             throw new OAuthException(self::errorReason($response, 'graph_request_failed'), $response->status());
         }
 

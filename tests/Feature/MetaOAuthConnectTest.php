@@ -109,6 +109,55 @@ class MetaOAuthConnectTest extends TestCase
         }
     }
 
+    public function test_pages_are_requested_in_small_batches_following_the_pagination(): void
+    {
+        config(['social.meta.pages_batch_size' => 2]);
+
+        $first = [$this->page('111', 'Pagina Um'), $this->page('222', 'Pagina Dois')];
+        $second = [$this->page('333', 'Pagina Tres')];
+
+        Http::fake([
+            self::GRAPH.'/oauth/access_token' => fn (HttpRequest $request) => Http::response([
+                'access_token' => ($request['grant_type'] ?? null) === 'fb_exchange_token' ? 'token-longo-usuario' : 'token-curto-usuario',
+            ]),
+            self::GRAPH.'/me/permissions*' => Http::response(['data' => array_map(fn ($p) => ['permission' => $p, 'status' => 'granted'], self::ALL_PERMISSIONS)]),
+            self::GRAPH.'/me/accounts*' => fn (HttpRequest $request) => str_contains($request->url(), 'after=cursor-um')
+                ? Http::response(['data' => $second, 'paging' => ['cursors' => ['after' => 'cursor-dois']]])
+                : Http::response(['data' => $first, 'paging' => ['cursors' => ['after' => 'cursor-um'], 'next' => 'https://graph.facebook.com/proxima']]),
+        ]);
+
+        $this->get($this->callbackUrl($this->start()))->assertRedirect(route('portal.social.meta.pages'));
+
+        $this->get(route('portal.social.meta.pages'))
+            ->assertSee('Pagina Um')
+            ->assertSee('Pagina Dois')
+            ->assertSee('Pagina Tres');
+
+        Http::assertSent(fn (HttpRequest $request) => str_contains($request->url(), '/me/accounts') && str_contains($request->url(), 'limit=2'));
+    }
+
+    public function test_a_failing_graph_call_logs_only_the_step_and_the_meta_codes(): void
+    {
+        Http::fake([
+            self::GRAPH.'/oauth/access_token' => fn (HttpRequest $request) => Http::response([
+                'access_token' => ($request['grant_type'] ?? null) === 'fb_exchange_token' ? 'token-longo-usuario' : 'token-curto-usuario',
+            ]),
+            self::GRAPH.'/me/permissions*' => Http::response(['data' => array_map(fn ($p) => ['permission' => $p, 'status' => 'granted'], self::ALL_PERMISSIONS)]),
+            self::GRAPH.'/me/accounts*' => Http::response(['error' => ['code' => 1, 'message' => 'Mensagem com token-vazado', 'type' => 'OAuthException']], 500),
+        ]);
+
+        $this->get($this->callbackUrl($this->start()))
+            ->assertRedirect(route('portal.social.index'))
+            ->assertSessionHas('error');
+
+        $line = collect($this->logs)->first(fn (string $log) => str_starts_with($log, 'social.meta.graph_failed'));
+        $this->assertNotNull($line);
+        $this->assertStringContainsString('"step":"me\/accounts"', $line);
+        $this->assertStringContainsString('"code":1', $line);
+        $this->assertStringNotContainsString('token-', $line);
+        $this->assertStringNotContainsString('Mensagem com', $line);
+    }
+
     public function test_page_without_instagram_connects_only_facebook_and_explains(): void
     {
         $this->fakeGraph([$this->page('111', 'Clinica Ficticia')]);

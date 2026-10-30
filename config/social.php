@@ -136,6 +136,10 @@ return [
         // Validade da lista de Páginas guardada (criptografada) enquanto o cliente escolhe uma.
         'page_selection_minutes' => 10,
 
+        // Páginas pedidas por vez à Graph API (lotes grandes causam o erro 1 da Meta) e quantos lotes no máximo.
+        'pages_batch_size' => 25,
+        'pages_max_batches' => 8,
+
         // Espera do processamento do vídeo pela Meta antes de publicar (a Meta sugere checar
         // por até 5 minutos). Passou disso, o job tenta de novo mais tarde sem reenviar o arquivo.
         'poll_attempts' => 20,
