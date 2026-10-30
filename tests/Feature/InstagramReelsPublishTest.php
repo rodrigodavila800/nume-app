@@ -84,6 +84,19 @@ class InstagramReelsPublishTest extends TestCase
         ]);
     }
 
+    public function test_an_account_from_the_unified_instagram_login_publishes_the_same_way(): void
+    {
+        $this->connection->update(['provider' => 'instagram']);
+        $this->fakeMeta(statuses: ['FINISHED']);
+        $publication = $this->publication();
+
+        $this->runJob($publication)->assertNotReleased();
+
+        $this->assertSame('publicado', $publication->fresh()->status);
+        $this->assertCount(1, $this->uploads);
+        Http::assertSent(fn (HttpRequest $request) => str_starts_with($request->url(), self::GRAPH.'/178414/media?') && $request['upload_type'] === 'resumable');
+    }
+
     public function test_uploads_the_file_waits_processing_and_publishes_the_reel(): void
     {
         $this->fakeMeta(statuses: ['IN_PROGRESS', 'FINISHED']);

@@ -51,11 +51,18 @@ class SocialDistributionController extends Controller
             ->map(fn (PlataformaAlvo $platform) => $platform->value)
             ->values();
         // Rede => chave do conector que a conecta direto (só quando configurado e liberado).
+        // Com mais de um conector para a rede, vale o primeiro configurado da lista.
         $nativeAvailable = [];
-        foreach (config('social.platform_connectors', []) as $platform => $key) {
-            $connector = $this->connectors->for($key);
-            if ($connector?->isConfigured() && $this->router->routeFor($platform) === SocialPublisherRouter::NATIVE) {
-                $nativeAvailable[$platform] = $key;
+        foreach (config('social.platform_connectors', []) as $platform => $keys) {
+            if ($this->router->routeFor($platform) !== SocialPublisherRouter::NATIVE) {
+                continue;
+            }
+
+            foreach ((array) $keys as $key) {
+                if ($this->connectors->for($key)?->isConfigured()) {
+                    $nativeAvailable[$platform] = $key;
+                    break;
+                }
             }
         }
 

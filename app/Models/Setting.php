@@ -95,6 +95,7 @@ class Setting extends Model
             $metaClientId = static::get('meta_client_id') ?: config('services.meta.client_id');
             $metaClientSecret = static::get('meta_client_secret') ?: config('services.meta.client_secret');
             $metaConfigId = static::get('meta_config_id') ?: config('services.meta.config_id');
+            $metaInstagramConfigId = static::get('meta_instagram_config_id') ?: config('services.meta.instagram_config_id');
 
             $threadsClientId = static::get('threads_client_id') ?: config('services.threads.client_id');
             $threadsClientSecret = static::get('threads_client_secret') ?: config('services.threads.client_secret');
@@ -122,6 +123,7 @@ class Setting extends Model
                 'services.meta.client_id' => $metaClientId,
                 'services.meta.client_secret' => $metaClientSecret,
                 'services.meta.config_id' => $metaConfigId,
+                'services.meta.instagram_config_id' => $metaInstagramConfigId,
                 'services.threads.client_id' => $threadsClientId,
                 'services.threads.client_secret' => $threadsClientSecret,
                 'services.tiktok.client_key' => $tiktokClientKey,

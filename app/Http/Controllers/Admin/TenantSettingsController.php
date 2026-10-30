@@ -68,6 +68,7 @@ class TenantSettingsController extends Controller
             'x_client_secret' => ['nullable', 'string', 'max:255'],
             'threads_client_id' => ['nullable', 'string', 'max:255'],
             'threads_client_secret' => ['nullable', 'string', 'max:255'],
+            'meta_instagram_config_id' => ['nullable', 'string', 'max:255'],
             'pinterest_client_id' => ['nullable', 'string', 'max:255'],
             'pinterest_client_secret' => ['nullable', 'string', 'max:255'],
         ]);
@@ -97,6 +98,7 @@ class TenantSettingsController extends Controller
             'linkedin_client_id',
             'x_client_id',
             'threads_client_id',
+            'meta_instagram_config_id',
             'pinterest_client_id',
         ];
 
@@ -167,12 +169,24 @@ class TenantSettingsController extends Controller
                 'secret_field' => 'meta_client_secret',
                 'secret_label' => 'Meta App Secret',
                 'has_secret' => ! empty(Setting::get('meta_client_secret') ?: config('services.meta.client_secret')),
-                'extra_field' => 'meta_config_id',
-                'extra_label' => 'Config ID (Login for Business — opcional)',
-                'extra_value' => (string) (Setting::get('meta_config_id') ?: config('services.meta.config_id', '')),
+                'extras' => [
+                    [
+                        'field' => 'meta_config_id',
+                        'label' => 'Config ID (Login for Business — opcional)',
+                        'value' => (string) (Setting::get('meta_config_id') ?: config('services.meta.config_id', '')),
+                        'placeholder' => __('Opcional — usado no Meta Login for Business'),
+                    ],
+                    [
+                        'field' => 'meta_instagram_config_id',
+                        'label' => 'Config ID do Instagram (login unificado, sem Página)',
+                        'value' => (string) (Setting::get('meta_instagram_config_id') ?: config('services.meta.instagram_config_id', '')),
+                        'placeholder' => __('Instagram API > API setup with Unified login > configuração'),
+                    ],
+                ],
                 'configured' => $this->connectorRegistry->for('meta')?->isConfigured() ?? false,
                 'callbacks' => [
                     route('portal.social.oauth.callback', 'meta'),
+                    route('portal.social.oauth.callback', 'instagram'),
                 ],
             ],
             [

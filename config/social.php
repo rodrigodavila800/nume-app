@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\SocialPublishing\Connectors\InstagramConnector;
 use App\Services\SocialPublishing\Connectors\LinkedInConnector;
 use App\Services\SocialPublishing\Connectors\MetaConnector;
 use App\Services\SocialPublishing\Connectors\PinterestConnector;
@@ -96,6 +97,7 @@ return [
     'connectors' => [
         'youtube' => YouTubeConnector::class,
         'meta' => MetaConnector::class,
+        'instagram' => InstagramConnector::class,
         'threads' => ThreadsConnector::class,
         'tiktok' => TikTokConnector::class,
         'linkedin' => LinkedInConnector::class,
@@ -104,9 +106,11 @@ return [
     ],
 
     // Qual conector conecta cada rede (Instagram e Facebook saem do mesmo login da Meta).
+    // Lista = ordem de preferência: o primeiro configurado é o oferecido no portal. O Instagram
+    // prefere o login unificado (não exige Página) e cai no da Meta se ele não estiver configurado.
     'platform_connectors' => [
         'youtube' => 'youtube',
-        'instagram' => 'meta',
+        'instagram' => ['instagram', 'meta'],
         'facebook' => 'meta',
         'threads' => 'threads',
         'tiktok' => 'tiktok',

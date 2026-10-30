@@ -193,19 +193,19 @@
                             </div>
                         </div>
 
-                        @if (! empty($provider['extra_field']))
+                        @foreach ($provider['extras'] ?? [] as $extra)
                             <div class="space-y-1">
-                                <label for="{{ $provider['extra_field'] }}" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                                    {{ $provider['extra_label'] }}
+                                <label for="{{ $extra['field'] }}" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                                    {{ $extra['label'] }}
                                 </label>
                                 <input type="text"
-                                    id="{{ $provider['extra_field'] }}"
-                                    name="{{ $provider['extra_field'] }}"
-                                    value="{{ old($provider['extra_field'], $provider['extra_value'] ?? '') }}"
-                                    placeholder="{{ __('Opcional — usado no Meta Login for Business') }}"
+                                    id="{{ $extra['field'] }}"
+                                    name="{{ $extra['field'] }}"
+                                    value="{{ old($extra['field'], $extra['value']) }}"
+                                    placeholder="{{ $extra['placeholder'] }}"
                                     class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 focus:border-orange-500 focus:outline-none transition font-mono">
                             </div>
-                        @endif
+                        @endforeach
 
                         <div class="pt-1 border-t border-zinc-900 flex flex-col gap-1">
                             <span class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">

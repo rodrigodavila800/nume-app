@@ -59,6 +59,9 @@ return [
         'config_id' => env('META_LOGIN_CONFIG_ID'),
         // Vazio: usa a rota portal.social.oauth.callback (meta).
         'redirect' => env('META_REDIRECT_URI'),
+        // Configuração do login unificado do Instagram (sem Página do Facebook), criada em
+        // Instagram API > API setup with Unified login. Usa o mesmo App ID e segredo acima.
+        'instagram_config_id' => env('META_INSTAGRAM_CONFIG_ID'),
     ],
 
     // App do X Developer Platform (OAuth 2.0 com PKCE). A API é paga por uso (créditos pré-pagos).

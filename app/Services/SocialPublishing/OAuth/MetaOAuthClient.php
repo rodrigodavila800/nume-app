@@ -33,18 +33,30 @@ class MetaOAuthClient
         return config('services.meta.redirect') ?: route('portal.social.oauth.callback', 'meta');
     }
 
-    public function authorizationUrl(string $state): string
+    /** Retorno do login unificado do Instagram (sem Página). */
+    public function instagramRedirectUri(): string
+    {
+        return route('portal.social.oauth.callback', 'instagram');
+    }
+
+    /**
+     * Sem argumentos: login da Página (configuração opcional ou lista de escopos). Com $configId e
+     * $redirectUri: outra configuração do Facebook Login for Business (ex.: login unificado do Instagram).
+     */
+    public function authorizationUrl(string $state, ?string $configId = null, ?string $redirectUri = null): string
     {
         $params = [
             'client_id' => config('services.meta.client_id'),
-            'redirect_uri' => $this->redirectUri(),
+            'redirect_uri' => $redirectUri ?? $this->redirectUri(),
             'response_type' => 'code',
             'state' => $state,
         ];
 
+        $configId ??= config('services.meta.config_id');
+
         // Facebook Login for Business: a configuração do app define as permissões.
-        if (filled(config('services.meta.config_id'))) {
-            $params['config_id'] = config('services.meta.config_id');
+        if (filled($configId)) {
+            $params['config_id'] = $configId;
         } else {
             $params['scope'] = implode(',', config('social.meta.scopes'));
         }
@@ -68,6 +80,42 @@ class MetaOAuthClient
             'grant_type' => 'fb_exchange_token',
             'fb_exchange_token' => $short['access_token'],
         ]);
+    }
+
+    /**
+     * Código do login unificado -> token de usuário do sistema do negócio do cliente (SUAT).
+     * Não passa pela troca por token longo: a validade vem da configuração (null = sem expiração).
+     *
+     * @return array{access_token: string, expires_in: ?int}
+     */
+    public function exchangeBusinessCode(string $code, string $redirectUri): array
+    {
+        return $this->tokenRequest([
+            'redirect_uri' => $redirectUri,
+            'code' => $code,
+        ]);
+    }
+
+    /**
+     * Contas do Instagram que o cliente atribuiu ao app no login unificado.
+     *
+     * @return list<array{id: string, username: ?string}>
+     */
+    public function assignedInstagramAccounts(string $businessToken): array
+    {
+        $response = $this->get($businessToken, 'me/assigned_instagram_accounts', ['fields' => 'id,username', 'limit' => 25]);
+
+        $accounts = [];
+        foreach ($response->json('data', []) as $account) {
+            if (is_array($account) && ! empty($account['id'])) {
+                $accounts[] = [
+                    'id' => (string) $account['id'],
+                    'username' => isset($account['username']) ? (string) $account['username'] : null,
+                ];
+            }
+        }
+
+        return $accounts;
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Controllers\Portal\SupportController;
 use App\Http\Controllers\Portal\AuthenticatedSessionController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\MarketingPlanController;
+use App\Http\Controllers\Portal\InstagramAccountSelectionController;
 use App\Http\Controllers\Portal\MetaPageSelectionController;
 use App\Http\Controllers\Portal\PackController;
 use App\Http\Controllers\Portal\PinterestComposerController;
@@ -127,17 +128,21 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
             // App próprio da NUME (OAuth oficial da rede)
             Route::get('conectar/{platform}', [SocialConnectionController::class, 'redirect'])
-                ->whereIn('platform', ['youtube', 'meta', 'threads', 'tiktok', 'linkedin', 'pinterest', 'x'])
+                ->whereIn('platform', ['youtube', 'meta', 'instagram', 'threads', 'tiktok', 'linkedin', 'pinterest', 'x'])
                 ->middleware('throttle:social')
                 ->name('oauth.redirect');
             Route::get('oauth/{platform}/callback', [SocialConnectionController::class, 'callback'])
-                ->whereIn('platform', ['youtube', 'meta', 'threads', 'tiktok', 'linkedin', 'pinterest', 'x'])
+                ->whereIn('platform', ['youtube', 'meta', 'instagram', 'threads', 'tiktok', 'linkedin', 'pinterest', 'x'])
                 ->middleware('throttle:social')
                 ->name('oauth.callback');
             Route::get('meta/paginas', [MetaPageSelectionController::class, 'show'])->name('meta.pages');
             Route::post('meta/paginas', [MetaPageSelectionController::class, 'store'])
                 ->middleware('throttle:social')
                 ->name('meta.pages.store');
+            Route::get('instagram/contas', [InstagramAccountSelectionController::class, 'show'])->name('instagram.accounts');
+            Route::post('instagram/contas', [InstagramAccountSelectionController::class, 'store'])
+                ->middleware('throttle:social')
+                ->name('instagram.accounts.store');
             Route::delete('conexoes/{socialConnection}', [SocialConnectionController::class, 'destroy'])
                 ->whereNumber('socialConnection')
                 ->middleware('throttle:social')

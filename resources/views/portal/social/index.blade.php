@@ -196,7 +196,11 @@
                                 <p class="text-[11px] text-zinc-500 mt-0.5">
                                     {{ __('Conecte direto pela NUME: o vídeo sai do nosso servidor para a sua conta, sem intermediários.') }}
                                 </p>
-                                @if($platform->value === 'instagram')
+                                @if($platform->value === 'instagram' && $canConnectNative === 'instagram')
+                                    <p class="text-[11px] text-zinc-500 mt-1">
+                                        {{ __('Entre com a sua conta profissional do Instagram (Empresa ou Criador). Não precisa de Página do Facebook.') }}
+                                    </p>
+                                @elseif($platform->value === 'instagram')
                                     <p class="text-[11px] text-zinc-500 mt-1">
                                         {{ __('Precisa ser conta profissional (Empresa ou Criador) ligada a uma Página do Facebook. A Página é conectada junto.') }}
                                     </p>
