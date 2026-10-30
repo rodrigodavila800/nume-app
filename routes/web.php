@@ -40,6 +40,7 @@ use App\Http\Controllers\VideoTypeController;
 use App\Http\Controllers\Webhooks\RedsysWebhookController;
 use App\Http\Controllers\Webhooks\UploadPostWebhookController;
 use App\Http\Controllers\Webhooks\WhatsAppWebhookController;
+use App\Http\Controllers\WhatsAppInboxController;
 use App\Models\Production;
 use Illuminate\Support\Facades\Route;
 
@@ -271,6 +272,10 @@ Route::middleware('auth')->group(function () {
         ->parameters(['leads' => 'lead'])
         ->names('crm.leads')
         ->except('destroy');
+
+    // Central de Mensagens & WhatsApp Inbox
+    Route::get('/inbox', [WhatsAppInboxController::class, 'index'])->name('inbox.index');
+    Route::post('/inbox/{conversation}/responder', [WhatsAppInboxController::class, 'reply'])->whereNumber('conversation')->name('inbox.reply');
 
     Route::get('/configuracoes/api-keys', [ApiKeyController::class, 'index'])
         ->name('api_keys.index');
