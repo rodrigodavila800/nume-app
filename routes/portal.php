@@ -145,23 +145,24 @@ Route::prefix('portal')->name('portal.')->group(function () {
         });
 
         // Disparo e consulta de status de publicação de vídeo
-        // TikTok: tela própria exigida pelas regras do Direct Post
+        // TikTok: tela própria exigida pelas regras do Direct Post.
+        // {video} é o uuid (Video::getRouteKeyName): sem whereNumber, que bloqueava toda URL.
         Route::get('videos/{video}/tiktok', [TikTokComposerController::class, 'show'])
-            ->whereNumber('video')
+            ->whereUuid('video')
             ->middleware('throttle:social')
             ->name('videos.tiktok');
         Route::post('videos/{video}/tiktok', [TikTokComposerController::class, 'store'])
-            ->whereNumber('video')
+            ->whereUuid('video')
             ->middleware('throttle:social')
             ->name('videos.tiktok.store');
 
         // Pinterest: tela própria para escolher a pasta do pin
         Route::get('videos/{video}/pinterest', [PinterestComposerController::class, 'show'])
-            ->whereNumber('video')
+            ->whereUuid('video')
             ->middleware('throttle:social')
             ->name('videos.pinterest');
         Route::post('videos/{video}/pinterest', [PinterestComposerController::class, 'store'])
-            ->whereNumber('video')
+            ->whereUuid('video')
             ->middleware('throttle:social')
             ->name('videos.pinterest.store');
 
