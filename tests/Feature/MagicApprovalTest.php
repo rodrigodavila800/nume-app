@@ -135,26 +135,24 @@ class MagicApprovalTest extends TestCase
         $this->assertStringContainsString('nova filial', $this->roteiro->rejection_reason);
     }
 
-    public function test_signed_magic_link_resolves_to_magic_video_controller_and_logs_in_client(): void
+    public function test_signed_magic_link_resolves_to_magic_video_controller_without_logging_in(): void
     {
         $signedUrl = $this->video->getMagicApprovalUrl(7);
 
-        // Garante que o link aponta para /m/videos/{video} do MagicVideoController
-        $this->assertStringContainsString('/m/videos/'.$this->video->id, $signedUrl);
+        // Link pelo uuid (nunca id sequencial) e para o MagicVideoController
+        $this->assertStringContainsString('/m/videos/'.$this->video->uuid, $signedUrl);
         $route = app('router')->getRoutes()->getByName('magic.videos.show');
         $this->assertNotNull($route);
         $this->assertSame('App\Http\Controllers\MagicVideoController@show', $route->getActionName());
 
-        $response = $this->get($signedUrl);
-
-        $response->assertStatus(302);
-        $response->assertRedirect(route('portal.productions.show', $this->production->uuid));
-        $this->assertAuthenticatedAs($this->cliente, 'cliente');
+        // Desde a correção de segurança o link mágico só mostra o vídeo: não loga no portal.
+        $this->get($signedUrl)->assertOk()->assertViewIs('magic.video');
+        $this->assertGuest('cliente');
 
         $signedApproveUrl = URL::temporarySignedRoute(
             'magic.videos.approve',
             now()->addHour(),
-            ['video' => $this->video->id]
+            ['video' => $this->video->uuid]
         );
 
         $postResponse = $this->post($signedApproveUrl);
@@ -169,10 +167,10 @@ class MagicApprovalTest extends TestCase
         $signedLegacyUrl = URL::temporarySignedRoute(
             'magic.videos.approval-legacy',
             now()->addDays(7),
-            ['video' => $this->video->id]
+            ['video' => $this->video->uuid]
         );
 
-        $this->assertStringContainsString('/magic/videos/'.$this->video->id, $signedLegacyUrl);
+        $this->assertStringContainsString('/magic/videos/'.$this->video->uuid, $signedLegacyUrl);
         $route = app('router')->getRoutes()->getByName('magic.videos.approval-legacy');
         $this->assertNotNull($route);
         $this->assertSame('App\Http\Controllers\MagicApprovalController@showVideo', $route->getActionName());

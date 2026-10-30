@@ -200,7 +200,8 @@ class VideoUploadAndMediaTest extends TestCase
     {
         $video = $this->videoWithFile();
 
-        $this->get(route('videos.media', $video))->assertForbidden();
+        // A rota de mídia é por id (sempre assinada); o Video usa uuid nas demais rotas.
+        $this->get(route('videos.media', ['video' => $video->id]))->assertForbidden();
 
         $expired = URL::temporarySignedRoute('videos.media', now()->subMinute(), ['video' => $video->id]);
         $this->get($expired)->assertForbidden();

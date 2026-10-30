@@ -71,24 +71,15 @@ class SofiVideoApprovalNotificationTest extends TestCase
         ]);
     }
 
-    public function test_magic_link_authenticates_client_and_redirects_to_production_show(): void
+    public function test_magic_link_shows_the_video_without_logging_the_client_in(): void
     {
         $magicUrl = $this->video->getMagicApprovalUrl(14);
-        $this->assertStringContainsString('/m/videos/' . $this->video->id, $magicUrl);
+        $this->assertStringContainsString('/m/videos/'.$this->video->uuid, $magicUrl);
         $this->assertStringContainsString('signature=', $magicUrl);
 
-        // Cliente não está logado inicialmente
+        // Desde a correção de segurança o link mágico mostra só este vídeo, sem abrir o portal.
+        $this->get($magicUrl)->assertOk()->assertViewIs('magic.video');
         $this->assertFalse(Auth::guard('cliente')->check());
-
-        // Acessa o Magic Link assinado
-        $response = $this->get($magicUrl);
-
-        // Deve redirecionar para a página da produção no portal do cliente
-        $response->assertRedirect(route('portal.productions.show', $this->production->uuid));
-
-        // Deve ter efetuado o login automático do cliente no guard 'cliente'
-        $this->assertTrue(Auth::guard('cliente')->check());
-        $this->assertEquals($this->cliente->id, Auth::guard('cliente')->id());
     }
 
     public function test_tampered_magic_link_is_rejected_by_hmac_signature(): void

@@ -55,7 +55,7 @@ class SocialConnectionLifecycleTest extends TestCase
         $this->actingAs($this->cliente, 'cliente')->get(route('portal.social.index'))
             ->assertOk()
             ->assertSee(route('portal.social.oauth.redirect', 'youtube'), false)
-            ->assertSee('Conectar YouTube')
+            ->assertSee('Conectar Conta')
             ->assertDontSee('Desconectar');
     }
 

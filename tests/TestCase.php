@@ -33,4 +33,18 @@ abstract class TestCase extends BaseTestCase
         // gasta cota de API paga, depende da internet e deixa a suíte lenta e instável.
         Http::preventStrayRequests();
     }
+
+    /**
+     * O middleware AuthenticateSession (sessão única por usuário) guarda na sessão o hash da senha de
+     * quem fez login. No navegador cada pessoa tem a própria sessão; no teste, trocar de usuário com
+     * actingAs reaproveita a mesma sessão, o hash não bate e o novo usuário é deslogado (302).
+     * Ao trocar de usuário, o teste começa como uma sessão nova para esse guard.
+     */
+    public function actingAs($user, $guard = null)
+    {
+        $guard ??= config('auth.defaults.guard');
+        $this->app['session']->forget("password_hash_{$guard}");
+
+        return parent::actingAs($user, $guard);
+    }
 }

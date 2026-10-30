@@ -138,7 +138,7 @@ class VideoHostedViewsTest extends TestCase
     {
         $video = $this->hostedVideo();
 
-        $this->get(URL::temporarySignedRoute('magic.videos.approval-legacy', now()->addHour(), ['video' => $video->id]))
+        $this->get(URL::temporarySignedRoute('magic.videos.approval-legacy', now()->addHour(), ['video' => $video->uuid]))
             ->assertOk()
             ->assertSee('/media/videos/'.$video->id, false)
             ->assertSee('disponível para download no seu portal')

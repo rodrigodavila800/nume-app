@@ -185,7 +185,7 @@ class YouTubeOAuthConnectTest extends TestCase
         $this->fakeGoogle(['scope' => 'https://www.googleapis.com/auth/youtube.readonly']);
 
         $this->get($this->callbackUrl($state))
-            ->assertSessionHas('error', 'Para publicar, autorize o envio de vídeos ao seu canal na tela do Google.');
+            ->assertSessionHas('error', 'Para publicar, você precisa marcar a caixinha permitindo gerenciar vídeos no YouTube na tela do Google.');
 
         Http::assertSent(fn (HttpRequest $request) => $request->url() === GoogleOAuthClient::REVOKE_URL);
         $this->assertSame(0, DB::table('social_connections')->count());
@@ -197,7 +197,7 @@ class YouTubeOAuthConnectTest extends TestCase
         $this->fakeGoogle(channels: ['items' => []]);
 
         $this->get($this->callbackUrl($state))
-            ->assertSessionHas('error', 'Esta conta Google não tem um canal do YouTube. Crie o canal e tente de novo.');
+            ->assertSessionHas('error', 'Esta conta Google não possui um canal no YouTube. Acesse o YouTube com essa conta, clique em "Criar canal" e tente novamente.');
 
         Http::assertSent(fn (HttpRequest $request) => $request->url() === GoogleOAuthClient::REVOKE_URL);
         $this->assertSame(0, DB::table('social_connections')->count());
@@ -209,7 +209,7 @@ class YouTubeOAuthConnectTest extends TestCase
         Http::fake([GoogleOAuthClient::TOKEN_URL => Http::response(['error' => 'invalid_grant', 'error_description' => 'Bad Request'], 400)]);
 
         $this->get($this->callbackUrl($state))
-            ->assertSessionHas('error', 'Não foi possível conectar o YouTube agora. Tente novamente em alguns minutos.');
+            ->assertSessionHas('error', 'A autorização expirou ou já foi utilizada. Tente conectar novamente.');
 
         $this->assertSame(0, DB::table('social_connections')->count());
     }

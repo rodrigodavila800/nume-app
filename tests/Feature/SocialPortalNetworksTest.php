@@ -42,9 +42,7 @@ class SocialPortalNetworksTest extends TestCase
     {
         $this->actingAs($this->cliente, 'cliente')->get(route('portal.social.index'))
             ->assertOk()
-            ->assertSee('Conectar Instagram')
-            ->assertSee('Conectar Facebook')
-            ->assertSee('Conectar Threads')
+            ->assertSee('Conectar Conta')
             ->assertSee(route('portal.social.oauth.redirect', 'meta'), false)
             ->assertSee(route('portal.social.oauth.redirect', 'threads'), false)
             ->assertSee('Precisa ser conta profissional')

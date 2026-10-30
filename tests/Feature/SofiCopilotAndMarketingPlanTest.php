@@ -161,8 +161,21 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
         $response->assertStatus(404);
     }
 
+    /**
+     * Converter item do plano exige pacote ativo ou orçamento aceito (a trava tem teste próprio
+     * no MarketingPlanApprovalTest); aqui o cliente já tem um pacote pago com vídeos livres.
+     */
+    private function giveActivePack(): void
+    {
+        \App\Models\PackPurchase::create([
+            'tenant_id' => $this->tenant->id, 'cliente_id' => $this->cliente->id, 'amount' => 400,
+            'status' => 'paid', 'video_quantity' => 4, 'videos_used' => 0,
+        ]);
+    }
+
     public function test_client_can_convert_marketing_plan_item_to_production(): void
     {
+        $this->giveActivePack();
         $staff = User::create(['tenant_id' => $this->tenant->id, 'name' => 'Equipe Real', 'email' => 'equipe@nume-hub.test', 'password' => 'secret12345', 'role' => 'admin']);
         $planGenerator = app(MarketingPlanGeneratorService::class);
         $plan = $planGenerator->generate($this->cliente, 4);
@@ -196,6 +209,7 @@ class SofiCopilotAndMarketingPlanTest extends TestCase
 
     public function test_converting_without_a_team_never_creates_a_user_with_a_known_password(): void
     {
+        $this->giveActivePack();
         $plan = app(MarketingPlanGeneratorService::class)->generate($this->cliente, 4);
         $plan->approveBy($this->cliente);
         $item = $plan->items()->first();

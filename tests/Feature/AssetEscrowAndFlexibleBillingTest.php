@@ -175,7 +175,9 @@ class AssetEscrowAndFlexibleBillingTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Custódia Ativa');
-        $response->assertSee('Download Bloqueado');
+        // Entrega em duas opções: com saldo pendente, só o convite para aprovar, nunca o download.
+        $response->assertSee('Aprovar Corte para Liberar Download');
+        $response->assertDontSee('Baixar Master (.mp4)');
         $response->assertSee('Aprovar Corte &amp; Liberar', false);
         $response->assertSee('300,00');
     }

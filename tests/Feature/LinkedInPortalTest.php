@@ -40,7 +40,7 @@ class LinkedInPortalTest extends TestCase
     {
         $this->actingAs($this->cliente, 'cliente')->get(route('portal.social.index'))
             ->assertOk()
-            ->assertSee('Conectar LinkedIn')
+            ->assertSee('Conectar Conta')
             ->assertSee(route('portal.social.oauth.redirect', 'linkedin'), false);
     }
 

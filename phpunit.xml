@@ -19,6 +19,13 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <!-- Endereço fixo: sem isso os links assinados herdavam o APP_URL (túnel) do .env local -->
+        <env name="APP_URL" value="http://localhost" force="true"/>
+        <!-- Nenhum token real do WhatsApp na suíte -->
+        <env name="WHATSAPP_ACCESS_TOKEN" value="" force="true"/>
+        <env name="WHATSAPP_APP_SECRET" value="" force="true"/>
+        <env name="WHATSAPP_VERIFY_TOKEN" value="" force="true"/>
+        <env name="WHATSAPP_PHONE_NUMBER_ID" value="" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
