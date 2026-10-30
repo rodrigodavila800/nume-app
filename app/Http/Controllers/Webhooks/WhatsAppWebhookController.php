@@ -7,6 +7,7 @@ use App\Services\WhatsApp\MetaWhatsAppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class WhatsAppWebhookController extends Controller
 {
@@ -37,12 +38,17 @@ class WhatsAppWebhookController extends Controller
      */
     public function handle(Request $request): JsonResponse
     {
-        $payload = $request->all();
+        // Só a Meta assina com o App Secret: sem assinatura válida, o "from" do corpo não é confiável
+        // (qualquer um poderia se passar pelo telefone de um cliente e consultar as produções dele).
+        if (! $this->whatsAppService->hasValidSignature($request->getContent(), $request->header('X-Hub-Signature-256'))) {
+            Log::warning('[MetaWhatsApp] POST no webhook com assinatura ausente ou inválida.');
 
-        $this->whatsAppService->processWebhookPayload($payload);
+            return response()->json(['error' => 'Invalid signature'], 403);
+        }
+
+        $this->whatsAppService->processWebhookPayload($request->json()->all());
 
         // A Meta exige retorno imediato 200 OK com EVENT_RECEIVED para evitar retries desnecessários
         return response()->json(['status' => 'EVENT_RECEIVED'], 200);
     }
 }
-

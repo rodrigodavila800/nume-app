@@ -22,12 +22,15 @@ class CheckProductionStatusTool implements Tool
 
     public function handle(Request $request): Stringable|string
     {
-        $query = Production::withoutGlobalScope('tenant')
-            ->where('tenant_id', $this->tenantId);
-
-        if ($this->clienteId) {
-            $query->where('cliente_id', $this->clienteId);
+        // Sem cliente identificado pelo telefone, nunca lista produções: antes, sem filtro,
+        // qualquer número desconhecido recebia as produções mais recentes de outros clientes.
+        if (! $this->clienteId) {
+            return 'Contato não identificado como cliente: não informe status de produções. Peça para acessar o portal do cliente ou falar com a equipe.';
         }
+
+        $query = Production::withoutGlobalScope('tenant')
+            ->where('tenant_id', $this->tenantId)
+            ->where('cliente_id', $this->clienteId);
 
         $term = trim($request['search'] ?? '');
         if ($term !== '') {
@@ -44,11 +47,11 @@ class CheckProductionStatusTool implements Tool
                 'published' => 'Vídeo finalizado e publicado',
             ];
 
+            // Link pelo uuid (regra 4: nunca expor id sequencial em link externo).
             return [
-                'id' => $p->id,
                 'title' => $p->title,
                 'status' => $statusMap[$p->status] ?? $p->status,
-                'portal_url' => url("/portal/productions/{$p->id}"),
+                'portal_url' => route('portal.productions.show', $p),
             ];
         });
 
@@ -66,4 +69,3 @@ class CheckProductionStatusTool implements Tool
         ];
     }
 }
-

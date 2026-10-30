@@ -116,9 +116,14 @@ return [
     ],
 
     'whatsapp' => [
-        'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'nume_whatsapp_verify_token'),
+        // Sem padrão: um token publicado no repositório não serve como segredo.
+        'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
+        // App Secret do app da Meta: valida a assinatura X-Hub-Signature-256 de cada POST.
+        'app_secret' => env('WHATSAPP_APP_SECRET'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        // Produtora dona do número oficial (mensagens de outro phone_number_id são ignoradas).
+        'tenant_slug' => env('WHATSAPP_TENANT_SLUG', 'nume'),
         'contact_number' => env('WHATSAPP_CONTACT_NUMBER', '34664274151'),
         'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
     ],

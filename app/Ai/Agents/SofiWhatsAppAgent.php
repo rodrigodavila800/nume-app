@@ -86,6 +86,6 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
 
     public function middleware(): array
     {
-        return [new RecordAiUsage($this->tenantId, static::class)];
+        return [new RecordAiUsage($this->tenantId, static::class, $this->clienteId)];
     }
 }
