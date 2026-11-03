@@ -15,7 +15,10 @@ use App\Services\Crm\LeadService;
 use App\Services\WhatsApp\HandoffService;
 use App\Services\WhatsApp\MetaWhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Ai\Responses\Data\ToolCall;
@@ -340,5 +343,24 @@ class WhatsAppHandoffTest extends TestCase
 
         $this->assertNull($service->processWebhookPayload($statusPayload));
         $this->assertNull($service->processWebhookPayload($statusPayload));
+    }
+
+    public function test_an_ai_failure_logs_the_cause_chain_but_never_the_message_or_the_url(): void
+    {
+        $lines = [];
+        Event::listen(MessageLogged::class, function (MessageLogged $event) use (&$lines) {
+            $lines[] = $event->message;
+        });
+        $timeout = new ConnectionException('cURL error 28: Operation timed out for https://gemini.exemplo.test/v1?key=SEGREDO-DA-CHAVE');
+        SofiWhatsAppAgent::fake([fn () => throw new \RuntimeException('falha do provedor com texto do cliente', 0, $timeout)])->preventStrayPrompts();
+
+        $this->incoming('Pode fechar, meu e-mail é ana@ficticio.test');
+
+        $line = collect($lines)->first(fn (string $l) => str_contains($l, 'Erro na execução do SofiWhatsAppAgent'));
+        $this->assertNotNull($line);
+        $this->assertStringContainsString('RuntimeException <- Illuminate\Http\Client\ConnectionException timeout', $line);
+        $this->assertStringNotContainsString('SEGREDO', $line);
+        $this->assertStringNotContainsString('gemini.exemplo', $line);
+        $this->assertStringNotContainsString('texto do cliente', $line);
     }
 }

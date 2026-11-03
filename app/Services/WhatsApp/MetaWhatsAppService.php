@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use App\Services\Ai\SofiMemoryDistillationService;
 use App\Services\Crm\LeadService;
 use App\Services\SofiSalesConsultantService;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -235,7 +236,7 @@ class MetaWhatsAppService
 
         if ($conversation->status === HandoffService::STATUS_NEEDS_HUMAN) {
             $brandContext .= "
-ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não chame EscalateToTeamTool de novo nem negocie o ponto pendente: diga que a equipe retorna por aqui.
+ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não chame EscalateToTeamTool de novo para o mesmo assunto e não negocie esse ponto: diga que a equipe retorna por aqui. Continue atendendo e vendendo normalmente o que não depende da equipe.
 ";
         }
 
@@ -409,7 +410,7 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning('[MetaWhatsApp] Erro na execução do SofiWhatsAppAgent: '.get_class($e));
+            Log::warning('[MetaWhatsApp] Erro na execução do SofiWhatsAppAgent: '.get_class($e).$this->causeOf($e));
         }
 
         return $this->fallbackReply($tenant, $isSpanish, $conversationId, $leadId);
@@ -420,6 +421,31 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
      * produtora (nada de frase fixa que não leva a lugar nenhum) e a equipe é chamada para atendê-lo.
      * Nada aqui pode quebrar o atendimento.
      */
+    /**
+     * Causa encadeada de uma falha da IA, só para diagnóstico: classes, status HTTP e se foi timeout.
+     * Nunca a mensagem da exceção, que traz a URL da chamada e pode trazer chave ou texto do cliente.
+     */
+    protected function causeOf(\Throwable $e): string
+    {
+        $parts = [];
+
+        for ($previous = $e->getPrevious(), $depth = 0; $previous !== null && $depth < 3; $previous = $previous->getPrevious(), $depth++) {
+            $part = get_class($previous);
+
+            if ($previous instanceof RequestException) {
+                $part .= ' HTTP '.$previous->response->status();
+            }
+
+            if (str_contains($previous->getMessage(), 'cURL error 28')) {
+                $part .= ' timeout';
+            }
+
+            $parts[] = $part;
+        }
+
+        return $parts === [] ? '' : ' <- '.implode(' <- ', $parts);
+    }
+
     protected function fallbackReply(Tenant $tenant, bool $isSpanish, ?int $conversationId, ?int $leadId): string
     {
         $teamCalled = false;
