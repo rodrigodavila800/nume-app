@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Ai\Agents\SofiWhatsAppAgent;
 use App\Ai\Tools\CreateQuoteFromPackTool;
+use App\Jobs\SendQuoteProposalDocuments;
 use App\Models\Lead;
 use App\Models\Pack;
 use App\Models\Quote;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Ai\Tools\Request;
 use Tests\TestCase;
@@ -28,6 +30,7 @@ class WhatsAppQuoteToolTest extends TestCase
     {
         parent::setUp();
 
+        Queue::fake([SendQuoteProposalDocuments::class]);
         $this->tenant = Tenant::create(['name' => 'Produtora Alpha', 'slug' => 'produtora-alpha']);
         $this->pack = Pack::create([
             'tenant_id' => $this->tenant->id, 'name' => 'Reels Starter', 'slug' => 'reels-starter', 'price' => 500,
@@ -211,5 +214,18 @@ class WhatsAppQuoteToolTest extends TestCase
         $this->assertSame(['interval' => 'month', 'commitment_months' => 6], $quote->request_details['subscription']);
         $this->assertStringContainsString('450,00 € + IVA por mês, contrato de 6 meses', $result);
         $this->assertStringContainsString('faturados pela equipe', $result);
+    }
+
+    public function test_a_new_proposal_queues_the_pdf_by_email_and_whatsapp_once(): void
+    {
+        $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+        $second = $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+
+        $quote = Quote::forTenant($this->tenant->id)->sole();
+        Queue::assertPushed(SendQuoteProposalDocuments::class, 1);
+        Queue::assertPushed(SendQuoteProposalDocuments::class, fn (SendQuoteProposalDocuments $job) => $job->quoteId === $quote->id
+            && $job->tenantId === $this->tenant->id
+            && $job->whatsAppTo === '34600000001');
+        $this->assertStringNotContainsString('PDF formal', $second, 'proposta reaproveitada não promete novo envio');
     }
 }

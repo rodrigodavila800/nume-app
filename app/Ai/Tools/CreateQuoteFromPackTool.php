@@ -2,6 +2,7 @@
 
 namespace App\Ai\Tools;
 
+use App\Jobs\SendQuoteProposalDocuments;
 use App\Models\Cliente;
 use App\Models\Lead;
 use App\Models\Pack;
@@ -124,10 +125,16 @@ class CreateQuoteFromPackTool implements Tool
 
         $closing = ['responsible' => $responsible, 'company' => $company, 'niche' => $niche];
 
-        $quote = $this->reusableQuote($email, $pack, $calc['total_com_iva'])
-            ?? $this->createQuote($email, $cliente, $pack, $calc, $defaults, $closing, $plan);
+        $quote = $this->reusableQuote($email, $pack, $calc['total_com_iva']);
+        $isNew = $quote === null;
+        $quote ??= $this->createQuote($email, $cliente, $pack, $calc, $defaults, $closing, $plan);
 
         $url = app(SofiQuoteNotificationService::class)->getPublicApprovalUrl($quote);
+
+        // PDF formal por e-mail e por este WhatsApp, só na primeira vez (a mesma proposta não reenvia).
+        if ($isNew) {
+            SendQuoteProposalDocuments::dispatch($quote->id, $this->tenantId, $this->phone);
+        }
         $money = fn (float $value): string => number_format($value, 2, ',', '.').' €';
 
         $payment = match (true) {
@@ -140,6 +147,7 @@ class CreateQuoteFromPackTool implements Tool
         return "Proposta {$quote->number} pronta para {$company} ({$responsible}): {$pack->translated_name}, {$calc['inputs_sanitized']['videos']} vídeos. "
             .$payment
             .'Válida até '.$quote->valid_until->format('d/m/Y').". Link de aprovação e pagamento: {$url} "
+            .($isNew ? 'O PDF formal da proposta chega em seguida por e-mail e por este WhatsApp. ' : '')
             .'Envie ao cliente este link exatamente como está e os valores acima, sem alterá-los. Explique que, ao abrir, ele cria a conta no portal (para acompanhar todo o projeto), informa os dados de faturação e escolhe a forma de pagamento.';
     }
 

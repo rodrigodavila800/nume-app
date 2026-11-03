@@ -384,6 +384,66 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
 ".$parts['directives'];
     }
 
+    /**
+     * Envia um PDF como documento do WhatsApp: sobe o arquivo na Meta (/{phone}/media) e manda a
+     * mensagem do tipo document com o id devolvido. Só funciona dentro da janela de 24 h da conversa
+     * (a proposta sai logo depois de o cliente escrever). Log só com status e código da Meta.
+     */
+    public function sendWhatsAppDocument(string $to, string $pdfBinary, string $filename, string $caption, ?string $phoneNumberId = null): bool
+    {
+        $accessToken = config('services.whatsapp.access_token');
+        $phoneId = $phoneNumberId ?: config('services.whatsapp.phone_number_id');
+        $version = config('services.whatsapp.api_version', 'v21.0');
+
+        if (! $accessToken || ! $phoneId) {
+            Log::info('[MetaWhatsApp] Token ou PhoneID não configurados: documento simulado para ****'.substr($to, -4).'.');
+
+            return true;
+        }
+
+        try {
+            $upload = Http::withToken($accessToken)
+                ->timeout(30)
+                ->attach('file', $pdfBinary, $filename, ['Content-Type' => 'application/pdf'])
+                ->post("https://graph.facebook.com/{$version}/{$phoneId}/media", [
+                    'messaging_product' => 'whatsapp',
+                    'type' => 'application/pdf',
+                ]);
+
+            $mediaId = $upload->successful() ? $upload->json('id') : null;
+            if (! is_string($mediaId) || $mediaId === '') {
+                Log::error('[MetaWhatsApp] Falha no upload do documento: HTTP '.$upload->status().' código '.($upload->json('error.code') ?? '?'));
+
+                return false;
+            }
+
+            $response = Http::withToken($accessToken)
+                ->timeout(10)
+                ->post("https://graph.facebook.com/{$version}/{$phoneId}/messages", [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type' => 'individual',
+                    'to' => $to,
+                    'type' => 'document',
+                    'document' => ['id' => $mediaId, 'filename' => $filename, 'caption' => $caption],
+                ]);
+
+            if ($response->successful()) {
+                Log::info('[MetaWhatsApp] Documento enviado para ****'.substr($to, -4).'.');
+
+                return true;
+            }
+
+            Log::error('[MetaWhatsApp] Erro ao enviar documento: HTTP '.$response->status().' código '.($response->json('error.code') ?? '?'));
+
+            return false;
+        } catch (\Throwable $e) {
+            // Só a classe: a mensagem do HTTP client inclui a URL chamada.
+            Log::error('[MetaWhatsApp] Exceção ao enviar documento: '.get_class($e));
+
+            return false;
+        }
+    }
+
     protected function generateSofiResponse(
         Tenant $tenant,
         ?int $clienteId,
