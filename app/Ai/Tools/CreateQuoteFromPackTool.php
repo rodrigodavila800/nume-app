@@ -7,8 +7,10 @@ use App\Models\Cliente;
 use App\Models\Lead;
 use App\Models\Pack;
 use App\Models\Quote;
+use App\Models\Tenant;
 use App\Services\Crm\LeadService;
 use App\Services\Notification\SofiQuoteNotificationService;
+use App\Services\Payment\PaymentMethodAvailability;
 use App\Services\Quotes\QuoteCalculatorService;
 use App\Services\Quotes\QuoteOwnership;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -133,7 +135,8 @@ class CreateQuoteFromPackTool implements Tool
         $isNew = $quote === null;
         $quote ??= $this->createQuote($email, $cliente, $pack, $calc, $defaults, $closing, $plan);
 
-        $url = app(SofiQuoteNotificationService::class)->getPublicApprovalUrl($quote);
+        // O link com token vai só no e-mail (botão de aprovação); no WhatsApp, só os endereços oficiais do portal.
+        app(SofiQuoteNotificationService::class)->ensureApprovalToken($quote);
 
         // PDF formal por e-mail e por este WhatsApp, só na primeira vez (a mesma proposta não reenvia).
         if ($isNew) {
@@ -148,11 +151,18 @@ class CreateQuoteFromPackTool implements Tool
             default => 'Total '.$money($quote->total_amount).' com IVA ('.$money($quote->subtotal).' + IVA). Pagamento integral na aprovação. ',
         };
 
+        $methods = PaymentMethodAvailability::forTenant(Tenant::findOrFail($this->tenantId))->activeMethodLabels($pack, $this->isSpanish);
+        $account = $quote->cliente_id
+            ? 'O cliente JÁ TEM CONTA: ele entra em '.route('portal.login')." com o e-mail {$email}; a proposta está em Orçamentos para aprovar e pagar. "
+            : 'O cliente AINDA NÃO TEM CONTA: para seguir, ele faz o cadastro em '.route('portal.register')." com o mesmo e-mail ({$email}); a proposta aparece em Orçamentos para aprovar e pagar. ";
+
         return "Proposta {$quote->number} pronta para {$company} ({$responsible}): {$pack->translated_name}, {$calc['inputs_sanitized']['videos']} vídeos. "
             .$payment
-            .'Válida até '.$quote->valid_until->format('d/m/Y').". Link de aprovação e pagamento: {$url} "
-            .($isNew ? 'O PDF formal da proposta chega em seguida por e-mail e por este WhatsApp. ' : '')
-            .'Envie ao cliente este link exatamente como está e os valores acima, sem alterá-los. Explique que, ao abrir, ele cria a conta no portal (para acompanhar todo o projeto), informa os dados de faturação e escolhe a forma de pagamento.';
+            .'Válida até '.$quote->valid_until->format('d/m/Y').'. '
+            .($isNew ? 'O PDF formal da proposta chega em seguida por e-mail e por este WhatsApp. ' : 'A proposta já tinha sido enviada antes por e-mail e por este WhatsApp. ')
+            .$account
+            .'Formas de pagamento disponíveis: '.($methods === [] ? 'a equipe informa' : implode(', ', $methods)).'. '
+            .'Repasse ao cliente os valores, o endereço do portal e as formas de pagamento exatamente como aqui, sem alterar nada e sem citar outros links ou formas de pagamento.';
     }
 
     public function schema(JsonSchema $schema): array

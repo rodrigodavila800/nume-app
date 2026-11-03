@@ -12,6 +12,7 @@ use App\Models\SofiMessage;
 use App\Models\Tenant;
 use App\Services\Ai\SofiMemoryDistillationService;
 use App\Services\Crm\LeadService;
+use App\Services\Payment\PaymentMethodAvailability;
 use App\Services\SofiSalesConsultantService;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
@@ -228,6 +229,8 @@ class MetaWhatsAppService
         $isSpanish = str_starts_with($locale, 'es');
 
         $brandContext = 'PRODUTORA: '.($tenant->name ?? 'NUME Creative')."\n";
+        $methods = PaymentMethodAvailability::forTenant($tenant)->activeMethodLabels(null, $isSpanish);
+        $brandContext .= 'FORMAS DE PAGAMENTO ATIVAS: '.($methods === [] ? 'a equipe informa' : implode(', ', $methods))."\n";
         if ($cliente) {
             $brandContext .= "CLIENTE IDENTIFICADO: {$cliente->name} ({$cliente->company_name})\n"
                            .'NICHO: '.($cliente->brand_niche ?: 'Serviços')."\n"

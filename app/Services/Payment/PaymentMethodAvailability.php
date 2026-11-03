@@ -185,4 +185,19 @@ class PaymentMethodAvailability
             'bank_transfer' => $this->bankTransferEnabled($pack),
         ];
     }
+
+    /**
+     * Nomes, para o cliente, das formas de pagamento ativas (só leitura). A Sofi repete só estas,
+     * nunca uma lista genérica que pode não valer para a produtora.
+     *
+     * @return list<string>
+     */
+    public function activeMethodLabels(?Pack $pack = null, bool $spanish = false): array
+    {
+        $labels = $spanish
+            ? ['bizum' => 'Bizum', 'redsys_card' => 'tarjeta de crédito o débito', 'stripe' => 'tarjeta online (Stripe)', 'bank_transfer' => 'transferencia bancaria']
+            : ['bizum' => 'Bizum', 'redsys_card' => 'cartão de crédito ou débito', 'stripe' => 'cartão online (Stripe)', 'bank_transfer' => 'transferência bancária'];
+
+        return array_values(array_intersect_key($labels, array_filter($this->getActiveMethods($pack))));
+    }
 }

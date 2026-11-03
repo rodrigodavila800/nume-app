@@ -341,4 +341,19 @@ class WhatsAppWebhookAndAgentTest extends TestCase
                 && ! in_array('Mensagem 1', $contents, true);
         });
     }
+
+    public function test_the_sofi_knows_only_the_payment_methods_that_are_really_active(): void
+    {
+        config(['sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-de-teste']);
+        \App\Models\TenantSetting::set($this->tenant, 'bank_transfer_iban', 'ES9121000418450200051332');
+        \App\Models\TenantSetting::set($this->tenant, 'bank_transfer_enabled', '1');
+        SofiWhatsAppAgent::fake(['Resposta de teste.'])->preventStrayPrompts();
+
+        $this->postSigned($this->messagePayload('5511999998888', 'Como posso pagar?'))->assertStatus(200);
+
+        $active = implode(', ', \App\Services\Payment\PaymentMethodAvailability::forTenant($this->tenant)->activeMethodLabels());
+        $this->assertStringContainsString('transferência bancária', $active);
+        SofiWhatsAppAgent::assertPrompted(fn ($prompt) => str_contains($prompt->agent->context, 'FORMAS DE PAGAMENTO ATIVAS: '.$active)
+            && str_contains((string) $prompt->agent->instructions(), 'Cite SÓ as FORMAS DE PAGAMENTO ATIVAS do CONTEXTO'));
+    }
 }

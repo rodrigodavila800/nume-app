@@ -5,10 +5,13 @@ namespace Tests\Feature;
 use App\Ai\Agents\SofiWhatsAppAgent;
 use App\Ai\Tools\CreateQuoteFromPackTool;
 use App\Jobs\SendQuoteProposalDocuments;
+use App\Models\Cliente;
 use App\Models\Lead;
 use App\Models\Pack;
 use App\Models\Quote;
 use App\Models\Tenant;
+use App\Models\TenantSetting;
+use App\Services\Payment\PaymentMethodAvailability;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Ai\Responses\Data\ToolCall;
@@ -50,7 +53,7 @@ class WhatsAppQuoteToolTest extends TestCase
         return (string) $tool->handle(new Request($arguments + $closing));
     }
 
-    public function test_creates_a_sent_quote_with_the_catalog_price_and_returns_the_public_link(): void
+    public function test_creates_a_sent_quote_with_the_catalog_price_and_points_to_the_portal_registration(): void
     {
         $lead = Lead::create(['tenant_id' => $this->tenant->id, 'name' => 'Carlos', 'phone' => '34600000001', 'source' => 'whatsapp']);
 
@@ -65,7 +68,9 @@ class WhatsAppQuoteToolTest extends TestCase
         $this->assertEquals(0.00, $quote->balance_amount);
         $this->assertSame(4, $quote->inputs['videos']);
         $this->assertNotEmpty($quote->approval_token);
-        $this->assertStringContainsString(route('quotes.public.show', $quote->approval_token), $result);
+        $this->assertStringNotContainsString('/orcamento/', $result, 'o link com token vai só no e-mail');
+        $this->assertStringContainsString('AINDA NÃO TEM CONTA', $result);
+        $this->assertStringContainsString(route('portal.register'), $result);
         $this->assertStringContainsString('605,00 €', $result);
         $this->assertStringContainsString('Pagamento integral', $result);
 
@@ -128,12 +133,38 @@ class WhatsAppQuoteToolTest extends TestCase
 
     public function test_the_same_proposal_is_reused_instead_of_duplicated(): void
     {
-        $first = $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+        $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
         $second = $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
 
         $this->assertSame(1, Quote::forTenant($this->tenant->id)->count());
-        $this->assertSame(Quote::forTenant($this->tenant->id)->value('approval_token'), $this->tokenFrom($first));
-        $this->assertSame($this->tokenFrom($first), $this->tokenFrom($second));
+        $this->assertStringContainsString('já tinha sido enviada', $second);
+    }
+
+    public function test_an_existing_account_is_sent_to_the_portal_login(): void
+    {
+        Cliente::create(['tenant_id' => $this->tenant->id, 'name' => 'Ana', 'email' => 'ana@ficticio.test', 'password' => 'secret12345']);
+
+        $result = $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+
+        $this->assertStringContainsString('JÁ TEM CONTA', $result);
+        $this->assertStringContainsString(route('portal.login'), $result);
+        $this->assertStringNotContainsString(route('portal.register'), $result);
+    }
+
+    public function test_only_the_active_payment_methods_are_offered(): void
+    {
+        TenantSetting::set($this->tenant, 'bank_transfer_iban', 'ES9121000418450200051332');
+        TenantSetting::set($this->tenant, 'bank_transfer_enabled', '1');
+
+        $result = $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+
+        $availability = PaymentMethodAvailability::forTenant($this->tenant);
+        $active = $availability->activeMethodLabels($this->pack);
+        $this->assertContains('transferência bancária', $active);
+        $this->assertStringContainsString('Formas de pagamento disponíveis: '.implode(', ', $active).'.', $result);
+        if (! $availability->stripeEnabled($this->pack)) {
+            $this->assertStringNotContainsString('Stripe', $result);
+        }
     }
 
     public function test_daily_limit_per_phone_stops_proposal_spam(): void
