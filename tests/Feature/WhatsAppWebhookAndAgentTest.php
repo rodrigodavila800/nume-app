@@ -125,11 +125,13 @@ class WhatsAppWebhookAndAgentTest extends TestCase
         $this->assertSame($this->tenant->id, $conversation->tenant_id);
         $this->assertSame($cliente->id, $conversation->cliente_id);
 
-        // Verifica se as mensagens (usuário e sofi) foram salvas
+        // Mensagem do cliente, boas-vindas (primeiro contato) e resposta da Sofi
         $messages = $conversation->messages()->get();
-        $this->assertCount(2, $messages);
+        $this->assertCount(3, $messages);
         $this->assertSame('user', $messages[0]->sender);
         $this->assertSame('sofi', $messages[1]->sender);
+        $this->assertTrue($messages[1]->metadata['welcome']);
+        $this->assertSame('sofi', $messages[2]->sender);
 
         // Verifica se o lead existe no CRM com a atividade registrada
         $lead = Lead::where('phone', '5511999998888')->first();
@@ -216,7 +218,7 @@ class WhatsAppWebhookAndAgentTest extends TestCase
         $this->postSigned($this->messagePayload('5511999998888', 'Quais pacotes vocês têm?'))->assertStatus(200);
 
         $conversation = SofiConversation::withoutGlobalScopes()->where('contact_phone', '5511999998888')->sole();
-        $this->assertSame('Olá! Aqui é a Sofi, respondendo pela IA.', $conversation->messages()->where('sender', 'sofi')->value('content'));
+        $this->assertSame('Olá! Aqui é a Sofi, respondendo pela IA.', $conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content'));
         SofiWhatsAppAgent::assertPrompted('Quais pacotes vocês têm?');
         $this->assertSame(1, AiUsageLog::forTenant($this->tenant->id)->where('agent', SofiWhatsAppAgent::class)->count());
     }

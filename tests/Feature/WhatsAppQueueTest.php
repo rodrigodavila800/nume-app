@@ -89,10 +89,10 @@ class WhatsAppQueueTest extends TestCase
         config(['sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-de-teste', 'sofi.whatsapp_timeout' => 30]);
         SofiWhatsAppAgent::fake(['Resposta da fila.'])->preventStrayPrompts();
 
-        (new ProcessWhatsAppMessage($this->payload('Oi')))->handle(app(MetaWhatsAppService::class));
+        (new ProcessWhatsAppMessage($this->payload('Quanto custa um vídeo?')))->handle(app(MetaWhatsAppService::class));
 
-        SofiWhatsAppAgent::assertPrompted(fn ($prompt) => $prompt->prompt === 'Oi' && $prompt->timeout === 30);
-        $this->assertSame('Resposta da fila.', SofiConversation::withoutGlobalScopes()->sole()->messages()->where('sender', 'sofi')->value('content'));
+        SofiWhatsAppAgent::assertPrompted(fn ($prompt) => $prompt->prompt === 'Quanto custa um vídeo?' && $prompt->timeout === 30);
+        $this->assertSame('Resposta da fila.', SofiConversation::withoutGlobalScopes()->sole()->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content'));
     }
 
     public function test_a_failed_job_logs_only_the_exception_class(): void

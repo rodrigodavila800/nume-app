@@ -149,10 +149,17 @@ class MetaWhatsAppService
         $incomingMsg = $changes['messages'][0];
         $from = $incomingMsg['from'] ?? null; // Ex: 5511999999999
         $messageType = $incomingMsg['type'] ?? 'text';
-        $messageBody = $incomingMsg['text']['body'] ?? null;
+        // Texto ou clique num botão das boas-vindas (o título do botão vira a mensagem do cliente).
+        $messageBody = match ($messageType) {
+            'text' => $incomingMsg['text']['body'] ?? null,
+            'interactive' => ($incomingMsg['interactive']['type'] ?? null) === 'button_reply'
+                ? mb_substr((string) ($incomingMsg['interactive']['button_reply']['title'] ?? ''), 0, 40)
+                : null,
+            default => null,
+        };
         $phoneNumberId = $changes['metadata']['phone_number_id'] ?? null;
 
-        if (! $from || ! $messageBody || $messageType !== 'text') {
+        if (! $from || ! is_string($messageBody) || trim($messageBody) === '') {
             return null;
         }
 
@@ -167,6 +174,8 @@ class MetaWhatsAppService
 
         // 2. Cliente cadastrado com esse telefone (regra estrita: ele passa a ver as próprias produções)
         $cliente = $this->findCliente($tenantId, $from);
+        $locale = $cliente?->locale ?? app()->getLocale();
+        $isSpanish = str_starts_with($locale, 'es');
 
         // Extrai nome do perfil do WhatsApp, se enviado pela Meta
         $contactName = $changes['contacts'][0]['profile']['name'] ?? null;
@@ -192,6 +201,8 @@ class MetaWhatsAppService
             ->latest('id')
             ->first();
 
+        $isNewConversation = ! $conversation;
+
         if (! $conversation) {
             $conversation = new SofiConversation([
                 'tenant_id' => $tenantId,
@@ -211,6 +222,18 @@ class MetaWhatsAppService
             'content' => trim($messageBody),
         ]);
 
+        // Primeiro contato: boas-vindas com aviso de privacidade (RGPD) e botões. Só um cumprimento
+        // ("oi", "bom dia") fica nas boas-vindas; uma pergunta de verdade a Sofi responde em seguida.
+        if ($isNewConversation) {
+            $this->sendWelcome($tenant, $conversation, $from, $phoneNumberId, $isSpanish);
+
+            if ($this->isGreetingOnly($messageBody)) {
+                $this->leadService->log($lead, 'whatsapp', 'Primeiro contato no WhatsApp: boas-vindas e aviso de privacidade enviados.', null, ['conversation_id' => $conversation->id, 'channel' => 'whatsapp']);
+
+                return ['status' => 'welcomed', 'conversation_id' => $conversation->id, 'reply' => null];
+            }
+        }
+
         // Equipe respondendo pelo painel: a mensagem fica salva e no CRM, mas a Sofi não interrompe.
         if ($this->isHumanHandling($conversation)) {
             $this->leadService->log(
@@ -225,8 +248,6 @@ class MetaWhatsAppService
         }
 
         // 5. Monta o contexto cognitivo e histórico para a Sofi
-        $locale = $cliente?->locale ?? app()->getLocale();
-        $isSpanish = str_starts_with($locale, 'es');
 
         $brandContext = 'PRODUTORA: '.($tenant->name ?? 'NUME Creative')."\n";
         $methods = PaymentMethodAvailability::forTenant($tenant)->activeMethodLabels(null, $isSpanish);
@@ -445,6 +466,108 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
         } catch (\Throwable $e) {
             // Só a classe: a mensagem do HTTP client inclui a URL chamada.
             Log::error('[MetaWhatsApp] Exceção ao enviar documento: '.get_class($e));
+
+            return false;
+        }
+    }
+
+    /**
+     * Botões das boas-vindas (id => título). Título com no máximo 20 caracteres (limite da Meta).
+     *
+     * @return array<string, string>
+     */
+    public static function welcomeButtons(bool $isSpanish): array
+    {
+        return $isSpanish
+            ? ['sofi_buy' => 'Quiero contratar', 'sofi_client' => 'Ya soy cliente', 'sofi_team' => 'Hablar con el equipo']
+            : ['sofi_buy' => 'Quero contratar', 'sofi_client' => 'Já sou cliente', 'sofi_team' => 'Falar com a equipe'];
+    }
+
+    protected function sendWelcome(Tenant $tenant, SofiConversation $conversation, string $to, ?string $phoneNumberId, bool $isSpanish): void
+    {
+        $name = $tenant->name ?: 'NUME Creative';
+        $privacy = route('legal.privacy');
+        $text = $isSpanish
+            ? "¡Hola! 👋 Soy Sofi, de {$name}. Producimos vídeos estratégicos para redes sociales y anuncios.\n\nElige una opción o cuéntame lo que necesitas.\n\n🔒 Usamos tus datos solo para atenderte y enviarte propuestas: {$privacy}"
+            : "Olá! 👋 Aqui é a Sofi, da {$name}. Produzimos vídeos estratégicos para redes sociais e anúncios.\n\nEscolha uma opção ou me conte o que você precisa.\n\n🔒 Usamos seus dados só para te atender e enviar propostas: {$privacy}";
+        $buttons = self::welcomeButtons($isSpanish);
+
+        SofiMessage::create([
+            'sofi_conversation_id' => $conversation->id,
+            'sender' => 'sofi',
+            'content' => $text,
+            'metadata' => ['welcome' => true, 'buttons' => array_values($buttons)],
+        ]);
+
+        $this->sendWhatsAppButtons($to, $text, $buttons, $phoneNumberId);
+    }
+
+    /**
+     * Só cumprimento, sem pedido (até 4 palavras, todas de saudação). Emoji ou pontuação sozinhos contam.
+     */
+    protected function isGreetingOnly(string $text): bool
+    {
+        $words = array_values(array_filter(explode(' ', (string) preg_replace('/[^\p{L}]+/u', ' ', mb_strtolower($text)))));
+
+        if (count($words) > 4) {
+            return false;
+        }
+
+        $greetings = ['oi', 'oie', 'olá', 'ola', 'opa', 'ei', 'eai', 'alô', 'alo', 'hola', 'holi', 'buenas', 'buenos', 'buen', 'bom', 'boa', 'dia', 'días', 'dias',
+            'tarde', 'tardes', 'noite', 'noches', 'tudo', 'bem', 'bien', 'que', 'qué', 'tal', 'hello', 'hi', 'hey', 'sofi', 'nume'];
+
+        return array_diff($words, $greetings) === [];
+    }
+
+    /**
+     * Mensagem com até 3 botões de resposta (interactive/button), dentro da janela de 24 h da conversa.
+     *
+     * @param  array<string, string>  $buttons  id => título
+     */
+    public function sendWhatsAppButtons(string $to, string $body, array $buttons, ?string $phoneNumberId = null): bool
+    {
+        $accessToken = config('services.whatsapp.access_token');
+        $phoneId = $phoneNumberId ?: config('services.whatsapp.phone_number_id');
+        $version = config('services.whatsapp.api_version', 'v21.0');
+
+        if (! $accessToken || ! $phoneId) {
+            Log::info('[MetaWhatsApp] Token ou PhoneID não configurados: boas-vindas simuladas para ****'.substr($to, -4).'.');
+
+            return true;
+        }
+
+        $buttons = array_slice($buttons, 0, 3, true);
+
+        try {
+            $response = Http::withToken($accessToken)
+                ->timeout(10)
+                ->post("https://graph.facebook.com/{$version}/{$phoneId}/messages", [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type' => 'individual',
+                    'to' => $to,
+                    'type' => 'interactive',
+                    'interactive' => [
+                        'type' => 'button',
+                        'body' => ['text' => mb_substr($body, 0, 1024)],
+                        'action' => ['buttons' => array_map(
+                            fn (string $id, string $title): array => ['type' => 'reply', 'reply' => ['id' => $id, 'title' => mb_substr($title, 0, 20)]],
+                            array_keys($buttons),
+                            array_values($buttons),
+                        )],
+                    ],
+                ]);
+
+            if ($response->successful()) {
+                Log::info('[MetaWhatsApp] Boas-vindas enviadas para ****'.substr($to, -4).'.');
+
+                return true;
+            }
+
+            Log::error('[MetaWhatsApp] Erro ao enviar boas-vindas: HTTP '.$response->status().' código '.($response->json('error.code') ?? '?'));
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('[MetaWhatsApp] Exceção ao enviar boas-vindas: '.get_class($e));
 
             return false;
         }
