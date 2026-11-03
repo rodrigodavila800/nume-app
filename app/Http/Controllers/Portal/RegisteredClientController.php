@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Portal;
 use App\Http\Controllers\Controller;
 use App\Models\Cliente;
 use App\Models\Pack;
+use App\Models\Quote;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -91,6 +92,12 @@ class RegisteredClientController extends Controller
                 return redirect()->route('portal.packs.index')
                     ->with('status', "Conta criada com sucesso! Selecione o pacote '{$pack->name}' para concluir a contratação.");
             }
+        }
+
+        // Proposta enviada antes do cadastro (ex.: pela Sofi no WhatsApp) já é dele: vai direto aprovar e pagar.
+        if (Quote::forTenant($tenant->id)->where('cliente_id', $cliente->id)->where('status', 'sent')->exists()) {
+            return redirect()->route('portal.quotes.index')
+                ->with('status', __('Conta criada! A sua proposta já está aqui em Orçamentos para aprovar e pagar.'));
         }
 
         return redirect()->route('portal.dashboard')

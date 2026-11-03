@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PlataformaAlvo;
+use App\Services\Quotes\QuoteOwnership;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 
 class Cliente extends Authenticatable
 {
@@ -48,6 +50,20 @@ class Cliente extends Authenticatable
         'billing_postal_code',
         'billing_city',
     ];
+
+    protected static function booted(): void
+    {
+        // Proposta enviada antes do cadastro (ex.: pela Sofi no WhatsApp) aparece no portal da conta nova.
+        // Cobre todos os caminhos de cadastro (portal, Google, vitrine, proposta, equipe, API).
+        static::created(function (Cliente $cliente) {
+            // Falha aqui nunca derruba o cadastro; log só com a classe (a mensagem SQL traria o e-mail).
+            rescue(
+                fn () => app(QuoteOwnership::class)->claimOpenQuotes($cliente),
+                fn (\Throwable $e) => Log::warning('quotes.claim_failed', ['error' => get_class($e)]),
+                report: false,
+            );
+        });
+    }
 
     protected function casts(): array
     {

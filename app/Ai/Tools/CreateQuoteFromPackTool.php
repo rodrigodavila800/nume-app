@@ -10,6 +10,7 @@ use App\Models\Quote;
 use App\Services\Crm\LeadService;
 use App\Services\Notification\SofiQuoteNotificationService;
 use App\Services\Quotes\QuoteCalculatorService;
+use App\Services\Quotes\QuoteOwnership;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
@@ -52,6 +53,9 @@ class CreateQuoteFromPackTool implements Tool
         $responsible = $this->clean($request['responsible_name'] ?? $cliente?->name);
         $company = $this->clean($request['company_name'] ?? $cliente?->company_name);
         $niche = $this->clean($request['niche'] ?? $cliente?->brand_niche);
+
+        // Contato não reconhecido pelo telefone, mas com conta no e-mail: a proposta já nasce dele.
+        $cliente ??= filter_var($email, FILTER_VALIDATE_EMAIL) ? QuoteOwnership::findClienteByEmail($this->tenantId, $email) : null;
 
         $missing = array_keys(array_filter([
             'e-mail válido' => ! filter_var($email, FILTER_VALIDATE_EMAIL),
