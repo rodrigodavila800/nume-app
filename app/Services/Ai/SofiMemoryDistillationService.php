@@ -102,7 +102,7 @@ class SofiMemoryDistillationService
      */
     public function distillFromChat(SofiConversation $conversation): void
     {
-        $messages = $conversation->messages()->latest('id')->take(6)->get()->reverse();
+        $messages = $conversation->messages()->reorder('id', 'desc')->take(6)->get()->reverse();
 
         if ($messages->isEmpty()) {
             return;

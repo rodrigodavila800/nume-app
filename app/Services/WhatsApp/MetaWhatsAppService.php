@@ -199,7 +199,7 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
         }
 
         $recentMessages = $conversation->messages()
-            ->latest('id')
+            ->reorder('id', 'desc')
             ->take(12)
             ->get()
             ->reverse()

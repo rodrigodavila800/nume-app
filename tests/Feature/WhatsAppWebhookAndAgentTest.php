@@ -330,6 +330,14 @@ class WhatsAppWebhookAndAgentTest extends TestCase
             $this->postSigned($this->messagePayload('5511999998888', "Mensagem {$number}"))->assertStatus(200);
         }
 
-        SofiWhatsAppAgent::assertPrompted(fn ($prompt) => $prompt->prompt === 'Mensagem 8' && count($prompt->agent->history) === 11);
+        SofiWhatsAppAgent::assertPrompted(function ($prompt) {
+            $contents = array_column($prompt->agent->history, 'content');
+
+            return $prompt->prompt === 'Mensagem 8'
+                && count($contents) === 11
+                && end($contents) === 'Resposta de teste.'
+                && in_array('Mensagem 7', $contents, true)
+                && ! in_array('Mensagem 1', $contents, true);
+        });
     }
 }
