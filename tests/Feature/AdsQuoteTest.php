@@ -98,7 +98,7 @@ class AdsQuoteTest extends TestCase
             ->assertOk()->assertSee('no está incluida en este importe')->assertDontSee('Sinal del 50% para inicio');
 
         $this->post(route('quotes.public.approve', $quote->approval_token), [
-            'payment_method' => 'bank_transfer', 'billing_type' => 'particular', 'billing_legal_name' => 'Ana Ficticia', 'billing_country' => 'ES',
+            'account_name' => 'Ana Ficticia', 'password' => 'secret12345', 'password_confirmation' => 'secret12345', 'payment_method' => 'bank_transfer', 'billing_type' => 'particular', 'billing_legal_name' => 'Ana Ficticia', 'billing_country' => 'ES',
         ]);
 
         $purchase = PackPurchase::withoutGlobalScopes()->where('quote_id', $quote->id)->sole();

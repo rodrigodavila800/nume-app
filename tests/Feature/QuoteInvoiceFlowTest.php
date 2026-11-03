@@ -38,7 +38,7 @@ class QuoteInvoiceFlowTest extends TestCase
         ]);
 
         $this->post(route('quotes.public.approve', $quote->approval_token), [
-            'payment_method' => 'bank_transfer', 'billing_type' => 'empresa', 'billing_legal_name' => 'Padaria Ficticia S.L.',
+            'account_name' => 'Ana Ficticia', 'password' => 'secret12345', 'password_confirmation' => 'secret12345', 'payment_method' => 'bank_transfer', 'billing_type' => 'empresa', 'billing_legal_name' => 'Padaria Ficticia S.L.',
             'billing_tax_id' => 'B12345674', 'billing_address' => 'Calle Falsa 123', 'billing_postal_code' => '50001',
             'billing_city' => 'Zaragoza', 'billing_country' => 'ES',
         ])->assertRedirect();

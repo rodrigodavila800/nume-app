@@ -362,7 +362,8 @@ Route::prefix('magic')->name('magic.')->middleware('signed')->group(function () 
 // Aprovação e Checkout Público de Orçamento via Token
 Route::prefix('orcamento')->name('quotes.public.')->group(function () {
     Route::get('/{token}', [QuoteApprovalController::class, 'show'])->name('show');
-    Route::post('/{token}/aprovar', [QuoteApprovalController::class, 'approve'])->name('approve');
+    // Pede a senha da conta do cliente: limite de tentativas contra força bruta.
+    Route::post('/{token}/aprovar', [QuoteApprovalController::class, 'approve'])->middleware('throttle:10,1')->name('approve');
     Route::post('/{token}/recusar', [QuoteApprovalController::class, 'reject'])->name('reject');
 });
 

@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\PackPurchase;
 use App\Models\Quote;
+use App\Services\Crm\LeadAutomation;
 use App\Services\Payment\PackCheckoutDispatcher;
 use App\Services\Payment\PaymentMethodAvailability;
 use App\Support\BillingProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class QuoteApprovalController extends Controller
@@ -46,7 +47,16 @@ class QuoteApprovalController extends Controller
             ? ['tax_tail' => mb_substr((string) $this->clienteFor($quote)->billing_tax_id, -4)]
             : null;
 
-        return view('quotes.public.show', compact('quote', 'tenant', 'activeMethods', 'savedBilling'));
+        // Conta obrigatória para pagar: o cliente acompanha produção, roteiros e faturas no portal.
+        $account = $this->clienteFor($quote);
+        $accountState = match (true) {
+            $account !== null && auth('cliente')->user()?->is($account) => 'logged_in',
+            $account !== null => 'existing',
+            default => 'new',
+        };
+        $accountName = $quote->client_contact ?: $quote->client_name;
+
+        return view('quotes.public.show', compact('quote', 'tenant', 'activeMethods', 'savedBilling', 'accountState', 'accountName'));
     }
 
     /**
@@ -121,25 +131,15 @@ class QuoteApprovalController extends Controller
             return back()->with('error', __('O orçamento não possui e-mail de contato cadastrado para envio das informações de cobrança.'));
         }
 
-        // Dados de faturação: obrigatórios antes do pagamento (a fatura sai com NIF e endereço).
-        $existing = $this->clienteFor($quote);
-        $useSaved = $request->boolean('use_saved_billing') && $existing?->hasBillingProfile();
-        $billing = $useSaved ? null : $request->validate(BillingProfile::rules());
-
-        // Localiza ou provisiona a conta do cliente para o tenant da produtora
-        $cliente = $existing ?? Cliente::withoutGlobalScope('tenant')
-            ->where('tenant_id', $quote->tenant_id)
-            ->where('email', $clientEmail)
-            ->first();
-
-        if (! $cliente) {
-            $cliente = Cliente::withoutGlobalScope('tenant')->create([
-                'tenant_id' => $quote->tenant_id,
-                'name' => $quote->client_name ?: 'Cliente',
-                'email' => $clientEmail,
-                'password' => bcrypt(Str::random(16)),
-            ]);
+        // Conta antes de tudo: sem ela o cliente pagaria e não teria como acompanhar o projeto.
+        $cliente = $this->resolveAccount($request, $quote, $clientEmail);
+        if ($cliente instanceof RedirectResponse) {
+            return $cliente;
         }
+
+        // Dados de faturação: obrigatórios antes do pagamento (a fatura sai com NIF e endereço).
+        $useSaved = $request->boolean('use_saved_billing') && $cliente->hasBillingProfile();
+        $billing = $useSaved ? null : $request->validate(BillingProfile::rules());
 
         if ($billing !== null) {
             BillingProfile::save($cliente, $billing);
@@ -189,5 +189,60 @@ class QuoteApprovalController extends Controller
             'bank_transfer' => $dispatcher->dispatchBankTransfer($purchase),
             default => back()->with('error', __('Método inválido.')),
         };
+    }
+
+    /**
+     * Conta do cliente para pagar a proposta, sempre no tenant do orçamento e no e-mail dela.
+     *
+     * - já logado na conta certa: segue;
+     * - e-mail com conta: exige a senha dela (a página abre só com o token, que pode ter sido
+     *   encaminhado; a senha impede pagar e entrar na conta de outra pessoa);
+     * - e-mail sem conta: cria com nome e senha escolhidos pelo cliente.
+     *
+     * Em todos os casos o cliente fica logado no portal e a proposta passa a ser dele.
+     */
+    private function resolveAccount(Request $request, Quote $quote, string $email): Cliente|RedirectResponse
+    {
+        $existing = $this->clienteFor($quote);
+        $logged = auth('cliente')->user();
+
+        if ($existing && $logged?->is($existing)) {
+            $cliente = $existing;
+        } elseif ($existing) {
+            $request->validate(['password' => ['required', 'string', 'max:255']]);
+
+            if (! Hash::check((string) $request->input('password'), (string) $existing->password)) {
+                return back()->withInput($request->except('password', 'password_confirmation'))
+                    ->with('error', __('Contraseña incorrecta para la cuenta de este e-mail.'));
+            }
+
+            $cliente = $existing;
+        } else {
+            $data = $request->validate([
+                'account_name' => ['required', 'string', 'max:255'],
+                'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
+            ]);
+
+            $cliente = Cliente::withoutGlobalScope('tenant')->create([
+                'tenant_id' => $quote->tenant_id,
+                'name' => $data['account_name'],
+                'email' => $email,
+                'company_name' => $quote->client_name,
+                'password' => $data['password'],
+            ]);
+
+            app(LeadAutomation::class)->clienteRegistered($cliente, 'quote');
+        }
+
+        if (! $logged?->is($cliente)) {
+            auth('cliente')->login($cliente);
+            $request->session()->regenerate();
+        }
+
+        if (! $quote->cliente_id) {
+            $quote->forceFill(['cliente_id' => $cliente->id])->save();
+        }
+
+        return $cliente;
     }
 }

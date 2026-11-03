@@ -35,6 +35,9 @@ class QuoteApprovalAndPaymentTest extends TestCase
 
     private Quote $quote;
 
+    /** Conta nova criada na aprovação (obrigatória para pagar). */
+    private const ACCOUNT = ['account_name' => 'Ana Ficticia', 'password' => 'secret12345', 'password_confirmation' => 'secret12345'];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -169,7 +172,7 @@ class QuoteApprovalAndPaymentTest extends TestCase
         // Desativa Redsys Card
         TenantSetting::set($this->tenant, 'redsys_card_enabled', '0');
 
-        $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", [
+        $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", self::ACCOUNT + [
             'payment_method' => 'redsys_card',
         ]);
 
@@ -179,7 +182,7 @@ class QuoteApprovalAndPaymentTest extends TestCase
 
     public function test_approval_via_bank_transfer_creates_purchase_and_renders_instructions(): void
     {
-        $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", [
+        $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", self::ACCOUNT + [
             'payment_method' => 'bank_transfer',
         ] + self::BILLING);
 
@@ -210,14 +213,14 @@ class QuoteApprovalAndPaymentTest extends TestCase
     {
         $this->quote->update(['inputs' => ['videos' => 0, 'prazo' => 15]]);
 
-        $this->post("/orcamento/{$this->quote->approval_token}/aprovar", ['payment_method' => 'bank_transfer'] + self::BILLING)->assertRedirect();
+        $this->post("/orcamento/{$this->quote->approval_token}/aprovar", self::ACCOUNT + ['payment_method' => 'bank_transfer'] + self::BILLING)->assertRedirect();
 
         $this->assertSame(1, PackPurchase::where('quote_id', $this->quote->id)->sole()->video_quantity);
     }
 
     public function test_approval_via_redsys_card_creates_purchase_and_renders_signed_form(): void
     {
-        $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", [
+        $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", self::ACCOUNT + [
             'payment_method' => 'redsys_card',
         ] + self::BILLING);
 
@@ -249,7 +252,7 @@ class QuoteApprovalAndPaymentTest extends TestCase
             'charges_enabled' => true,
         ]);
 
-        $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", [
+        $response = $this->post("/orcamento/{$this->quote->approval_token}/aprovar", self::ACCOUNT + [
             'payment_method' => 'stripe',
         ] + self::BILLING);
 

@@ -43,7 +43,7 @@ class BillingProfileTest extends TestCase
 
     private function approve(array $billing)
     {
-        return $this->post(route('quotes.public.approve', $this->quote->approval_token), ['payment_method' => 'bank_transfer'] + $billing);
+        return $this->post(route('quotes.public.approve', $this->quote->approval_token), ['payment_method' => 'bank_transfer', 'account_name' => 'Ana Ficticia', 'password' => 'secret12345', 'password_confirmation' => 'secret12345'] + $billing);
     }
 
     private function companyBilling(array $overrides = []): array

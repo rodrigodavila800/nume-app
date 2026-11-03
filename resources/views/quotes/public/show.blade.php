@@ -135,6 +135,38 @@
                         </div>
                     @endif
 
+                    {{-- Cuenta obligatoria para pagar: el cliente sigue producción, guiones, vídeos y facturas en el portal. --}}
+                    <fieldset class="space-y-3">
+                        <legend class="text-sm font-bold text-white mb-2">{{ __('Tu cuenta') }}</legend>
+
+                        @if($accountState === 'logged_in')
+                            <p class="text-xs text-emerald-300">{{ __('Conectado como :email.', ['email' => $quote->client_email]) }}</p>
+                        @elseif($accountState === 'existing')
+                            <p class="text-xs text-zinc-400">{{ __('Ya tienes cuenta con :email. Escribe tu contraseña para aprobar y seguir el proyecto en el portal.', ['email' => $quote->client_email]) }}</p>
+                            <div>
+                                <label for="password" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Contraseña') }}</label>
+                                <input id="password" name="password" type="password" required autocomplete="current-password" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            </div>
+                            <a href="{{ route('portal.login') }}" class="inline-block text-[11px] text-orange-400 hover:text-orange-300">{{ __('¿Olvidaste la contraseña? Entra en el portal') }}</a>
+                        @else
+                            <p class="text-xs text-zinc-400">{{ __('Crea tu cuenta con :email para aprobar y seguir todo el proyecto en el portal (producción, guiones, vídeos y facturas).', ['email' => $quote->client_email]) }}</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="sm:col-span-2">
+                                    <label for="account_name" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Nombre del responsable') }}</label>
+                                    <input id="account_name" name="account_name" maxlength="255" required value="{{ old('account_name', $accountName) }}" autocomplete="name" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label for="password" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Contraseña (mínimo 8)') }}</label>
+                                    <input id="password" name="password" type="password" minlength="8" required autocomplete="new-password" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                                </div>
+                                <div>
+                                    <label for="password_confirmation" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ __('Repite la contraseña') }}</label>
+                                    <input id="password_confirmation" name="password_confirmation" type="password" minlength="8" required autocomplete="new-password" class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                                </div>
+                            </div>
+                        @endif
+                    </fieldset>
+
                     {{-- Datos de facturación: la factura sale con NIF y dirección. Nunca se muestran completos en esta página. --}}
                     <fieldset class="space-y-3">
                         <legend class="text-sm font-bold text-white mb-2">{{ __('Datos de facturación') }}</legend>
