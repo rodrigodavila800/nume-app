@@ -42,7 +42,9 @@ class WhatsAppQuoteToolTest extends TestCase
 
     private function callTool(CreateQuoteFromPackTool $tool, array $arguments): string
     {
-        return (string) $tool->handle(new Request($arguments));
+        $closing = ['responsible_name' => 'Carlos Ficticio', 'company_name' => 'Padaria Ficticia', 'niche' => 'Padaria'];
+
+        return (string) $tool->handle(new Request($arguments + $closing));
     }
 
     public function test_creates_a_sent_quote_with_the_catalog_price_and_returns_the_public_link(): void
@@ -102,22 +104,22 @@ class WhatsAppQuoteToolTest extends TestCase
 
     public function test_missing_or_invalid_email_asks_for_it_and_creates_nothing(): void
     {
-        $this->assertStringContainsString('Falta um e-mail', $this->callTool($this->tool(), ['pack_id' => $this->pack->id]));
-        $this->assertStringContainsString('Falta um e-mail', $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'nao-e-email']));
+        $this->assertStringContainsString('e-mail válido', $this->callTool($this->tool(), ['pack_id' => $this->pack->id]));
+        $this->assertStringContainsString('e-mail válido', $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'nao-e-email']));
         $this->assertSame(0, Quote::forTenant($this->tenant->id)->count());
     }
 
-    public function test_pack_from_another_tenant_inactive_or_subscription_is_refused(): void
+    public function test_pack_from_another_tenant_inactive_or_pilot_is_refused(): void
     {
         $other = Tenant::create(['name' => 'Produtora Beta', 'slug' => 'produtora-beta']);
         $foreign = Pack::create(['tenant_id' => $other->id, 'name' => 'Pack Beta', 'slug' => 'pack-beta', 'price' => 900, 'video_quantity' => 8, 'status' => 'active']);
         $inactive = Pack::create(['tenant_id' => $this->tenant->id, 'name' => 'Antigo', 'slug' => 'antigo', 'price' => 100, 'video_quantity' => 1, 'status' => 'inactive']);
-        $subscription = Pack::create(['tenant_id' => $this->tenant->id, 'name' => 'Plano Mensal', 'slug' => 'plano-mensal', 'price' => 300, 'video_quantity' => 4, 'status' => 'active', 'billing_type' => 'subscription']);
+        $pilot = Pack::create(['tenant_id' => $this->tenant->id, 'name' => 'Piloto', 'slug' => 'piloto', 'price' => 300, 'video_quantity' => 4, 'status' => 'active', 'billing_mode' => 'pilot_entry']);
 
         foreach ([$foreign, $inactive] as $pack) {
             $this->assertStringContainsString('não encontrado', $this->callTool($this->tool(), ['pack_id' => $pack->id, 'client_email' => 'ana@ficticio.test']));
         }
-        $this->assertStringContainsString('equipe retorna', $this->callTool($this->tool(), ['pack_id' => $subscription->id, 'client_email' => 'ana@ficticio.test']));
+        $this->assertStringContainsString('EscalateToTeamTool', $this->callTool($this->tool(), ['pack_id' => $pilot->id, 'client_email' => 'ana@ficticio.test']));
         $this->assertSame(0, Quote::withoutGlobalScopes()->count());
     }
 
@@ -151,7 +153,7 @@ class WhatsAppQuoteToolTest extends TestCase
     {
         config(['sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-de-teste']);
         SofiWhatsAppAgent::fake([
-            new ToolCall('call_1', 'CreateQuoteFromPackTool', ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']),
+            new ToolCall('call_1', 'CreateQuoteFromPackTool', ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test', 'responsible_name' => 'Ana', 'company_name' => 'Padaria Ficticia']),
             'Aqui está a sua proposta.',
         ])->preventStrayPrompts();
 
@@ -167,5 +169,47 @@ class WhatsAppQuoteToolTest extends TestCase
         preg_match('#/orcamento/([A-Za-z0-9]+)#', $result, $match);
 
         return $match[1] ?? '';
+    }
+
+    public function test_the_closing_data_is_required_and_lands_on_the_quote_and_the_crm(): void
+    {
+        $lead = Lead::create(['tenant_id' => $this->tenant->id, 'name' => 'Contato WhatsApp 34600000001', 'phone' => '34600000001', 'source' => 'whatsapp']);
+
+        $missing = (string) $this->tool($lead->id)->handle(new Request(['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']));
+        $this->assertStringContainsString('nome do responsável, nome da empresa', $missing);
+        $this->assertSame(0, Quote::forTenant($this->tenant->id)->count());
+
+        $this->callTool($this->tool($lead->id), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test', 'responsible_name' => 'Ana <b>Souza</b>', 'company_name' => 'Clínica Sorriso', 'niche' => 'Odontologia']);
+
+        $quote = Quote::forTenant($this->tenant->id)->sole();
+        $this->assertSame('Clínica Sorriso', $quote->client_name);
+        $this->assertSame('Ana Souza', $quote->client_contact, 'sem HTML');
+        $this->assertSame('Odontologia', $quote->request_details['niche']);
+
+        $lead->refresh();
+        $this->assertSame('Ana Souza', $lead->name);
+        $this->assertSame('Clínica Sorriso', $lead->company);
+        $this->assertStringContainsString('Nicho: Odontologia', $lead->activities()->where('type', 'whatsapp')->latest('id')->value('body'));
+    }
+
+    public function test_a_subscription_plan_becomes_a_first_period_proposal(): void
+    {
+        $plan = Pack::create([
+            'tenant_id' => $this->tenant->id, 'name' => 'Nume Ads Starter', 'slug' => 'ads-starter', 'price' => 450, 'vat_rate' => 21,
+            'video_quantity' => 3, 'status' => 'active', 'billing_type' => 'subscription', 'billing_interval' => 'month', 'commitment_months' => 6,
+            'billing_mode' => 'split_50_50', 'deposit_percentage' => 50,
+        ]);
+
+        $result = $this->callTool($this->tool(), ['pack_id' => $plan->id, 'client_email' => 'ana@ficticio.test']);
+
+        $quote = Quote::forTenant($this->tenant->id)->sole();
+        $this->assertEquals(450.00, $quote->subtotal);
+        $this->assertEquals(544.50, $quote->total_amount);
+        $this->assertEquals(544.50, $quote->deposit_amount, 'cobra o primeiro mês inteiro, sem sinal');
+        $this->assertEquals(0.00, $quote->balance_amount);
+        $this->assertSame('Nume Ads Starter (mensal, contrato de 6 meses)', $quote->project_title);
+        $this->assertSame(['interval' => 'month', 'commitment_months' => 6], $quote->request_details['subscription']);
+        $this->assertStringContainsString('450,00 € + IVA por mês, contrato de 6 meses', $result);
+        $this->assertStringContainsString('faturados pela equipe', $result);
     }
 }
