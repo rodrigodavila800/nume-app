@@ -4,6 +4,7 @@ namespace App\Ai\Agents;
 
 use App\Ai\Middleware\RecordAiUsage;
 use App\Ai\Tools\CheckProductionStatusTool;
+use App\Ai\Tools\CreateQuoteFromPackTool;
 use App\Ai\Tools\ListTenantPacksTool;
 use App\Ai\Tools\QualifyLeadTool;
 use Laravel\Ai\Attributes\MaxSteps;
@@ -25,7 +26,7 @@ use Stringable;
  */
 #[Temperature(0.5)]
 #[MaxTokens(900)]
-#[MaxSteps(3)]
+#[MaxSteps(4)]
 class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTools
 {
     use Promptable;
@@ -62,9 +63,10 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
             '4. Dúvida de pagamento, fatura ou IVA: responda na hora com as regras acima. Objeção de preço: reforce o resultado do pacote; você não dá desconto nem muda preço.',
             '5. Todo preço, quantidade e adicional vem da ferramenta ListTenantPacksTool. Nunca invente valor, prazo, desconto ou condição.',
             '6. Assim que souber a empresa, o nicho ou o pacote de interesse, chame QualifyLeadTool, sem avisar o cliente e sem atrasar a resposta.',
-            '7. Encerre SEMPRE com um único próximo passo claro, em forma de pergunta de fechamento (ex.: "Fecho esse pacote para você? Me passa seu e-mail que registro a proposta"). Nunca encerre só com "qualquer dúvida estou aqui".',
-            '8. Projeto fora do catálogo, desconto, reclamação, questão fiscal ou contratual, ou pedido de falar com uma pessoa: diga que deixou tudo registrado para a equipe retornar. Não prometa prazo.',
-            '9. Status de vídeo ou produção: use CheckProductionStatusTool. Nunca peça nem aceite dados de cartão ou senha na conversa.',
+            '7. Cliente aceitou o pacote, pediu a proposta ou passou o e-mail: chame CreateQuoteFromPackTool com o id do pacote e o e-mail dele. Na mesma resposta envie o total e o link da proposta EXATAMENTE como a ferramenta devolveu, dizendo que no link ele informa a faturação e escolhe a forma de pagamento. Nunca escreva link por conta própria.',
+            '8. Encerre SEMPRE com um único próximo passo claro, em forma de pergunta de fechamento. Sem o e-mail ainda: "Fecho esse pacote para você? Me passa seu e-mail que já te envio a proposta por aqui". Nunca encerre só com "qualquer dúvida estou aqui".',
+            '9. Projeto fora do catálogo, desconto, reclamação, questão fiscal ou contratual, ou pedido de falar com uma pessoa: diga que deixou tudo registrado para a equipe retornar. Não prometa prazo.',
+            '10. Status de vídeo ou produção: use CheckProductionStatusTool. Nunca peça nem aceite dados de cartão ou senha na conversa.',
             '',
             'ESTILO NO WHATSAPP:',
             '- Máximo de 4 parágrafos curtos, direto ao ponto, no idioma: '.$lang.'.',
@@ -94,6 +96,7 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
             new CheckProductionStatusTool($this->tenantId, $this->clienteId),
             new ListTenantPacksTool($this->tenantId),
             new QualifyLeadTool($this->tenantId, $this->leadId, $this->contactPhone),
+            new CreateQuoteFromPackTool($this->tenantId, $this->clienteId, $this->contactPhone, $this->leadId, $this->isSpanish),
         ];
     }
 
