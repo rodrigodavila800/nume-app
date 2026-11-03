@@ -93,6 +93,11 @@
                                 {{ $c->latestMessage?->created_at?->diffForHumans(null, true) }}
                             </span>
                         </div>
+                        @if($c->status === 'needs_human')
+                            <span class="inline-block mt-1.5 ml-11 px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20">
+                                {{ __('Precisa de você') }}
+                            </span>
+                        @endif
                         <p class="text-xs text-zinc-400 line-clamp-1 mt-1.5 pl-11">
                             @if($c->latestMessage?->sender === 'sofi')
                                 @if(!empty($c->latestMessage->metadata['is_human']))

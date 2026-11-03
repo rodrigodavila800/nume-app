@@ -187,6 +187,12 @@ class MetaWhatsAppService
                            .'PÚBLICO: '.($cliente->target_audience ?: 'Geral')."\n";
         }
 
+        if ($conversation->status === HandoffService::STATUS_NEEDS_HUMAN) {
+            $brandContext .= "
+ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não chame EscalateToTeamTool de novo nem negocie o ponto pendente: diga que a equipe retorna por aqui.
+";
+        }
+
         $memoryPrompt = $this->distillationService->getMemoryPromptForCliente($cliente, $tenantId);
         if (! empty($memoryPrompt)) {
             $brandContext .= "\nMEMÓRIA COGNITIVA & HISTÓRICO APRENDIDO:\n{$memoryPrompt}\n";
@@ -202,7 +208,7 @@ class MetaWhatsAppService
             ->all();
 
         // 6. Executa a Sofi (Agent via Laravel AI SDK ou resposta heurística)
-        $replyText = $this->generateSofiResponse($tenant, $cliente?->id, $brandContext, $isSpanish, $recentMessages, $messageBody, $lead->id, $from);
+        $replyText = $this->generateSofiResponse($tenant, $cliente?->id, $brandContext, $isSpanish, $recentMessages, $messageBody, $lead->id, $from, $conversation->id);
 
         // 7. Salva a resposta da Sofi
         SofiMessage::create([
@@ -313,7 +319,8 @@ class MetaWhatsAppService
         array $history,
         string $userMessage,
         ?int $leadId = null,
-        ?string $contactPhone = null
+        ?string $contactPhone = null,
+        ?int $conversationId = null
     ): string {
         try {
             // Provedor + limite mensal de tokens (produtora e cliente). Antes chamava um
@@ -322,7 +329,7 @@ class MetaWhatsAppService
 
             if ($options !== null) {
                 // O histórico já termina na mensagem atual, que vai como prompt.
-                $agent = new SofiWhatsAppAgent($tenant->id, $clienteId, $context, $isSpanish, array_slice($history, 0, -1), $leadId, $contactPhone, $this->salesRules($tenant, $isSpanish, $userMessage));
+                $agent = new SofiWhatsAppAgent($tenant->id, $clienteId, $context, $isSpanish, array_slice($history, 0, -1), $leadId, $contactPhone, $this->salesRules($tenant, $isSpanish, $userMessage), $conversationId);
                 $result = $agent->prompt($userMessage, ...$options);
 
                 if (filled((string) $result)) {

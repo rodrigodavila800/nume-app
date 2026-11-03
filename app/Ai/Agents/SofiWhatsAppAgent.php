@@ -5,6 +5,7 @@ namespace App\Ai\Agents;
 use App\Ai\Middleware\RecordAiUsage;
 use App\Ai\Tools\CheckProductionStatusTool;
 use App\Ai\Tools\CreateQuoteFromPackTool;
+use App\Ai\Tools\EscalateToTeamTool;
 use App\Ai\Tools\ListTenantPacksTool;
 use App\Ai\Tools\QualifyLeadTool;
 use Laravel\Ai\Attributes\MaxSteps;
@@ -44,6 +45,7 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
         public ?int $leadId = null,
         public ?string $contactPhone = null,
         public string $salesRules = '',
+        public ?int $conversationId = null,
     ) {}
 
     public function instructions(): Stringable|string
@@ -65,7 +67,7 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
             '6. Assim que souber a empresa, o nicho ou o pacote de interesse, chame QualifyLeadTool, sem avisar o cliente e sem atrasar a resposta.',
             '7. Cliente aceitou o pacote, pediu a proposta ou passou o e-mail: chame CreateQuoteFromPackTool com o id do pacote e o e-mail dele. Na mesma resposta envie o total e o link da proposta EXATAMENTE como a ferramenta devolveu, dizendo que no link ele informa a faturação e escolhe a forma de pagamento. Nunca escreva link por conta própria.',
             '8. Encerre SEMPRE com um único próximo passo claro, em forma de pergunta de fechamento. Sem o e-mail ainda: "Fecho esse pacote para você? Me passa seu e-mail que já te envio a proposta por aqui". Nunca encerre só com "qualquer dúvida estou aqui".',
-            '9. Projeto fora do catálogo, desconto, reclamação, questão fiscal ou contratual, ou pedido de falar com uma pessoa: diga que deixou tudo registrado para a equipe retornar. Não prometa prazo.',
+            '9. Desconto ou condição especial, projeto fora do catálogo, reclamação, questão fiscal ou contratual, ou pedido de falar com uma pessoa: chame EscalateToTeamTool (motivo e resumo curto) e diga que a equipe foi avisada e retorna por este mesmo WhatsApp. Não prometa prazo e não negocie esse ponto.',
             '10. Status de vídeo ou produção: use CheckProductionStatusTool. Nunca peça nem aceite dados de cartão ou senha na conversa.',
             '',
             'ESTILO NO WHATSAPP:',
@@ -97,6 +99,7 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
             new ListTenantPacksTool($this->tenantId),
             new QualifyLeadTool($this->tenantId, $this->leadId, $this->contactPhone),
             new CreateQuoteFromPackTool($this->tenantId, $this->clienteId, $this->contactPhone, $this->leadId, $this->isSpanish),
+            new EscalateToTeamTool($this->tenantId, $this->conversationId, $this->leadId),
         ];
     }
 

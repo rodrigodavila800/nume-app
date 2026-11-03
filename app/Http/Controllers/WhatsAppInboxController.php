@@ -7,6 +7,7 @@ use App\Models\Production;
 use App\Models\SofiConversation;
 use App\Models\SofiMessage;
 use App\Services\Crm\LeadService;
+use App\Services\WhatsApp\HandoffService;
 use App\Services\WhatsApp\MetaWhatsAppService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class WhatsAppInboxController extends Controller
         $conversations = SofiConversation::forTenant($tenantId)
             ->where('channel', 'whatsapp')
             ->with(['cliente', 'latestMessage'])
+            ->orderByRaw('status = ? desc', [HandoffService::STATUS_NEEDS_HUMAN])
             ->latest('updated_at')
             ->get();
 
