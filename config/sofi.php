@@ -25,6 +25,9 @@ return [
 
     'timeout' => (int) env('SOFI_AI_TIMEOUT', 15),
 
+    // Por chamada ao modelo no WhatsApp, que roda na fila (ProcessWhatsAppMessage) e tem até 4 passos com ferramentas.
+    'whatsapp_timeout' => (int) env('SOFI_WHATSAPP_AI_TIMEOUT', 30),
+
     'keys' => [
         'gemini' => env('GEMINI_API_KEY'),
         'anthropic' => env('ANTHROPIC_API_KEY'),

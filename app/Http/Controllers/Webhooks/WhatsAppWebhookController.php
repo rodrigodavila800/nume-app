@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessWhatsAppMessage;
 use App\Services\WhatsApp\MetaWhatsAppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,7 +47,9 @@ class WhatsAppWebhookController extends Controller
             return response()->json(['error' => 'Invalid signature'], 403);
         }
 
-        $this->whatsAppService->processWebhookPayload($request->json()->all());
+        // A IA pode levar dezenas de segundos: processa na fila e devolve o 200 na hora (a Meta reenvia o
+        // evento se a resposta demora). A trava por wamid fica no MetaWhatsAppService.
+        ProcessWhatsAppMessage::dispatch($request->json()->all());
 
         // A Meta exige retorno imediato 200 OK com EVENT_RECEIVED para evitar retries desnecessários
         return response()->json(['status' => 'EVENT_RECEIVED'], 200);

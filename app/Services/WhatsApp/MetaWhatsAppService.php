@@ -401,6 +401,8 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
             $options = $this->sofiProvider->options($tenant, $clienteId);
 
             if ($options !== null) {
+                $options['timeout'] = max(1, (int) config('sofi.whatsapp_timeout', 30));
+
                 // O histórico já termina na mensagem atual, que vai como prompt.
                 $agent = new SofiWhatsAppAgent($tenant->id, $clienteId, $context, $isSpanish, array_slice($history, 0, -1), $leadId, $contactPhone, $this->salesRules($tenant, $isSpanish, $userMessage), $conversationId);
                 $result = $agent->prompt($userMessage, ...$options);
