@@ -55,7 +55,7 @@ class WhatsAppWebhookAndAgentTest extends TestCase
     {
         return ['entry' => [['changes' => [['value' => [
             'metadata' => ['phone_number_id' => $phoneNumberId],
-            'messages' => [['from' => $from, 'id' => 'wamid.teste', 'timestamp' => '1730222000', 'type' => 'text', 'text' => ['body' => $text]]],
+            'messages' => [['from' => $from, 'id' => 'wamid.'.uniqid('', true), 'timestamp' => '1730222000', 'type' => 'text', 'text' => ['body' => $text]]],
         ]]]]]];
     }
 

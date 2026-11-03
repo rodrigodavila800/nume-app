@@ -11,8 +11,11 @@ use App\Models\SofiConversation;
 use App\Models\SofiMessage;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Crm\LeadService;
 use App\Services\WhatsApp\HandoffService;
+use App\Services\WhatsApp\MetaWhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Ai\Responses\Data\ToolCall;
@@ -159,7 +162,7 @@ class WhatsAppHandoffTest extends TestCase
 
         $body = json_encode(['entry' => [['changes' => [['value' => [
             'metadata' => ['phone_number_id' => '1234567890'],
-            'messages' => [['from' => '34600000001', 'id' => 'wamid.teste', 'type' => 'text', 'text' => ['body' => 'E então?']]],
+            'messages' => [['from' => '34600000001', 'id' => 'wamid.'.uniqid('', true), 'type' => 'text', 'text' => ['body' => 'E então?']]],
         ]]]]]]);
         $this->call('POST', '/webhooks/whatsapp', [], [], [], [
             'CONTENT_TYPE' => 'application/json',
@@ -184,7 +187,7 @@ class WhatsAppHandoffTest extends TestCase
         Mail::assertQueued(WhatsAppHandoffMail::class, 1);
     }
 
-    private function incoming(string $text, bool $withAiKey = true): void
+    private function incoming(string $text, bool $withAiKey = true, ?string $messageId = null): void
     {
         config([
             'sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => $withAiKey ? 'chave-de-teste' : null,
@@ -194,7 +197,7 @@ class WhatsAppHandoffTest extends TestCase
 
         $body = json_encode(['entry' => [['changes' => [['value' => [
             'metadata' => ['phone_number_id' => '1234567890'],
-            'messages' => [['from' => '34600000001', 'id' => 'wamid.teste', 'type' => 'text', 'text' => ['body' => $text]]],
+            'messages' => [['from' => '34600000001', 'id' => $messageId ?? 'wamid.'.uniqid('', true), 'type' => 'text', 'text' => ['body' => $text]]],
         ]]]]]]);
 
         $this->call('POST', '/webhooks/whatsapp', [], [], [], [
@@ -287,5 +290,55 @@ class WhatsAppHandoffTest extends TestCase
         $reply = $this->conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content');
         $this->assertStringContainsString('Produtora Alpha', $reply);
         $this->assertStringNotContainsString('pacotes:', $reply);
+    }
+
+    public function test_meta_resending_the_same_message_is_answered_only_once(): void
+    {
+        SofiWhatsAppAgent::fake(['Resposta única.'])->preventStrayPrompts();
+
+        $this->incoming('Quero um orçamento', messageId: 'wamid.REENVIO');
+        $this->incoming('Quero um orçamento', messageId: 'wamid.REENVIO');
+
+        $this->assertSame(1, $this->conversation->messages()->where('sender', 'user')->count());
+        $this->assertSame(1, $this->conversation->messages()->where('sender', 'sofi')->count());
+        $this->assertSame(1, $this->lead->activities()->where('type', 'whatsapp')->count());
+    }
+
+    public function test_a_failed_processing_releases_the_lock_so_the_meta_retry_still_works(): void
+    {
+        config([
+            'services.whatsapp.phone_number_id' => '1234567890', 'services.whatsapp.tenant_slug' => 'produtora-alpha',
+            'sofi.provider' => 'gemini', 'sofi.keys.gemini' => 'chave-de-teste', 'services.whatsapp.access_token' => null,
+        ]);
+        SofiWhatsAppAgent::fake(['Resposta depois do reenvio.'])->preventStrayPrompts();
+        $payload = ['entry' => [['changes' => [['value' => [
+            'metadata' => ['phone_number_id' => '1234567890'],
+            'messages' => [['from' => '34600000001', 'id' => 'wamid.FALHA', 'type' => 'text', 'text' => ['body' => 'Oi']]],
+        ]]]]]];
+        $lockKey = 'whatsapp:wamid:'.hash('sha256', 'wamid.FALHA');
+
+        $this->app->bind(LeadService::class, fn () => throw new \RuntimeException('banco indisponível'));
+        try {
+            app(MetaWhatsAppService::class)->processWebhookPayload($payload);
+            $this->fail('A falha deveria subir para a Meta reenviar.');
+        } catch (\RuntimeException) {
+            $this->assertFalse(Cache::has($lockKey), 'a trava foi solta');
+        }
+
+        $this->app->offsetUnset(LeadService::class);
+        $this->app->forgetInstance(MetaWhatsAppService::class);
+        $result = app(MetaWhatsAppService::class)->processWebhookPayload($payload);
+
+        $this->assertSame('success', $result['status']);
+        $this->assertTrue(Cache::has($lockKey));
+    }
+
+    public function test_status_updates_without_a_message_id_are_not_locked(): void
+    {
+        $service = app(MetaWhatsAppService::class);
+        $statusPayload = ['entry' => [['changes' => [['value' => ['statuses' => [['id' => 'wamid.X', 'status' => 'delivered']]]]]]]];
+
+        $this->assertNull($service->processWebhookPayload($statusPayload));
+        $this->assertNull($service->processWebhookPayload($statusPayload));
     }
 }

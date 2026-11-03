@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use App\Services\Ai\SofiMemoryDistillationService;
 use App\Services\Crm\LeadService;
 use App\Services\SofiSalesConsultantService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -102,9 +103,39 @@ class MetaWhatsAppService
     }
 
     /**
-     * Processa payload de mensagem recebida via Meta Cloud API.
+     * Processa payload de mensagem recebida via Meta Cloud API, uma única vez por mensagem.
+     *
+     * A Meta reenvia o evento quando a resposta demora (a IA pode levar segundos) ou falha; sem a
+     * trava pelo id da mensagem (wamid) a Sofi responderia duas vezes ao mesmo cliente. A trava é
+     * atômica (Cache::add) e solta se o processamento falhar, para o reenvio da Meta valer.
      */
     public function processWebhookPayload(array $payload): ?array
+    {
+        $message = $payload['entry'][0]['changes'][0]['value']['messages'][0] ?? null;
+        $messageId = is_array($message) ? ($message['id'] ?? null) : null;
+
+        if (! is_string($messageId) || $messageId === '') {
+            return $this->handleIncoming($payload);
+        }
+
+        $lockKey = 'whatsapp:wamid:'.hash('sha256', $messageId);
+
+        if (! Cache::add($lockKey, true, now()->addDay())) {
+            Log::info('[MetaWhatsApp] Mensagem repetida pela Meta: ignorada.');
+
+            return ['status' => 'duplicate'];
+        }
+
+        try {
+            return $this->handleIncoming($payload);
+        } catch (\Throwable $e) {
+            Cache::forget($lockKey);
+
+            throw $e;
+        }
+    }
+
+    protected function handleIncoming(array $payload): ?array
     {
         $entry = $payload['entry'][0] ?? null;
         $changes = $entry['changes'][0]['value'] ?? null;
