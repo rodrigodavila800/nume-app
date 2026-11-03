@@ -317,6 +317,7 @@ class WhatsAppWebhookAndAgentTest extends TestCase
                 && str_contains($instructions, 'NA MESMA RESPOSTA, recomende UM pacote')
                 && str_contains($instructions, 'NO MÁXIMO UMA pergunta por mensagem')
                 && str_contains($instructions, 'Encerre SEMPRE com um único próximo passo')
+                && str_contains($instructions, 'Nunca prometa prazo nem tempo de retorno da equipe')
                 && ! str_contains($instructions, 'Diagnosticar a dor e o objetivo');
         });
     }
