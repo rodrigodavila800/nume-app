@@ -91,6 +91,32 @@ class WhatsAppInboxController extends Controller
     }
 
     /**
+     * A equipe devolve a conversa para a Sofi antes do fim da pausa (ou depois de resolver o ponto
+     * que a Sofi passou para uma pessoa). A próxima mensagem do cliente já é respondida pela Sofi.
+     */
+    public function handBack(SofiConversation $conversation): RedirectResponse
+    {
+        if ($conversation->tenant_id !== (int) auth()->user()->tenant_id) {
+            abort(403);
+        }
+
+        $conversation->forceFill(['status' => 'active'])->save();
+
+        $lead = $this->leadFor($conversation, (int) $conversation->tenant_id);
+        if ($lead) {
+            $this->leadService->log(
+                $lead,
+                'whatsapp',
+                'Conversa devolvida para a Sofi por '.auth()->user()->name.'.',
+                auth()->user(),
+                ['conversation_id' => $conversation->id, 'channel' => 'whatsapp']
+            );
+        }
+
+        return back()->with('success', __('A Sofi voltou a atender esta conversa.'));
+    }
+
+    /**
      * Envia mensagem de resposta manual da equipe pelo WhatsApp via Meta Cloud API.
      */
     public function reply(Request $request, SofiConversation $conversation): RedirectResponse
@@ -155,5 +181,21 @@ class WhatsAppInboxController extends Controller
         }
 
         return back()->with('success', __('Mensagem enviada com sucesso para o WhatsApp!'));
+    }
+
+    private function leadFor(SofiConversation $conversation, int $tenantId): ?Lead
+    {
+        $cleanPhone = preg_replace('/\D/', '', (string) $conversation->contact_phone);
+        $phoneSuffix = strlen($cleanPhone) >= 8 ? substr($cleanPhone, -8) : $cleanPhone;
+
+        return Lead::forTenant($tenantId)
+            ->whereNull('anonymized_at')
+            ->where(function ($q) use ($conversation, $cleanPhone, $phoneSuffix) {
+                $q->when($conversation->cliente_id, fn ($q) => $q->orWhere('cliente_id', $conversation->cliente_id))
+                    ->when($cleanPhone, fn ($q) => $q->orWhere('phone', 'like', "%{$cleanPhone}%"))
+                    ->when($phoneSuffix, fn ($q) => $q->orWhere('phone', 'like', "%{$phoneSuffix}%"));
+            })
+            ->latest('id')
+            ->first();
     }
 }

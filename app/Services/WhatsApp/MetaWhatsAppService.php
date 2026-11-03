@@ -357,6 +357,9 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
             ->first();
 
         if ($lastHumanReply && $lastHumanReply->created_at->gt(now()->subHours($pauseHours))) {
+            Log::info('[MetaWhatsApp] Conversa ****'.substr((string) $conversation->contact_phone, -4)
+                .' em atendimento da equipe: Sofi calada até '.$lastHumanReply->created_at->copy()->addHours($pauseHours)->format('H:i').' (UTC).');
+
             return true;
         }
 

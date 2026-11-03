@@ -142,11 +142,21 @@
                             </p>
                         </div>
                     </div>
-                    @if($associatedLead)
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
-                            {{ $stages[$associatedLead->stage] ?? $associatedLead->stage }}
-                        </span>
-                    @endif
+                    <div class="flex items-center gap-2">
+                        @if(in_array($activeConversation->status, ['human', 'needs_human'], true))
+                            <form method="POST" action="{{ route('inbox.hand-back', $activeConversation) }}">
+                                @csrf
+                                <button type="submit" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 transition">
+                                    {{ __('Devolver para a Sofi') }}
+                                </button>
+                            </form>
+                        @endif
+                        @if($associatedLead)
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                {{ $stages[$associatedLead->stage] ?? $associatedLead->stage }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
 
                 <!-- Lista de Balões de Mensagem -->

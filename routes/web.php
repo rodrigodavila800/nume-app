@@ -276,6 +276,7 @@ Route::middleware('auth')->group(function () {
     // Central de Mensagens & WhatsApp Inbox
     Route::get('/inbox', [WhatsAppInboxController::class, 'index'])->name('inbox.index');
     Route::post('/inbox/{conversation}/responder', [WhatsAppInboxController::class, 'reply'])->whereNumber('conversation')->name('inbox.reply');
+    Route::post('/inbox/{conversation}/devolver-sofi', [WhatsAppInboxController::class, 'handBack'])->whereNumber('conversation')->name('inbox.hand-back');
 
     Route::get('/configuracoes/api-keys', [ApiKeyController::class, 'index'])
         ->name('api_keys.index');

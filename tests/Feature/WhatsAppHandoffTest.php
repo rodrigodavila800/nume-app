@@ -363,4 +363,46 @@ class WhatsAppHandoffTest extends TestCase
         $this->assertStringNotContainsString('gemini.exemplo', $line);
         $this->assertStringNotContainsString('texto do cliente', $line);
     }
+
+    public function test_the_team_can_hand_the_conversation_back_to_the_sofi(): void
+    {
+        $this->humanReply('Já te mando o orçamento.', now()->subMinutes(10));
+
+        $this->actingAs($this->admin)->get(route('inbox.index', ['conversation_id' => $this->conversation->id]))->assertSee('Devolver para a Sofi');
+        $this->actingAs($this->admin)->post(route('inbox.hand-back', $this->conversation))->assertRedirect()->assertSessionHas('success');
+
+        $this->assertSame('active', $this->conversation->fresh()->status);
+        $this->assertStringContainsString('devolvida para a Sofi', $this->lead->activities()->latest('id')->value('body'));
+        $this->actingAs($this->admin)->get(route('inbox.index', ['conversation_id' => $this->conversation->id]))->assertDontSee('Devolver para a Sofi');
+
+        SofiWhatsAppAgent::fake(['Voltei!'])->preventStrayPrompts();
+        $this->incoming('Oi de novo');
+        SofiWhatsAppAgent::assertPrompted('Oi de novo');
+    }
+
+    public function test_another_tenant_cannot_hand_back_a_conversation(): void
+    {
+        $other = Tenant::create(['name' => 'Produtora Beta', 'slug' => 'produtora-beta', 'status' => 'active', 'subscription_expires_at' => now()->addMonth()]);
+        $intruder = User::create(['tenant_id' => $other->id, 'name' => 'Intrusa', 'email' => 'intrusa@ficticio.test', 'password' => 'secret12345', 'role' => 'admin']);
+        $this->conversation->forceFill(['status' => 'human'])->save();
+
+        $this->actingAs($intruder)->post(route('inbox.hand-back', $this->conversation))->assertNotFound();
+
+        $this->assertSame('human', $this->conversation->fresh()->status);
+    }
+
+    public function test_the_pause_is_logged_with_the_time_the_sofi_comes_back(): void
+    {
+        $lines = [];
+        Event::listen(MessageLogged::class, function (MessageLogged $event) use (&$lines) {
+            $lines[] = $event->message;
+        });
+        SofiWhatsAppAgent::fake([])->preventStrayPrompts();
+        $this->travelTo(now()->setTime(22, 0));
+        $this->humanReply('Já te mando o orçamento.', now()->subHour());
+
+        $this->incoming('Pode ser amanhã?');
+
+        $this->assertContains('[MetaWhatsApp] Conversa ****0001 em atendimento da equipe: Sofi calada até 01:00 (UTC).', $lines);
+    }
 }
