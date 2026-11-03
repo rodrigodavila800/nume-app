@@ -302,4 +302,34 @@ class WhatsAppWebhookAndAgentTest extends TestCase
             'type' => 'whatsapp',
         ]);
     }
+
+    public function test_the_agent_sells_directly_with_the_storefront_voice_and_without_the_diagnosis_mission(): void
+    {
+        config(['sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-de-teste']);
+        SofiWhatsAppAgent::fake(['Resposta de teste.'])->preventStrayPrompts();
+
+        $this->postSigned($this->messagePayload('5511999998888', 'Oi gostaria de orçamento'))->assertStatus(200);
+
+        SofiWhatsAppAgent::assertPrompted(function ($prompt) {
+            $instructions = (string) $prompt->agent->instructions();
+
+            return str_contains($instructions, 'Consultora Comercial Sênior da produtora Produtora Alpha')
+                && str_contains($instructions, 'NA MESMA RESPOSTA, recomende UM pacote')
+                && str_contains($instructions, 'NO MÁXIMO UMA pergunta por mensagem')
+                && str_contains($instructions, 'Encerre SEMPRE com um único próximo passo')
+                && ! str_contains($instructions, 'Diagnosticar a dor e o objetivo');
+        });
+    }
+
+    public function test_the_agent_receives_the_last_twelve_messages_of_the_conversation(): void
+    {
+        config(['sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-de-teste']);
+        SofiWhatsAppAgent::fake(array_fill(0, 8, 'Resposta de teste.'))->preventStrayPrompts();
+
+        foreach (range(1, 8) as $number) {
+            $this->postSigned($this->messagePayload('5511999998888', "Mensagem {$number}"))->assertStatus(200);
+        }
+
+        SofiWhatsAppAgent::assertPrompted(fn ($prompt) => $prompt->prompt === 'Mensagem 8' && count($prompt->agent->history) === 11);
+    }
 }

@@ -10,6 +10,7 @@ use App\Models\SofiMessage;
 use App\Models\Tenant;
 use App\Services\Ai\SofiMemoryDistillationService;
 use App\Services\Crm\LeadService;
+use App\Services\SofiSalesConsultantService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -193,7 +194,7 @@ class MetaWhatsAppService
 
         $recentMessages = $conversation->messages()
             ->latest('id')
-            ->take(6)
+            ->take(12)
             ->get()
             ->reverse()
             ->map(fn ($m) => ['sender' => $m->sender, 'content' => $m->content])
@@ -285,6 +286,25 @@ class MetaWhatsAppService
         }
     }
 
+    /**
+     * Voz comercial da Sofi, a mesma do chat da vitrine. Fica de fora a "missão" dela (diagnosticar
+     * antes de recomendar e convidar ao cadastro), que no WhatsApp atrasa a venda: as regras do
+     * canal ficam no SofiWhatsAppAgent.
+     */
+    protected function salesRules(Tenant $tenant, bool $isSpanish, string $userMessage): string
+    {
+        $parts = app(SofiSalesConsultantService::class)->salesPromptParts($tenant, $isSpanish, $userMessage);
+
+        return $parts['persona']
+            ."
+".$parts['market_trends']
+            ."
+".$parts['anti_patterns']
+            .$parts['niche_section']
+            ."
+".$parts['directives'];
+    }
+
     protected function generateSofiResponse(
         Tenant $tenant,
         ?int $clienteId,
@@ -302,7 +322,7 @@ class MetaWhatsAppService
 
             if ($options !== null) {
                 // O histórico já termina na mensagem atual, que vai como prompt.
-                $agent = new SofiWhatsAppAgent($tenant->id, $clienteId, $context, $isSpanish, array_slice($history, 0, -1), $leadId, $contactPhone);
+                $agent = new SofiWhatsAppAgent($tenant->id, $clienteId, $context, $isSpanish, array_slice($history, 0, -1), $leadId, $contactPhone, $this->salesRules($tenant, $isSpanish, $userMessage));
                 $result = $agent->prompt($userMessage, ...$options);
 
                 if (filled((string) $result)) {
