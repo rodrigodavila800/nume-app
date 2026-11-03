@@ -6,12 +6,14 @@ use App\Ai\Agents\SofiWhatsAppAgent;
 use App\Ai\Tools\EscalateToTeamTool;
 use App\Mail\WhatsAppHandoffMail;
 use App\Models\Lead;
+use App\Models\Pack;
 use App\Models\SofiConversation;
 use App\Models\SofiMessage;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\WhatsApp\HandoffService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Ai\Tools\Request;
@@ -37,6 +39,7 @@ class WhatsAppHandoffTest extends TestCase
         parent::setUp();
 
         Mail::fake();
+        Http::preventStrayRequests();
         $this->tenant = Tenant::create(['name' => 'Produtora Alpha', 'slug' => 'produtora-alpha', 'status' => 'active', 'subscription_expires_at' => now()->addMonth()]);
         $this->admin = User::create(['tenant_id' => $this->tenant->id, 'name' => 'Dona', 'email' => 'dona@ficticio.test', 'password' => 'secret12345', 'role' => 'admin']);
         User::create(['tenant_id' => $this->tenant->id, 'name' => 'Editor', 'email' => 'editor@ficticio.test', 'password' => 'secret12345', 'role' => 'editor']);
@@ -181,10 +184,10 @@ class WhatsAppHandoffTest extends TestCase
         Mail::assertQueued(WhatsAppHandoffMail::class, 1);
     }
 
-    private function incoming(string $text): void
+    private function incoming(string $text, bool $withAiKey = true): void
     {
         config([
-            'sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-de-teste',
+            'sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => $withAiKey ? 'chave-de-teste' : null,
             'services.whatsapp.app_secret' => 'segredo-ficticio-do-app', 'services.whatsapp.phone_number_id' => '1234567890',
             'services.whatsapp.tenant_slug' => 'produtora-alpha', 'services.whatsapp.access_token' => null,
         ]);
@@ -248,5 +251,41 @@ class WhatsAppHandoffTest extends TestCase
         SofiMessage::create(['sofi_conversation_id' => $this->conversation->id, 'sender' => 'user', 'content' => 'Pode ser amanhã?']);
 
         $this->actingAs($this->admin)->get(route('inbox.index'))->assertOk()->assertSee('Cliente respondeu');
+    }
+
+    public function test_when_the_ai_fails_the_customer_gets_the_real_packs_and_the_team_is_called(): void
+    {
+        Pack::create(['tenant_id' => $this->tenant->id, 'name' => 'Reels Starter', 'slug' => 'reels-starter', 'price' => 490, 'video_quantity' => 4, 'status' => 'active']);
+        SofiWhatsAppAgent::fake([fn () => throw new \RuntimeException('503 modelo sobrecarregado')])->preventStrayPrompts();
+
+        $this->incoming('Oi gostaria de orçamento');
+
+        $reply = $this->conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content');
+        $this->assertStringContainsString('*Reels Starter*: 4 vídeos por 490,00 € + IVA', $reply);
+        $this->assertStringContainsString('já avisei nossa equipe', $reply);
+        $this->assertSame('needs_human', $this->conversation->fresh()->status);
+        Mail::assertQueued(WhatsAppHandoffMail::class, fn (WhatsAppHandoffMail $mail) => $mail->reasonLabel === HandoffService::REASONS['ai_unavailable'] && $mail->hasTo('dona@ficticio.test'));
+    }
+
+    public function test_without_an_ai_key_the_same_fallback_applies_and_the_team_is_warned_only_once(): void
+    {
+        Pack::create(['tenant_id' => $this->tenant->id, 'name' => 'Reels Starter', 'slug' => 'reels-starter', 'price' => 490, 'video_quantity' => 4, 'status' => 'active']);
+
+        $this->incoming('Oi gostaria de orçamento', withAiKey: false);
+        $this->incoming('Alguém aí?', withAiKey: false);
+
+        $this->assertSame(2, $this->conversation->messages()->where('sender', 'sofi')->count());
+        Mail::assertQueued(WhatsAppHandoffMail::class, 1);
+    }
+
+    public function test_the_fallback_still_replies_when_the_tenant_has_no_packs(): void
+    {
+        SofiWhatsAppAgent::fake([fn () => throw new \RuntimeException('503')])->preventStrayPrompts();
+
+        $this->incoming('Oi');
+
+        $reply = $this->conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content');
+        $this->assertStringContainsString('Produtora Alpha', $reply);
+        $this->assertStringNotContainsString('pacotes:', $reply);
     }
 }

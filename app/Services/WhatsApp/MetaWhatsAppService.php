@@ -4,7 +4,9 @@ namespace App\Services\WhatsApp;
 
 use App\Ai\Agents\SofiWhatsAppAgent;
 use App\Ai\SofiProvider;
+use App\Ai\Tools\ListTenantPacksTool;
 use App\Models\Cliente;
+use App\Models\Lead;
 use App\Models\SofiConversation;
 use App\Models\SofiMessage;
 use App\Models\Tenant;
@@ -379,9 +381,50 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
             Log::warning('[MetaWhatsApp] Erro na execução do SofiWhatsAppAgent: '.get_class($e));
         }
 
-        // Resposta padrão caso a IA não esteja disponível
-        return $isSpanish
-            ? '¡Hola! Soy Sofi de NUME Creative. He recibido tu mensaje y ya lo he registrado con nuestro equipo. En breve te daremos más detalles. ¡Gracias!'
-            : 'Olá! Sou a Sofi da NUME Creative. Recebi sua mensagem e já registrei no nosso sistema. Em breve nossa equipe retornará com todos os detalhes!';
+        return $this->fallbackReply($tenant, $isSpanish, $conversationId, $leadId);
+    }
+
+    /**
+     * IA fora do ar, sem chave ou sem orçamento de tokens: o cliente recebe os pacotes reais da
+     * produtora (nada de frase fixa que não leva a lugar nenhum) e a equipe é chamada para atendê-lo.
+     * Nada aqui pode quebrar o atendimento.
+     */
+    protected function fallbackReply(Tenant $tenant, bool $isSpanish, ?int $conversationId, ?int $leadId): string
+    {
+        $teamCalled = false;
+
+        try {
+            $conversation = $conversationId ? SofiConversation::forTenant($tenant->id)->find($conversationId) : null;
+            $lead = $leadId ? Lead::forTenant($tenant->id)->whereNull('anonymized_at')->find($leadId) : null;
+
+            if ($conversation) {
+                app(HandoffService::class)->request($conversation, $lead, 'ai_unavailable', 'A IA não respondeu; o cliente recebeu os pacotes do catálogo e aguarda a equipe.');
+                $teamCalled = true;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[MetaWhatsApp] Falha ao chamar a equipe no fallback: '.get_class($e));
+        }
+
+        $lines = [];
+
+        try {
+            foreach (array_slice((new ListTenantPacksTool($tenant->id))->packs(), 0, 3) as $pack) {
+                $price = number_format($pack['price'], 2, ',', '.');
+                $lines[] = "• *{$pack['name']}*: {$pack['video_quantity']} vídeos por {$price} € + IVA";
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[MetaWhatsApp] Falha ao listar pacotes no fallback: '.get_class($e));
+        }
+
+        $name = $tenant->name ?: 'NUME Creative';
+        $catalog = $lines === [] ? '' : "\n\n".implode("\n", $lines);
+
+        if ($isSpanish) {
+            return "¡Hola! Soy Sofi de {$name}. Tengo una pequeña inestabilidad ahora mismo".($teamCalled ? ' y ya avisé a nuestro equipo para atenderte por aquí' : '').'.'
+                .($lines === [] ? '' : "\n\nMientras tanto, estos son nuestros paquetes:").$catalog;
+        }
+
+        return "Olá! Aqui é a Sofi da {$name}. Estou com uma instabilidade rápida agora".($teamCalled ? ' e já avisei nossa equipe para te atender por aqui' : '').'.'
+            .($lines === [] ? '' : "\n\nEnquanto isso, estes são os nossos pacotes:").$catalog;
     }
 }
