@@ -176,6 +176,19 @@ class MetaWhatsAppService
             'content' => trim($messageBody),
         ]);
 
+        // Equipe respondendo pelo painel: a mensagem fica salva e no CRM, mas a Sofi não interrompe.
+        if ($this->isHumanHandling($conversation)) {
+            $this->leadService->log(
+                $lead,
+                'whatsapp',
+                "Mensagem recebida durante o atendimento da equipe: \"{$messageBody}\"",
+                null,
+                ['conversation_id' => $conversation->id, 'channel' => 'whatsapp']
+            );
+
+            return ['status' => 'human_handling', 'conversation_id' => $conversation->id, 'reply' => null];
+        }
+
         // 5. Monta o contexto cognitivo e histórico para a Sofi
         $locale = $cliente?->locale ?? app()->getLocale();
         $isSpanish = str_starts_with($locale, 'es');
@@ -290,6 +303,32 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
 
             return false;
         }
+    }
+
+    /**
+     * A equipe respondeu há pouco? Só nesse caso a Sofi se cala. Passada a pausa, a conversa
+     * volta para a Sofi sozinha, para o cliente não ficar sem resposta se ninguém retomar.
+     */
+    protected function isHumanHandling(SofiConversation $conversation): bool
+    {
+        if ($conversation->status !== HandoffService::STATUS_HUMAN) {
+            return false;
+        }
+
+        $pauseHours = max(1, (int) config('sofi.whatsapp_human_pause_hours', 4));
+        $lastHumanReply = $conversation->messages()
+            ->where('sender', 'sofi')
+            ->where('metadata->is_human', true)
+            ->reorder('id', 'desc')
+            ->first();
+
+        if ($lastHumanReply && $lastHumanReply->created_at->gt(now()->subHours($pauseHours))) {
+            return true;
+        }
+
+        $conversation->forceFill(['status' => 'active'])->save();
+
+        return false;
     }
 
     /**

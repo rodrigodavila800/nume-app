@@ -7,6 +7,7 @@ use App\Ai\Tools\EscalateToTeamTool;
 use App\Mail\WhatsAppHandoffMail;
 use App\Models\Lead;
 use App\Models\SofiConversation;
+use App\Models\SofiMessage;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\WhatsApp\HandoffService;
@@ -178,5 +179,74 @@ class WhatsAppHandoffTest extends TestCase
         $this->assertSame('A equipe foi avisada.', (string) $agent->prompt('Quero falar com uma pessoa'));
         $this->assertSame('needs_human', $this->conversation->fresh()->status);
         Mail::assertQueued(WhatsAppHandoffMail::class, 1);
+    }
+
+    private function incoming(string $text): void
+    {
+        config([
+            'sofi.provider' => 'gemini', 'sofi.model' => null, 'sofi.keys.gemini' => 'chave-de-teste',
+            'services.whatsapp.app_secret' => 'segredo-ficticio-do-app', 'services.whatsapp.phone_number_id' => '1234567890',
+            'services.whatsapp.tenant_slug' => 'produtora-alpha', 'services.whatsapp.access_token' => null,
+        ]);
+
+        $body = json_encode(['entry' => [['changes' => [['value' => [
+            'metadata' => ['phone_number_id' => '1234567890'],
+            'messages' => [['from' => '34600000001', 'id' => 'wamid.teste', 'type' => 'text', 'text' => ['body' => $text]]],
+        ]]]]]]);
+
+        $this->call('POST', '/webhooks/whatsapp', [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_HUB_SIGNATURE_256' => 'sha256='.hash_hmac('sha256', $body, 'segredo-ficticio-do-app'),
+        ], $body)->assertOk();
+    }
+
+    private function humanReply(string $text, \DateTimeInterface $at): void
+    {
+        $this->conversation->forceFill(['status' => 'human'])->save();
+        SofiMessage::create(['sofi_conversation_id' => $this->conversation->id, 'sender' => 'sofi', 'content' => $text, 'metadata' => ['is_human' => true]])
+            ->forceFill(['created_at' => $at])->save();
+    }
+
+    public function test_replying_from_the_panel_pauses_the_sofi(): void
+    {
+        config(['services.whatsapp.access_token' => null, 'services.whatsapp.phone_number_id' => null]);
+
+        $this->actingAs($this->admin)->post(route('inbox.reply', $this->conversation), ['message' => 'Oi, aqui é a equipe.'])->assertRedirect();
+
+        $this->assertSame('human', $this->conversation->fresh()->status);
+    }
+
+    public function test_the_sofi_stays_quiet_while_the_team_is_handling_the_conversation(): void
+    {
+        SofiWhatsAppAgent::fake([])->preventStrayPrompts();
+        $this->humanReply('Já te mando o orçamento.', now()->subHour());
+
+        $this->incoming('Pode ser amanhã?');
+
+        SofiWhatsAppAgent::assertNeverPrompted();
+        $this->assertSame('human', $this->conversation->fresh()->status);
+        $this->assertSame(1, $this->conversation->messages()->where('sender', 'user')->count(), 'a mensagem do cliente fica salva');
+        $this->assertSame(1, $this->conversation->messages()->where('sender', 'sofi')->count(), 'só a resposta da equipe, nenhuma da Sofi');
+        $this->assertStringContainsString('durante o atendimento da equipe', $this->lead->activities()->latest('id')->value('body'));
+    }
+
+    public function test_the_sofi_resumes_after_the_pause_ends(): void
+    {
+        SofiWhatsAppAgent::fake(['Voltei por aqui! Posso ajudar?'])->preventStrayPrompts();
+        $this->humanReply('Já te mando o orçamento.', now()->subHours(5));
+
+        $this->incoming('Alguma novidade?');
+
+        SofiWhatsAppAgent::assertPrompted('Alguma novidade?');
+        $this->assertSame('active', $this->conversation->fresh()->status);
+        $this->assertSame('Voltei por aqui! Posso ajudar?', $this->conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content'));
+    }
+
+    public function test_the_inbox_flags_a_customer_waiting_after_the_team_replied(): void
+    {
+        $this->humanReply('Já te mando o orçamento.', now()->subHour());
+        SofiMessage::create(['sofi_conversation_id' => $this->conversation->id, 'sender' => 'user', 'content' => 'Pode ser amanhã?']);
+
+        $this->actingAs($this->admin)->get(route('inbox.index'))->assertOk()->assertSee('Cliente respondeu');
     }
 }

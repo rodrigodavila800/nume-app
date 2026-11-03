@@ -44,6 +44,9 @@ return [
         'per_hour' => (int) env('SOFI_PORTAL_CHAT_PER_HOUR', 60),
     ],
 
+    // Horas em que a Sofi fica calada no WhatsApp depois que a equipe responde pelo painel; depois volta sozinha.
+    'whatsapp_human_pause_hours' => (int) env('SOFI_WHATSAPP_HUMAN_PAUSE_HOURS', 4),
+
     // Orçamento mensal de tokens (input + output). Zero = sem limite.
     'budgets' => [
         'monthly_tokens_per_tenant' => (int) env('SOFI_MONTHLY_TOKENS_PER_TENANT', 0),

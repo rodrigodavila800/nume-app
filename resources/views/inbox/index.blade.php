@@ -98,6 +98,11 @@
                                 {{ __('Precisa de você') }}
                             </span>
                         @endif
+                        @if($c->status === 'human' && $c->latestMessage?->sender === 'user')
+                            <span class="inline-block mt-1.5 ml-11 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                {{ __('Cliente respondeu') }}
+                            </span>
+                        @endif
                         <p class="text-xs text-zinc-400 line-clamp-1 mt-1.5 pl-11">
                             @if($c->latestMessage?->sender === 'sofi')
                                 @if(!empty($c->latestMessage->metadata['is_human']))

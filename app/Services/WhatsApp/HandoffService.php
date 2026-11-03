@@ -22,6 +22,9 @@ class HandoffService
 {
     public const STATUS_NEEDS_HUMAN = 'needs_human';
 
+    /** A equipe respondeu pelo painel: a Sofi fica calada até o fim da pausa. */
+    public const STATUS_HUMAN = 'human';
+
     /**
      * @var array<string, string>
      */

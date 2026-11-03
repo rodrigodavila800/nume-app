@@ -120,6 +120,8 @@ class WhatsAppInboxController extends Controller
             ],
         ]);
 
+        // A equipe assumiu: a Sofi fica calada por algumas horas (config sofi.whatsapp_human_pause_hours).
+        $conversation->forceFill(['status' => HandoffService::STATUS_HUMAN])->save();
         $conversation->touch();
 
         // 2. Dispara a mensagem para o WhatsApp do contato via Cloud API
