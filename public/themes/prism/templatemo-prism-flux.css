@@ -5501,3 +5501,127 @@ body.nav-menu-open {
 		font-size: 12px;
 	}
 }
+
+/* Monte seu pacote (vitrine) */
+.builder-grid {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 0 20px;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 26px;
+	align-items: flex-start;
+}
+
+.builder-card {
+	flex: 2 1 420px;
+	max-width: 660px;
+	gap: 10px;
+	justify-content: flex-start;
+}
+
+.builder-summary {
+	flex: 1 1 280px;
+	max-width: 360px;
+	gap: 14px;
+	justify-content: flex-start;
+}
+
+.builder-section-label {
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--text-secondary);
+	margin: 6px 0 2px;
+}
+
+.builder-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 11px 14px;
+	background: rgba(10, 10, 14, 0.8);
+	border: 1px solid rgba(255, 255, 255, 0.07);
+	border-radius: 12px;
+}
+
+.builder-row-info {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.builder-row-title {
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--text-primary);
+}
+
+.builder-row-meta {
+	font-size: 12px;
+	color: var(--text-secondary);
+	white-space: nowrap;
+}
+
+.builder-qty-input {
+	width: 72px;
+	padding: 8px;
+	text-align: center;
+	font-weight: 800;
+	font-size: 14px;
+	color: var(--text-primary);
+	background: var(--carbon-dark);
+	border: 1px solid var(--metal-dark);
+	border-radius: 10px;
+}
+
+.builder-qty-input:focus {
+	outline: none;
+	border-color: var(--accent-red);
+}
+
+.builder-summary-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0;
+}
+
+.builder-summary-row {
+	display: flex;
+	justify-content: space-between;
+	font-size: 13px;
+	color: var(--text-secondary);
+}
+
+.builder-summary-row dd {
+	margin: 0;
+	color: var(--text-primary);
+	font-variant-numeric: tabular-nums;
+}
+
+.builder-summary-total {
+	padding-top: 8px;
+	border-top: 1px solid var(--metal-dark);
+	font-size: 16px;
+	font-weight: 800;
+}
+
+.builder-summary-total dd {
+	color: var(--accent-cyan);
+}
+
+.builder-error {
+	font-size: 12px;
+	font-weight: 700;
+	color: #fca5a5;
+}
+
+.builder-note {
+	font-size: 11px;
+	line-height: 1.5;
+	color: var(--text-secondary);
+}

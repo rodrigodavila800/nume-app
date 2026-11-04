@@ -443,6 +443,65 @@
         </div>
     </section>
 
+    @if (! empty($builderCatalog['video_types']))
+    <!-- Monte seu pacote: só simulação; para contratar, cadastro ou login -->
+    <section class="contact-section pricing-section-wrapper" id="monte-seu-pacote">
+        <div class="section-header">
+            <span class="pricing-badge-label">{{ __('Do seu jeito') }}</span>
+            <h2 class="section-title">{{ __('Monte seu pacote') }}</h2>
+            <p class="section-subtitle">{{ __('Escolha quantos vídeos de cada tipo e os extras. O valor sobe conforme você acrescenta.') }}</p>
+        </div>
+
+        <form method="POST" action="{{ route('storefront.builder', $tenant->slug) }}" id="storefrontBuilder" class="builder-grid" data-vat="{{ $builderCatalog['vat_rate'] }}">
+            @csrf
+            <div class="pack-card-custom builder-card">
+                <p class="builder-section-label">{{ __('Vídeos') }}</p>
+                @foreach ($builderCatalog['video_types'] as $type)
+                    <div class="builder-row">
+                        <div class="builder-row-info">
+                            <span class="builder-row-title">{{ $type['name'] }}</span>
+                            <span class="builder-row-meta">{{ $type['duration_seconds'] }} s · {{ number_format($type['price'], 2, ',', '.') }} € {{ __('por vídeo') }}</span>
+                        </div>
+                        <label class="sr-only" for="builder-type-{{ $type['id'] }}">{{ __('Quantidade de :type', ['type' => $type['name']]) }}</label>
+                        <input id="builder-type-{{ $type['id'] }}" class="builder-qty-input" type="number" name="items[{{ $type['id'] }}]" min="0" max="50" step="1" inputmode="numeric"
+                            value="{{ (int) old('items.'.$type['id'], 0) }}" data-builder-qty data-price="{{ $type['price'] }}">
+                    </div>
+                @endforeach
+
+                @if (! empty($builderCatalog['addons']))
+                    <p class="builder-section-label">{{ __('Extras') }}</p>
+                    @foreach ($builderCatalog['addons'] as $addon)
+                        <label class="addon-checkbox-label">
+                            <span class="addon-left-col">
+                                <input type="checkbox" class="addon-checkbox-input" name="addons[]" value="{{ $addon['id'] }}" data-builder-addon data-price="{{ $addon['price'] }}"
+                                    @checked(in_array($addon['id'], array_map('intval', (array) old('addons', [])), true))>
+                                <span class="builder-row-title">{{ $addon['name'] }}</span>
+                            </span>
+                            <span class="builder-row-meta">+ {{ number_format($addon['price'], 2, ',', '.') }} €</span>
+                        </label>
+                    @endforeach
+                @endif
+            </div>
+
+            <aside class="pack-card-custom builder-summary">
+                <p class="builder-section-label">{{ __('Seu pacote') }}</p>
+                <dl class="builder-summary-list">
+                    <div class="builder-summary-row"><dt>{{ __('Vídeos') }}</dt><dd id="sbVideos">0</dd></div>
+                    <div class="builder-summary-row"><dt>{{ __('Subtotal') }}</dt><dd id="sbSubtotal">0,00 €</dd></div>
+                    <div class="builder-summary-row"><dt>{{ __('IVA') }}</dt><dd id="sbTax">0,00 €</dd></div>
+                    <div class="builder-summary-row builder-summary-total"><dt>{{ __('Total') }}</dt><dd id="sbTotal">0,00 €</dd></div>
+                    <div class="builder-summary-row"><dt>{{ __('Sinal para começar (50%)') }}</dt><dd id="sbDeposit">0,00 €</dd></div>
+                </dl>
+                @if (session('builder_error'))
+                    <p class="builder-error">{{ session('builder_error') }}</p>
+                @endif
+                <button type="submit" id="sbSubmit" class="contract-btn pack-cta-btn-block" disabled>{{ __('Contratar este pacote') }} <span aria-hidden="true">→</span></button>
+                <p class="builder-note">{{ __('Para contratar, você cria a sua conta (ou entra, se já tiver) e confirma no portal, onde acompanha todo o projeto.') }}</p>
+            </aside>
+        </form>
+    </section>
+    @endif
+
     <!-- Official One-off Packs Section -->
     <section class="contact-section pricing-section-wrapper" id="pacotes">
         <div class="section-header">
@@ -833,6 +892,35 @@
                 targetEl.scrollIntoView({ behavior: 'smooth' });
             }
         }
+
+        // Monte seu pacote: prévia do total (o servidor recalcula com os preços do banco).
+        (function () {
+            const form = document.getElementById('storefrontBuilder');
+            if (!form) return;
+            const vat = parseFloat(form.dataset.vat) || 0;
+            const money = (v) => v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+            const out = (id, text) => { document.getElementById(id).textContent = text; };
+            function refresh() {
+                let videos = 0, subtotal = 0;
+                form.querySelectorAll('[data-builder-qty]').forEach(function (input) {
+                    const qty = Math.max(0, Math.min(50, parseInt(input.value, 10) || 0));
+                    videos += qty;
+                    subtotal += qty * parseFloat(input.dataset.price);
+                });
+                form.querySelectorAll('[data-builder-addon]:checked').forEach(function (box) { subtotal += parseFloat(box.dataset.price); });
+                const tax = Math.round(subtotal * vat) / 100;
+                const total = subtotal + tax;
+                out('sbVideos', String(videos));
+                out('sbSubtotal', money(subtotal));
+                out('sbTax', money(tax));
+                out('sbTotal', money(total));
+                out('sbDeposit', money(Math.round(total * 50) / 100));
+                document.getElementById('sbSubmit').disabled = videos === 0;
+            }
+            form.addEventListener('input', refresh);
+            form.addEventListener('change', refresh);
+            refresh();
+        })();
 
         // Funções de Checkout Transparente da Vitrine
         function openStorefrontCheckout(packId, packName, basePrice, checkoutUrl, billingType, commitmentMonths, billingInterval) {

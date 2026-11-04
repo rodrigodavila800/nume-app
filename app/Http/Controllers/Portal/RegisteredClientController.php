@@ -94,6 +94,12 @@ class RegisteredClientController extends Controller
             }
         }
 
+        // Montou o pacote na vitrine antes de se cadastrar: volta ao montador já preenchido.
+        if ($request->session()->has(\App\Http\Controllers\Portal\PackBuilderController::SESSION_KEY)) {
+            return redirect()->route('portal.builder')
+                ->with('status', __('Conta criada! Confira o pacote que você montou e confirme.'));
+        }
+
         // Proposta enviada antes do cadastro (ex.: pela Sofi no WhatsApp) já é dele: vai direto aprovar e pagar.
         if (Quote::forTenant($tenant->id)->where('cliente_id', $cliente->id)->where('status', 'sent')->exists()) {
             return redirect()->route('portal.quotes.index')

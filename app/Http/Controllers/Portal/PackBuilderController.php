@@ -25,6 +25,9 @@ class PackBuilderController extends Controller
     {
         $cliente = $request->user('cliente');
         $selection = (array) $request->session()->get(self::SESSION_KEY, []);
+        if (isset($selection['tenant_id']) && (int) $selection['tenant_id'] !== (int) $cliente->tenant_id) {
+            $selection = [];
+        }
 
         return view('portal.builder', [
             'catalog' => $this->builder->catalog($cliente->tenant),

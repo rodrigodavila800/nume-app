@@ -30,6 +30,7 @@ use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\RoteiroController;
 use App\Http\Controllers\ShowcaseVideoController;
 use App\Http\Controllers\SocialDistributionManagementController;
+use App\Http\Controllers\StorefrontBuilderController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\StripeConnectController;
 use App\Http\Controllers\StripeWebhookController;
@@ -77,6 +78,10 @@ Route::post('/vitrine/{tenant:slug}/sofi-chat', [StorefrontController::class, 's
 Route::post('/vitrine/{tenant:slug}/sofi-chat/reset', [StorefrontController::class, 'resetSofiChat'])
     ->middleware('throttle:sofi-chat-reset')
     ->name('storefront.sofi-chat.reset');
+// Monte seu pacote: na vitrine só simula; guarda a montagem e manda para cadastro ou login
+Route::post('/vitrine/{tenant:slug}/monte-seu-pacote', [StorefrontBuilderController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('storefront.builder');
 Route::post('/vitrine/{tenant:slug}/pacotes/{pack}/checkout', [StorefrontController::class, 'checkout'])
     ->middleware('throttle:10,1')
     ->name('storefront.checkout');

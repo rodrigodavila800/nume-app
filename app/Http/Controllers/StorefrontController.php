@@ -60,6 +60,7 @@ class StorefrontController extends Controller
                 ->orderBy('id')
                 ->get(),
             'packs' => $this->storefrontPacks($tenant)->get(),
+            'builderCatalog' => app(\App\Services\Quotes\PackBuilderService::class)->catalog($tenant),
             'recurringPlans' => $this->storefrontPacks($tenant)
                 ->where('billing_type', 'subscription')
                 ->get(),
