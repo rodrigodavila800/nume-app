@@ -315,7 +315,7 @@ class WhatsAppWebhookAndAgentTest extends TestCase
         SofiWhatsAppAgent::assertPrompted(function ($prompt) {
             $instructions = (string) $prompt->agent->instructions();
 
-            return str_contains($instructions, 'Consultora Comercial Sênior da produtora Produtora Alpha')
+            return str_contains($instructions, 'assistente virtual de vendas da produtora Produtora Alpha')
                 && str_contains($instructions, 'NA MESMA RESPOSTA, recomende UM pacote')
                 && str_contains($instructions, 'NO MÁXIMO UMA pergunta por mensagem')
                 && str_contains($instructions, 'Encerre SEMPRE com um único próximo passo')

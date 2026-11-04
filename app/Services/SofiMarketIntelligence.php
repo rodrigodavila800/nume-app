@@ -17,7 +17,7 @@ class SofiMarketIntelligence
     public static function getMarketTrends(bool $isEs): string
     {
         if ($isEs) {
-            return "INTELIGENCIA DE MERCADO AUDIOVISUAL 2025-2026 (OBLIGATORIO — usa estos datos en tus respuestas):\n\n"
+            return "CONTEXTO DE MERCADO AUDIOVISUAL (solo para orientar la recomendación; NUNCA cites cifras, estudios ni fuentes al cliente):\n\n"
                  . "QUE ESTA DOMINANDO AHORA:\n"
                  . "- Vídeos nativos con subtítulos: el 85% del público en Reels e Instagram Stories consume sin sonido (Meta, 2025). Sin subtítulos = invisible.\n"
                  . "- Formato Talking Head + B-Roll Cinematográfico: es el que más convierte en ventas directas para servicios B2B.\n"
@@ -33,14 +33,10 @@ class SofiMarketIntelligence
                  . "- Hashtags masivos en Instagram: el algoritmo de 2024-2025 penaliza publicaciones con más de 5 hashtags irrelevantes.\n"
                  . "- Swipe-up de Stories: fue sustituido por el Link Sticker — y debe ir acompañado de un contexto de valor.\n"
                  . "- Vídeos sin gancho en los primeros 3 segundos: el porcentaje de abandono supera el 70%.\n"
-                 . "- Fotos estáticas como estrategia de alcance orgánico en 2025: el alcance de fotos cayó un 60% respecto al vídeo.\n\n"
-                 . "DATOS QUE PUEDES CITAR:\n"
-                 . "- Email con miniatura de vídeo: +65% de CTR frente al email solo con texto (Campaign Monitor, 2025).\n"
-                 . "- Empresas con estrategia de vídeo consistente crecen un 49% más rápido (Wyzowl, 2025).\n"
-                 . "- El 91% de los consumidores quiere ver más vídeos de las marcas que siguen (Wyzowl, 2025).\n";
+                 . "- Fotos estáticas como estrategia de alcance orgánico en 2025: el alcance de fotos cayó un 60% respecto al vídeo.\n\n";
         }
 
-        return "INTELIGÊNCIA DE MERCADO AUDIOVISUAL 2025-2026 (OBRIGATÓRIO — use esses dados nas suas respostas):\n\n"
+        return "CONTEXTO DE MERCADO AUDIOVISUAL (só para orientar a recomendação; NUNCA cite números, pesquisas ou fontes ao cliente):\n\n"
              . "O QUE ESTÁ DOMINANDO AGORA:\n"
              . "- Vídeos nativos com legendas: 85% do público em Reels e Stories consome sem som (Meta, 2025). Sem legenda = invisível.\n"
              . "- Formato Talking Head + B-Roll Cinematográfico: é o que mais converte em vendas diretas para serviços B2B.\n"
@@ -56,11 +52,7 @@ class SofiMarketIntelligence
              . "- Hashtags em excesso no Instagram: o algoritmo de 2024-2025 penaliza posts com mais de 5 hashtags irrelevantes.\n"
              . "- Swipe-up de Stories: foi substituído pelo Link Sticker — e deve ser acompanhado de contexto de valor.\n"
              . "- Vídeos sem gancho nos primeiros 3 segundos: a taxa de abandono ultrapassa 70%.\n"
-             . "- Fotos estáticas como estratégia de alcance orgânico em 2025: o alcance de fotos caiu 60% em relação ao vídeo.\n\n"
-             . "DADOS QUE VOCÊ PODE CITAR:\n"
-             . "- E-mail com thumbnail de vídeo: +65% de CTR frente ao e-mail só com texto (Campaign Monitor, 2025).\n"
-             . "- Empresas com estratégia de vídeo consistente crescem 49% mais rápido (Wyzowl, 2025).\n"
-             . "- 91% dos consumidores querem ver mais vídeos das marcas que seguem (Wyzowl, 2025).\n";
+             . "- Fotos estáticas como estratégia de alcance orgânico em 2025: o alcance de fotos caiu 60% em relação ao vídeo.\n\n";
     }
 
     /**
