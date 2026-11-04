@@ -206,6 +206,14 @@
                 </label>
             </div>
 
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="in_builder" id="create-in-builder" value="1"
+                       class="w-4 h-4 rounded bg-zinc-950 border-zinc-800 text-orange-600 focus:ring-orange-500">
+                <label for="create-in-builder" class="text-xs text-zinc-300 font-semibold cursor-pointer">
+                    {{ __('Disponível no "Monte seu pacote" (o cliente pode acrescentar sozinho)') }}
+                </label>
+            </div>
+
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
                 <button type="button" onclick="closeCreateAddonModal()"
                         class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition">
@@ -280,6 +288,14 @@
                 </label>
             </div>
 
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="in_builder" id="edit-in-builder" value="1"
+                       class="w-4 h-4 rounded bg-zinc-950 border-zinc-800 text-orange-600 focus:ring-orange-500">
+                <label for="edit-in-builder" class="text-xs text-zinc-300 font-semibold cursor-pointer">
+                    {{ __('Disponível no "Monte seu pacote" (o cliente pode acrescentar sozinho)') }}
+                </label>
+            </div>
+
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
                 <button type="button" onclick="closeEditAddonModal()"
                         class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition">
@@ -310,6 +326,7 @@ function openEditAddonModal(addon) {
     document.getElementById('edit-addon-price').value = addon.default_price;
     document.getElementById('edit-addon-order').value = addon.sort_order;
     document.getElementById('edit-is-active').checked = !!addon.is_active;
+    document.getElementById('edit-in-builder').checked = !!addon.in_builder;
 
     document.getElementById('edit-addon-modal').classList.remove('hidden');
 }

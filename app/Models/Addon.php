@@ -21,6 +21,7 @@ class Addon extends Model
         'default_price',
         'currency',
         'is_active',
+        'in_builder',
         'sort_order',
     ];
 
@@ -29,6 +30,7 @@ class Addon extends Model
         return [
             'default_price' => 'decimal:2',
             'is_active' => 'boolean',
+            'in_builder' => 'boolean',
             'sort_order' => 'integer',
         ];
     }

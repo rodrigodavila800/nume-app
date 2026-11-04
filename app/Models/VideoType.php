@@ -23,6 +23,7 @@ class VideoType extends Model
         'description',
         'duration_seconds',
         'edit_hours_per_video',
+        'builder_price',
         'blocks',
         'sofi_guidance',
         'is_active',
@@ -41,6 +42,7 @@ class VideoType extends Model
             'is_active' => 'boolean',
             'duration_seconds' => 'integer',
             'edit_hours_per_video' => 'float',
+            'builder_price' => 'float',
             'sort_order' => 'integer',
         ];
     }

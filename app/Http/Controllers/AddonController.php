@@ -40,6 +40,7 @@ class AddonController extends Controller
         $validated['currency'] = $validated['currency'] ?? 'eur';
         $validated['sort_order'] = $validated['sort_order'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['in_builder'] = $request->boolean('in_builder');
         $validated['slug'] = Str::slug($validated['name']);
 
         Addon::create($validated);
@@ -61,6 +62,7 @@ class AddonController extends Controller
         $validated['currency'] = $validated['currency'] ?? 'eur';
         $validated['sort_order'] = $validated['sort_order'] ?? 0;
         $validated['is_active'] = $request->boolean('is_active');
+        $validated['in_builder'] = $request->boolean('in_builder');
         $validated['slug'] = Str::slug($validated['name']);
 
         $addon->update($validated);

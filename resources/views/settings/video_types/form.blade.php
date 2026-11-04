@@ -50,6 +50,12 @@
                     placeholder="{{ __('Padrão') }}" title="{{ __('Usado na calculadora quando o cliente pede orçamento. Vazio = padrão da produtora.') }}"
                     class="w-full text-sm px-3 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 focus:border-orange-500 focus:outline-none">
             </div>
+            <div class="sm:col-span-2">
+                <label for="builder_price" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-300 mb-1">{{ __('Preço no montador (€/vídeo, sem IVA)') }}</label>
+                <input id="builder_price" name="builder_price" type="number" min="0" max="100000" step="0.01" value="{{ old('builder_price', $type->builder_price) }}"
+                    placeholder="{{ __('Vazio = fora do montador') }}" title="{{ __('Preço de cada vídeo deste tipo quando o cliente monta o próprio pacote. Vazio = o tipo não aparece no montador.') }}"
+                    class="w-full text-sm px-3 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 focus:border-orange-500 focus:outline-none">
+            </div>
             <div>
                 <label for="sort_order" class="block text-[11px] font-bold uppercase tracking-wider text-zinc-300 mb-1">{{ __('Ordem') }}</label>
                 <input id="sort_order" name="sort_order" type="number" min="0" max="999" value="{{ old('sort_order', $type->sort_order ?? 0) }}"
