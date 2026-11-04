@@ -83,39 +83,11 @@
             </div>
         </div>
 
-        <!-- SEÇÃO: Modelo de Faturamento & Assinatura Recorrente -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80">
-            <div class="space-y-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                    {{ __('Tipo de Cobrança') }}
-                </label>
-                <select name="billing_type" id="field-billing-type"
-                        class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-orange-500">
-                    <option value="one_time" @selected(old('billing_type', $pack->billing_type ?? 'one_time') == 'one_time')>{{ __('Compra Pontual / Avulsa') }}</option>
-                    <option value="subscription" @selected(old('billing_type', $pack->billing_type) == 'subscription')>{{ __('Plano Recorrente / Assinatura') }}</option>
-                </select>
-            </div>
-
-            <div class="space-y-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                    {{ __('Ciclo de Renovação') }}
-                </label>
-                <select name="billing_interval" id="field-billing-interval"
-                        class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-orange-500">
-                    <option value="month" @selected(old('billing_interval', $pack->billing_interval ?? 'month') == 'month')>{{ __('Mensal (a cada 30 dias)') }}</option>
-                    <option value="quarter" @selected(old('billing_interval', $pack->billing_interval) == 'quarter')>{{ __('Trimestral (a cada 90 dias)') }}</option>
-                </select>
-            </div>
-
-            <div class="space-y-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider text-zinc-300">
-                    {{ __('Contrato Mínimo (Meses)') }}
-                </label>
-                <input type="number" min="1" max="36" name="commitment_months" id="field-commitment-months" value="{{ old('commitment_months', $pack->commitment_months ?? 1) }}"
-                       class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-orange-500">
-                <p class="text-[10px] text-zinc-500">{{ __('Ex: 3 para contratos trimestrais com cota renovada.') }}</p>
-            </div>
-        </div>
+        <!-- Pacote é sempre compra avulsa; assinatura mensal ou trimestral fica em Planos -->
+        <p class="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-xs text-zinc-400">
+            {{ __('Pacotes são compra avulsa (pagamento único). Para assinatura mensal ou trimestral, use') }}
+            <a href="{{ route('admin.plans.index') }}" class="font-bold text-orange-400 hover:text-orange-300">{{ __('Planos') }}</a>.
+        </p>
 
         <!-- SEÇÃO: Modalidade Comercial de Pagamento & Custódia de Ativos (Asset Escrow) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-gradient-to-r from-zinc-950 via-zinc-950 to-orange-950/20 border border-orange-500/20">

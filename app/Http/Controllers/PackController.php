@@ -18,7 +18,8 @@ class PackController extends Controller
     {
         $this->authorize('viewAny', Pack::class);
 
-        $packs = Pack::with(['category', 'addons'])->orderBy('price')->paginate(15);
+        // Só pacotes avulsos: planos de assinatura têm a própria tela (admin.plans) e não se misturam.
+        $packs = Pack::oneOffPacks()->with(['category', 'addons'])->orderBy('price')->paginate(15);
 
         return view('packs.index', compact('packs'));
     }
@@ -48,7 +49,6 @@ class PackController extends Controller
             'price' => 'required|numeric|min:0',
             'currency' => 'nullable|string|in:eur,brl,EUR,BRL',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
-            'billing_type' => 'nullable|in:one_time,subscription',
             'billing_interval' => 'nullable|in:month,quarter',
             'commitment_months' => 'nullable|integer|min:1|max:36',
             'billing_mode' => 'nullable|in:full_upfront,split_50_50,pilot_entry',
@@ -75,7 +75,8 @@ class PackController extends Controller
         $validated['features'] = $features;
         $validated['currency'] = strtolower($validated['currency'] ?? 'eur');
         $validated['vat_rate'] = $validated['vat_rate'] ?? 21.00;
-        $validated['billing_type'] = $validated['billing_type'] ?? 'one_time';
+        // Pacote é sempre compra avulsa; assinatura só pela tela de Planos.
+        $validated['billing_type'] = 'one_time';
         $validated['billing_interval'] = $validated['billing_interval'] ?? 'month';
         $validated['commitment_months'] = (int) ($validated['commitment_months'] ?? 1);
         $validated['billing_mode'] = $validated['billing_mode'] ?? 'full_upfront';
@@ -90,9 +91,14 @@ class PackController extends Controller
         return redirect()->route('packs.index')->with('success', __('Pacote criado com sucesso!'));
     }
 
-    public function edit(Pack $pack): View
+    public function edit(Pack $pack): View|RedirectResponse
     {
         $this->authorize('update', $pack);
+
+        if ($pack->billing_type === 'subscription') {
+            return redirect()->route('admin.plans.edit', $pack)
+                ->with('info', __('Este item é um plano de assinatura: edite-o em Planos.'));
+        }
         $pack->load(['category', 'addons', 'showcaseVideo']);
         $categories = Category::where('is_active', true)->orderBy('sort_order')->get();
         $availableAddons = Addon::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
@@ -105,6 +111,11 @@ class PackController extends Controller
     {
         $this->authorize('update', $pack);
 
+        if ($pack->billing_type === 'subscription') {
+            return redirect()->route('admin.plans.edit', $pack)
+                ->with('info', __('Este item é um plano de assinatura: edite-o em Planos.'));
+        }
+
         $validated = $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'showcase_video_id' => 'nullable|exists:showcase_videos,id',
@@ -116,7 +127,6 @@ class PackController extends Controller
             'price' => 'required|numeric|min:0',
             'currency' => 'nullable|string|in:eur,brl,EUR,BRL',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
-            'billing_type' => 'nullable|in:one_time,subscription',
             'billing_interval' => 'nullable|in:month,quarter',
             'commitment_months' => 'nullable|integer|min:1|max:36',
             'billing_mode' => 'nullable|in:full_upfront,split_50_50,pilot_entry',
@@ -143,7 +153,8 @@ class PackController extends Controller
         $validated['features'] = $features;
         $validated['currency'] = strtolower($validated['currency'] ?? 'eur');
         $validated['vat_rate'] = $validated['vat_rate'] ?? 21.00;
-        $validated['billing_type'] = $validated['billing_type'] ?? 'one_time';
+        // Pacote é sempre compra avulsa; assinatura só pela tela de Planos.
+        $validated['billing_type'] = 'one_time';
         $validated['billing_interval'] = $validated['billing_interval'] ?? 'month';
         $validated['commitment_months'] = (int) ($validated['commitment_months'] ?? 1);
         $validated['billing_mode'] = $validated['billing_mode'] ?? 'full_upfront';
