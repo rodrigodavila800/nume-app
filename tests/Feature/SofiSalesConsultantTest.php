@@ -63,7 +63,13 @@ class SofiSalesConsultantTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('sofiSalesWidget');
-        $response->assertSee('Sofi Sales Copilot');
+        $response->assertSee('Assistente de vendas');
+        $response->assertSee('data-chat-url="'.route('storefront.sofi-chat', $this->tenant).'"', false);
+        $response->assertSee('data-pack-url="'.route('portal.register').'"', false);
+        $response->assertSee(route('legal.privacy'), false);
+        // Texto da IA nunca entra em onclick (o navegador decodifica &#039; antes de rodar o JS).
+        $response->assertDontSee('onclick="sendQuickPrompt', false);
+        $response->assertDontSee('sofiPackFocusedModal', false);
     }
 
     public function test_public_visitor_can_chat_with_sofi_sales_copilot(): void
@@ -152,14 +158,19 @@ class SofiSalesConsultantTest extends TestCase
         );
     }
 
-    public function test_storefront_renders_focused_pack_modal(): void
+    public function test_the_recommended_pack_goes_to_the_registration_page_not_a_modal(): void
     {
-        $response = $this->get(route('storefront.show', $this->tenant));
+        $this->get(route('storefront.show', $this->tenant))
+            ->assertOk()
+            ->assertSee('data-pack-url="'.route('portal.register').'"', false)
+            ->assertSee('data-label-pack-cta="Contratar este pacote"', false)
+            ->assertDontSee('modalRegisterBtn', false);
 
-        $response->assertOk();
-        $response->assertSee('sofiPackFocusedModal');
-        $response->assertSee('modalPackTitle');
-        $response->assertSee('modalRegisterBtn');
+        $cliente = \App\Models\Cliente::create(['tenant_id' => $this->tenant->id, 'name' => 'Ana', 'email' => 'ana@ficticio.test', 'password' => 'secret12345']);
+
+        $this->actingAs($cliente, 'cliente')->get(route('storefront.show', $this->tenant))
+            ->assertOk()
+            ->assertSee('data-pack-url="'.route('portal.packs.index').'"', false);
     }
 
     public function test_sofi_chat_validation_rejects_empty_message(): void
