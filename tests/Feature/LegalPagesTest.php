@@ -53,7 +53,7 @@ class LegalPagesTest extends TestCase
 
     public function test_pages_have_no_inline_css(): void
     {
-        foreach (['page', 'terms', 'data-deletion', 'es/privacy', 'pt/privacy', 'es/cookies', 'pt/cookies', 'es/notice', 'pt/notice'] as $view) {
+        foreach (['page', 'es/privacy', 'pt/privacy', 'es/cookies', 'pt/cookies', 'es/notice', 'pt/notice', 'es/terms', 'pt/terms', 'es/data-deletion', 'pt/data-deletion'] as $view) {
             $this->assertStringNotContainsString('style="', file_get_contents(resource_path("views/legal/{$view}.blade.php")), $view);
         }
     }
@@ -79,6 +79,22 @@ class LegalPagesTest extends TestCase
         $this->get(route('legal.notice'))->assertOk()
             ->assertSee('Aviso legal')
             ->assertSee('LSSI-CE');
+
+        $this->get(route('legal.terms'))->assertOk()
+            ->assertSee('Términos del servicio de YouTube');
+
+        $this->get(route('legal.data-deletion'))->assertOk()
+            ->assertSee('Eliminación de datos')
+            ->assertSee('15 días hábiles');
+    }
+
+    public function test_the_portal_footer_always_shows_the_legal_links(): void
+    {
+        $this->get(route('legal.terms'))->assertOk()
+            ->assertSee(route('legal.cookies'), false)
+            ->assertSee(route('legal.notice'), false)
+            ->assertSee('data-open-cookie-settings', false)
+            ->assertDontSee('admin@numecreative.com');
     }
 
     public function test_the_owner_comes_from_the_fiscal_settings_and_sample_values_never_show(): void

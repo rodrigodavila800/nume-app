@@ -6,7 +6,7 @@ use App\Support\LegalIdentity;
 use Illuminate\View\View;
 
 /**
- * Páginas legais públicas (aviso legal, privacidade e cookies), em espanhol ou português conforme o
+ * Páginas legais públicas (aviso legal, privacidade, cookies, termos e exclusão de dados), em espanhol ou português conforme o
  * idioma da sessão, com o titular lido das configurações fiscais (LegalIdentity).
  */
 class LegalPageController extends Controller
@@ -27,6 +27,16 @@ class LegalPageController extends Controller
     public function notice(): View
     {
         return $this->page('notice');
+    }
+
+    public function terms(): View
+    {
+        return $this->page('terms');
+    }
+
+    public function dataDeletion(): View
+    {
+        return $this->page('data-deletion');
     }
 
     /**

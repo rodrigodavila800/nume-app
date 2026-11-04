@@ -67,8 +67,9 @@ Route::get('/privacidade', [LegalPageController::class, 'privacy'])->name('legal
 Route::get('/cookies', [LegalPageController::class, 'cookies'])->name('legal.cookies');
 Route::get('/aviso-legal', [LegalPageController::class, 'notice'])->name('legal.notice');
 
-Route::view('/termos', 'legal.terms')->name('legal.terms');
-Route::view('/exclusao-de-dados', 'legal.data-deletion')->name('legal.data-deletion');
+// URLs cadastradas nas revisões de app do Google, da Meta e do TikTok: não mudar.
+Route::get('/termos', [LegalPageController::class, 'terms'])->name('legal.terms');
+Route::get('/exclusao-de-dados', [LegalPageController::class, 'dataDeletion'])->name('legal.data-deletion');
 
 Route::get('/', [MarketplaceController::class, 'index'])->name('marketplace.index');
 

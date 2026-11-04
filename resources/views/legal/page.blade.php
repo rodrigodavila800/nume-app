@@ -2,10 +2,10 @@
 
 @php
     $titles = [
-        'es' => ['privacy' => 'Política de privacidad', 'cookies' => 'Política de cookies', 'notice' => 'Aviso legal'],
-        'pt' => ['privacy' => 'Política de privacidade', 'cookies' => 'Política de cookies', 'notice' => 'Aviso legal'],
+        'es' => ['privacy' => 'Política de privacidad', 'cookies' => 'Política de cookies', 'notice' => 'Aviso legal', 'terms' => 'Términos del servicio', 'data-deletion' => 'Eliminación de datos'],
+        'pt' => ['privacy' => 'Política de privacidade', 'cookies' => 'Política de cookies', 'notice' => 'Aviso legal', 'terms' => 'Termos de uso', 'data-deletion' => 'Exclusão de dados'],
     ];
-    $routes = ['privacy' => 'legal.privacy', 'cookies' => 'legal.cookies', 'notice' => 'legal.notice'];
+    $routes = ['privacy' => 'legal.privacy', 'cookies' => 'legal.cookies', 'notice' => 'legal.notice', 'terms' => 'legal.terms', 'data-deletion' => 'legal.data-deletion'];
     $pending = $lang === 'es' ? 'pendiente de configurar' : 'pendente de configuração';
 @endphp
 
