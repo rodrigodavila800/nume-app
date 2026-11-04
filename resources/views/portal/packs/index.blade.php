@@ -16,6 +16,10 @@
         <p class="text-sm sm:text-base text-zinc-600 leading-relaxed">
             {{ __('Contrate lotes fechados de vídeos com escopo delimitado, captação 4K HDR e roteiros persuasivos. Pagamento único, sem mensalidades ou compromisso de longo prazo.') }}
         </p>
+        <a href="{{ route('portal.builder') }}"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-extrabold text-white bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-sm transition-all duration-200">
+            {{ __('Monte seu pacote') }} <span aria-hidden="true">→</span>
+        </a>
     </div>
 
     @if (session('error'))

@@ -3,8 +3,11 @@
 namespace App\Services\Quotes;
 
 use App\Models\Addon;
+use App\Models\Cliente;
+use App\Models\Quote;
 use App\Models\Tenant;
 use App\Models\VideoType;
+use App\Services\Notification\SofiQuoteNotificationService;
 
 /**
  * "Monte seu pacote": o cliente escolhe quantos vídeos de cada tipo e quais extras, e o total sobe.
@@ -114,5 +117,77 @@ class PackBuilderService
             'balance' => round($total - $deposit, 2),
             'signature' => md5(json_encode(array_map(fn (array $l) => [$l['kind'], $l['id'], $l['quantity'], $l['unit_price']], $lines))),
         ];
+    }
+
+    /**
+     * Proposta "enviada" da montagem (fluxo de sempre: aprovação com conta e pagamento confirmado só
+     * pelo gateway). A mesma montagem ainda válida para o mesmo e-mail e canal reaproveita a proposta.
+     *
+     * @param  array{lines: list<array{kind: string, id: int, name: string, quantity: int, unit_price: float, total: float}>, videos: int, tax_rate: float, signature: string}  $priced  Saída de price()
+     * @param  array{responsible: string, company: string, email: string}  $contact
+     */
+    public function createQuote(Tenant $tenant, array $priced, array $contact, string $source, ?Cliente $cliente = null, ?string $phone = null, bool $isSpanish = false): Quote
+    {
+        $email = mb_strtolower(trim($contact['email']));
+
+        $existing = Quote::forTenant($tenant->id)
+            ->where('client_email', $email)
+            ->where('status', 'sent')
+            ->where('request_details->source', $source)
+            ->where('request_details->builder_signature', $priced['signature'])
+            ->whereDate('valid_until', '>=', now()->toDateString())
+            ->latest('id')
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $defaults = $this->calculator->getDefaults($tenant);
+        $calc = $this->calculator->calculate([
+            'videos' => $priced['videos'],
+            'filmmakers' => 1,
+            'iva' => $priced['tax_rate'],
+            'cambios' => $defaults['cambios'],
+            'prazo' => $defaults['prazo'],
+            'extras' => array_map(fn (array $line): array => [
+                'nome' => $line['kind'] === 'video' ? "{$line['quantity']}× {$line['name']}" : $line['name'],
+                'valor' => $line['total'],
+            ], $priced['lines']),
+        ]);
+
+        $quote = Quote::create([
+            'tenant_id' => $tenant->id,
+            'cliente_id' => $cliente?->id,
+            'client_name' => $contact['company'],
+            'client_contact' => $contact['responsible'],
+            'client_email' => $email,
+            'project_title' => ($isSpanish ? 'Paquete personalizado' : 'Pacote personalizado')." ({$priced['videos']} vídeos)",
+            'language' => $isSpanish ? 'es' : 'pt_BR',
+            'request_text' => 'Pacote montado pelo cliente ('.$source.').',
+            'request_details' => array_filter([
+                'source' => $source,
+                'builder' => $priced['lines'],
+                'builder_signature' => $priced['signature'],
+                'phone' => $phone,
+            ], fn ($value) => $value !== null),
+            'inputs' => $calc['inputs_sanitized'],
+            'calculation' => $calc,
+            'subtotal' => $calc['preco'],
+            'margin_amount' => $calc['margem'],
+            'adjustment_amount' => $calc['adicional'],
+            'tax_rate' => $calc['inputs_sanitized']['iva'],
+            'tax_amount' => $calc['iva'],
+            'total_amount' => $calc['total_com_iva'],
+            'deposit_amount' => $calc['sinal'],
+            'balance_amount' => $calc['na_entrega'],
+            'valid_until' => now()->addDays(max(1, (int) $defaults['validade_dias'])),
+            'status' => 'sent',
+            'sent_at' => now(),
+        ]);
+
+        app(SofiQuoteNotificationService::class)->ensureApprovalToken($quote);
+
+        return $quote;
     }
 }

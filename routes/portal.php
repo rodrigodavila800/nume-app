@@ -10,6 +10,7 @@ use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\MarketingPlanController;
 use App\Http\Controllers\Portal\InstagramAccountSelectionController;
 use App\Http\Controllers\Portal\MetaPageSelectionController;
+use App\Http\Controllers\Portal\PackBuilderController;
 use App\Http\Controllers\Portal\PackController;
 use App\Http\Controllers\Portal\PinterestComposerController;
 use App\Http\Controllers\Portal\ProductionController;
@@ -102,6 +103,12 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
         // Planos Recorrentes (Retainers / Assinaturas)
         Route::get('planos', [PackController::class, 'plans'])->name('plans.index');
+
+        // Monte seu pacote: o cliente escolhe tipos de vídeo, quantidades e extras (preço recalculado no servidor)
+        Route::get('monte-seu-pacote', [PackBuilderController::class, 'show'])->name('builder');
+        Route::post('monte-seu-pacote', [PackBuilderController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('builder.store');
 
         // Pacotes & Produções Avulsas (One-off)
         Route::get('packs', [PackController::class, 'index'])->name('packs.index');
