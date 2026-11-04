@@ -18,9 +18,13 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Laravel\Ai\Exceptions\FailoverableException;
 
 class MetaWhatsAppService
 {
+    /** A última resposta gerada foi a de falha da IA (fica marcada na mensagem salva). */
+    protected bool $lastReplyWasFallback = false;
+
     public function __construct(
         protected LeadService $leadService,
         protected SofiMemoryDistillationService $distillationService,
@@ -287,6 +291,7 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
             'sofi_conversation_id' => $conversation->id,
             'sender' => 'sofi',
             'content' => $replyText,
+            'metadata' => $this->lastReplyWasFallback ? ['fallback' => true] : null,
         ]);
         $conversation->touch();
 
@@ -585,34 +590,69 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
         ?string $contactPhone = null,
         ?int $conversationId = null
     ): string {
-        try {
-            // Provedor + limite mensal de tokens (produtora e cliente). Antes chamava um
-            // isConfigured() inexistente: o erro era engolido e a IA nunca respondia.
-            $options = $this->sofiProvider->options($tenant, $clienteId);
+        $this->lastReplyWasFallback = false;
+        $started = microtime(true);
 
-            if ($options !== null) {
-                $options['timeout'] = max(1, (int) config('sofi.whatsapp_timeout', 30));
+        // Provedor + limite mensal de tokens (produtora e cliente). Null = sem IA (sem chave ou sem orçamento).
+        $options = $this->sofiProvider->options($tenant, $clienteId);
 
-                // O histórico já termina na mensagem atual, que vai como prompt.
-                $agent = new SofiWhatsAppAgent($tenant->id, $clienteId, $context, $isSpanish, array_slice($history, 0, -1), $leadId, $contactPhone, $this->salesRules($tenant, $isSpanish, $userMessage), $conversationId);
-                $result = $agent->prompt($userMessage, ...$options);
+        if ($options !== null) {
+            $options['timeout'] = max(1, (int) config('sofi.whatsapp_timeout', 30));
 
-                if (filled((string) $result)) {
-                    return trim((string) $result);
+            foreach ($this->modelAttempts($options) as $attempt => $model) {
+                try {
+                    $agentOptions = $model === null ? $options : ['model' => $model] + $options;
+                    // O histórico já termina na mensagem atual, que vai como prompt.
+                    $agent = new SofiWhatsAppAgent($tenant->id, $clienteId, $context, $isSpanish, array_slice($history, 0, -1), $leadId, $contactPhone, $this->salesRules($tenant, $isSpanish, $userMessage), $conversationId);
+                    $result = $agent->prompt($userMessage, ...$agentOptions);
+
+                    if (filled((string) $result)) {
+                        return trim((string) $result);
+                    }
+
+                    break;
+                } catch (FailoverableException $e) {
+                    // Gemini sobrecarregado (503), timeout ou limite: uma nova tentativa em outro modelo,
+                    // só se ainda couber no prazo do job (ProcessWhatsAppMessage).
+                    Log::warning('[MetaWhatsApp] Erro na execução do SofiWhatsAppAgent (tentativa '.($attempt + 1).'): '.get_class($e).$this->causeOf($e));
+
+                    if (microtime(true) - $started > (float) config('sofi.whatsapp_retry_within_seconds', 45)) {
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('[MetaWhatsApp] Erro na execução do SofiWhatsAppAgent: '.get_class($e).$this->causeOf($e));
+
+                    break;
                 }
             }
-        } catch (\Throwable $e) {
-            Log::warning('[MetaWhatsApp] Erro na execução do SofiWhatsAppAgent: '.get_class($e).$this->causeOf($e));
         }
+
+        $this->lastReplyWasFallback = true;
 
         return $this->fallbackReply($tenant, $isSpanish, $conversationId, $leadId);
     }
 
     /**
-     * IA fora do ar, sem chave ou sem orçamento de tokens: o cliente recebe os pacotes reais da
-     * produtora (nada de frase fixa que não leva a lugar nenhum) e a equipe é chamada para atendê-lo.
-     * Nada aqui pode quebrar o atendimento.
+     * Modelos a tentar: o configurado e, no Gemini, o primeiro modelo de reserva diferente dele
+     * (services.gemini.fallback_models). Null = o modelo padrão do provedor.
+     *
+     * @param  array<string, mixed>  $options
+     * @return list<?string>
      */
+    protected function modelAttempts(array $options): array
+    {
+        $primary = $options['model'] ?? null;
+
+        if ($this->sofiProvider->driver() !== 'gemini') {
+            return [$primary];
+        }
+
+        $reserve = collect((array) config('services.gemini.fallback_models', []))
+            ->first(fn ($model) => filled($model) && $model !== $primary);
+
+        return $reserve ? [$primary, $reserve] : [$primary];
+    }
+
     /**
      * Causa encadeada de uma falha da IA, só para diagnóstico: classes, status HTTP e se foi timeout.
      * Nunca a mensagem da exceção, que traz a URL da chamada e pode trazer chave ou texto do cliente.
@@ -638,20 +678,49 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
         return $parts === [] ? '' : ' <- '.implode(' <- ', $parts);
     }
 
+    /**
+     * IA fora do ar, sem chave ou sem orçamento de tokens: a equipe é chamada e o cliente recebe uma
+     * resposta humana. No primeiro contato, os pacotes reais (para não ficar sem nada); no meio da
+     * conversa (ex.: fechando a proposta), um pedido de desculpas curto com o nome dele, sem repetir o
+     * catálogo; se a falha se repete, uma frase diferente. Nada aqui pode quebrar o atendimento.
+     */
     protected function fallbackReply(Tenant $tenant, bool $isSpanish, ?int $conversationId, ?int $leadId): string
     {
         $teamCalled = false;
+        $conversation = null;
+        $lead = null;
 
         try {
             $conversation = $conversationId ? SofiConversation::forTenant($tenant->id)->find($conversationId) : null;
             $lead = $leadId ? Lead::forTenant($tenant->id)->whereNull('anonymized_at')->find($leadId) : null;
 
             if ($conversation) {
-                app(HandoffService::class)->request($conversation, $lead, 'ai_unavailable', 'A IA não respondeu; o cliente recebeu os pacotes do catálogo e aguarda a equipe.');
+                app(HandoffService::class)->request($conversation, $lead, 'ai_unavailable', 'A IA não respondeu; o cliente aguarda a equipe nesta conversa.');
                 $teamCalled = true;
             }
         } catch (\Throwable $e) {
             Log::warning('[MetaWhatsApp] Falha ao chamar a equipe no fallback: '.get_class($e));
+        }
+
+        $sofiReplies = $conversation
+            ? $conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->get(['id', 'metadata'])
+                ->reject(fn (SofiMessage $m) => ! empty($m->metadata['welcome']))
+            : collect();
+        $firstName = $this->contactFirstName($lead);
+        $hi = $firstName !== '' ? ($isSpanish ? "Perdona, {$firstName}" : "Desculpe, {$firstName}") : ($isSpanish ? 'Perdona' : 'Desculpe');
+
+        // Falha seguida: não repete o mesmo texto.
+        if (! empty($sofiReplies->first()?->metadata['fallback'])) {
+            return $isSpanish
+                ? 'Sigo sin poder responderte yo misma, pero tu mensaje ya está con el equipo y te contestan por aquí.'
+                : 'Ainda não consigo responder por aqui, mas a sua mensagem já está com a equipe e eles te respondem neste WhatsApp.';
+        }
+
+        // No meio da conversa: desculpa curta, sem catálogo.
+        if ($sofiReplies->isNotEmpty()) {
+            return $isSpanish
+                ? "{$hi}, he tenido un problema técnico para responderte ahora.".($teamCalled ? ' Ya avisé al equipo y te contestan por aquí para seguir con tu propuesta.' : ' Inténtalo de nuevo en unos minutos.')
+                : "{$hi}, tive um problema técnico para te responder agora.".($teamCalled ? ' Já avisei a equipe e eles te respondem por aqui para seguir com a sua proposta.' : ' Tente de novo em alguns minutos.');
         }
 
         $lines = [];
@@ -665,15 +734,26 @@ ATENÇÃO: A EQUIPE JÁ FOI AVISADA sobre esta conversa e vai assumir. Não cham
             Log::warning('[MetaWhatsApp] Falha ao listar pacotes no fallback: '.get_class($e));
         }
 
-        $name = $tenant->name ?: 'NUME Creative';
         $catalog = $lines === [] ? '' : "\n\n".implode("\n", $lines);
 
         if ($isSpanish) {
-            return "¡Hola! Soy Sofi de {$name}. Tengo una pequeña inestabilidad ahora mismo".($teamCalled ? ' y ya avisé a nuestro equipo para atenderte por aquí' : '').'.'
+            return "{$hi}, ahora mismo no consigo responderte".($teamCalled ? '; ya avisé al equipo y te contestan por aquí' : '').'.'
                 .($lines === [] ? '' : "\n\nMientras tanto, estos son nuestros paquetes:").$catalog;
         }
 
-        return "Olá! Aqui é a Sofi da {$name}. Estou com uma instabilidade rápida agora".($teamCalled ? ' e já avisei nossa equipe para te atender por aqui' : '').'.'
+        return "{$hi}, agora não consigo te responder".($teamCalled ? '; já avisei a equipe e eles te respondem por aqui' : '').'.'
             .($lines === [] ? '' : "\n\nEnquanto isso, estes são os nossos pacotes:").$catalog;
+    }
+
+    /** Primeiro nome do contato, se for um nome de verdade (nunca "Contato WhatsApp 34..."). */
+    protected function contactFirstName(?Lead $lead): string
+    {
+        $name = trim((string) $lead?->name);
+
+        if ($name === '' || str_starts_with($name, 'Contato WhatsApp')) {
+            return '';
+        }
+
+        return mb_substr((string) strtok($name, ' '), 0, 40);
     }
 }

@@ -24,7 +24,8 @@ class ProcessWhatsAppMessage implements ShouldBeEncrypted, ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 150;
+    /** Até 4 passos de IA e uma nova tentativa em outro modelo quando o Gemini falha. */
+    public int $timeout = 200;
 
     /**
      * @param  array<string, mixed>  $payload  Corpo do webhook já com a assinatura validada

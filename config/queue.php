@@ -39,8 +39,8 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            // Maior que o timeout do job mais longo desta conexão (ProcessWhatsAppMessage: 150 s).
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 180),
+            // Maior que o timeout do job mais longo desta conexão (ProcessWhatsAppMessage: 200 s).
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 240),
             'after_commit' => false,
         ],
 

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Ai\Exceptions\ProviderOverloadedException;
 use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Ai\Tools\Request;
 use Tests\TestCase;
@@ -268,7 +269,7 @@ class WhatsAppHandoffTest extends TestCase
 
         $reply = $this->conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content');
         $this->assertStringContainsString('*Reels Starter*: 4 vídeos por 490,00 € + IVA', $reply);
-        $this->assertStringContainsString('já avisei nossa equipe', $reply);
+        $this->assertStringContainsString('já avisei a equipe', $reply);
         $this->assertSame('needs_human', $this->conversation->fresh()->status);
         Mail::assertQueued(WhatsAppHandoffMail::class, fn (WhatsAppHandoffMail $mail) => $mail->reasonLabel === HandoffService::REASONS['ai_unavailable'] && $mail->hasTo('dona@ficticio.test'));
     }
@@ -291,7 +292,7 @@ class WhatsAppHandoffTest extends TestCase
         $this->incoming('Oi');
 
         $reply = $this->conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content');
-        $this->assertStringContainsString('Produtora Alpha', $reply);
+        $this->assertStringContainsString('agora não consigo te responder', $reply);
         $this->assertStringNotContainsString('pacotes:', $reply);
     }
 
@@ -404,5 +405,65 @@ class WhatsAppHandoffTest extends TestCase
         $this->incoming('Pode ser amanhã?');
 
         $this->assertContains('[MetaWhatsApp] Conversa ****0001 em atendimento da equipe: Sofi calada até 01:00 (UTC).', $lines);
+    }
+
+    private function sofiSaid(string $text): void
+    {
+        SofiMessage::create(['sofi_conversation_id' => $this->conversation->id, 'sender' => 'sofi', 'content' => $text]);
+    }
+
+    private function lastSofiReply(): string
+    {
+        return (string) $this->conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->value('content');
+    }
+
+    public function test_an_overloaded_gemini_is_retried_once_with_the_reserve_model(): void
+    {
+        config(['services.gemini.fallback_models' => ['modelo-reserva-ficticio']]);
+        // O fake reaproveita a resposta que lança exceção: a mesma closure falha na 1ª chamada e responde na 2ª.
+        $calls = 0;
+        SofiWhatsAppAgent::fake([
+            function () use (&$calls) {
+                if ($calls++ === 0) {
+                    throw ProviderOverloadedException::forProvider('gemini', 503);
+                }
+
+                return 'Resposta do modelo reserva.';
+            },
+        ])->preventStrayPrompts();
+        $this->sofiSaid('Qual é o seu negócio?');
+
+        $this->incoming('Tenho uma padaria');
+
+        $this->assertSame('Resposta do modelo reserva.', $this->lastSofiReply());
+        SofiWhatsAppAgent::assertPrompted(fn ($prompt) => $prompt->model === 'modelo-reserva-ficticio');
+        $this->assertSame('active', $this->conversation->fresh()->status, 'a segunda tentativa deu certo: ninguém foi chamado');
+        Mail::assertNothingQueued();
+    }
+
+    public function test_in_the_middle_of_a_conversation_the_failure_reply_is_a_short_apology_with_the_name(): void
+    {
+        SofiWhatsAppAgent::fake([fn () => throw new \RuntimeException('falha')])->preventStrayPrompts();
+        $this->sofiSaid('Me passa o seu e-mail para eu enviar a proposta.');
+
+        $this->incoming('Gaby Gol. GabyPhoto. Fotografia.');
+
+        $reply = $this->lastSofiReply();
+        $this->assertStringStartsWith('Desculpe, Carlos, tive um problema técnico', $reply);
+        $this->assertStringNotContainsString('pacotes', $reply);
+        $this->assertTrue($this->conversation->messages()->where('sender', 'sofi')->reorder('id', 'desc')->first()->metadata['fallback']);
+    }
+
+    public function test_a_repeated_failure_does_not_repeat_the_same_text(): void
+    {
+        SofiWhatsAppAgent::fake([fn () => throw new \RuntimeException('falha'), fn () => throw new \RuntimeException('falha')])->preventStrayPrompts();
+        $this->sofiSaid('Me passa o seu e-mail.');
+
+        $this->incoming('Gaby, GabyPhoto');
+        $first = $this->lastSofiReply();
+        $this->incoming('https://exemplo.test/site');
+
+        $this->assertNotSame($first, $this->lastSofiReply());
+        $this->assertStringContainsString('já está com a equipe', $this->lastSofiReply());
     }
 }

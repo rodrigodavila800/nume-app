@@ -27,6 +27,8 @@ return [
 
     // Por chamada ao modelo no WhatsApp, que roda na fila (ProcessWhatsAppMessage) e tem até 4 passos com ferramentas.
     'whatsapp_timeout' => (int) env('SOFI_WHATSAPP_AI_TIMEOUT', 30),
+    // Gemini falhou (503, timeout): só tenta outro modelo se isso aconteceu dentro destes segundos.
+    'whatsapp_retry_within_seconds' => (int) env('SOFI_WHATSAPP_RETRY_WITHIN_SECONDS', 45),
 
     'keys' => [
         'gemini' => env('GEMINI_API_KEY'),
