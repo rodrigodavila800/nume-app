@@ -1224,7 +1224,7 @@
             const isMp4 = targetUrl && (targetUrl.endsWith('.mp4') || targetUrl.includes('.mp4?') || targetUrl.includes('/videos/') || targetUrl.includes('/storage/'));
 
             if (isMp4) {
-                if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
+                if (iframe) { iframe.style.display = 'none'; window.NumeConsent ? NumeConsent.loadEmbed(iframe, '') : (iframe.src = ''); }
                 if (videoEl) {
                     videoEl.style.display = 'block';
                     videoEl.src = targetUrl;
@@ -1234,7 +1234,8 @@
                 if (videoEl) { videoEl.style.display = 'none'; videoEl.pause(); videoEl.src = ''; }
                 if (iframe) {
                     iframe.style.display = 'block';
-                    iframe.src = resolveEmbedUrl(url, embedUrl);
+                    // Conteúdo externo só com aceite (cookie-consent.js); sem aceite mostra "Aceitar e assistir".
+                    window.NumeConsent ? NumeConsent.loadEmbed(iframe, resolveEmbedUrl(url, embedUrl)) : (iframe.src = resolveEmbedUrl(url, embedUrl));
                 }
             }
 
@@ -1285,7 +1286,7 @@
             const modal = document.getElementById('storefront-video-modal');
             const iframe = document.getElementById('storefront-modal-iframe');
             const videoEl = document.getElementById('storefront-modal-video');
-            if (iframe) iframe.src = '';
+            if (iframe) { window.NumeConsent ? NumeConsent.loadEmbed(iframe, '') : (iframe.src = ''); }
             if (videoEl) { videoEl.pause(); videoEl.src = ''; }
             if (modal) modal.style.display = 'none';
             document.body.style.overflow = '';

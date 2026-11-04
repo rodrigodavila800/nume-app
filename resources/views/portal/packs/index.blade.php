@@ -949,7 +949,7 @@
             embedUrl = 'https://www.youtube-nocookie.com/embed/' + ytMatch[1] + '?autoplay=1&playsinline=1&rel=0&enablejsapi=1';
         }
 
-        iframe.src = embedUrl;
+        window.NumeConsent ? NumeConsent.loadEmbed(iframe, embedUrl) : (iframe.src = embedUrl);
         titleEl.textContent = title || 'Vídeo de Exemplo';
         formatBadge.textContent = isVertical ? '9:16' : '16:9';
 
@@ -959,7 +959,7 @@
     function closePortalVideoModal() {
         const modal = document.getElementById('portal-video-modal');
         const iframe = document.getElementById('portal-modal-iframe');
-        iframe.src = '';
+        window.NumeConsent ? NumeConsent.loadEmbed(iframe, '') : (iframe.src = '');
         modal.classList.add('hidden');
     }
 

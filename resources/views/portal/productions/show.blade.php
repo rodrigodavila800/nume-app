@@ -216,7 +216,7 @@
                                 </video>
                             @elseif($video->video_type === 'youtube' || $video->video_type === 'vimeo')
                                 <iframe 
-                                    src="{{ $video->embed_url }}" 
+                                    data-consent-src="{{ $video->embed_url }}" 
                                     class="w-full h-full border-0" 
                                     title="{{ $video->title }}"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 

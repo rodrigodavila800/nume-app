@@ -79,7 +79,7 @@
                         <source src="{{ $video->playbackUrl() }}" type="{{ $video->source_mime ?: 'video/mp4' }}">
                     </video>
                 @elseif($video->embed_url)
-                    <iframe src="{{ $video->embed_url }}"
+                    <iframe data-consent-src="{{ $video->embed_url }}"
                             class="w-full h-full border-0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
@@ -161,5 +161,6 @@
 
     </div>
 
+    @include('partials.cookie-consent')
 </body>
 </html>

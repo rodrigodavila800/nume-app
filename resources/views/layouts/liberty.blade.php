@@ -174,5 +174,6 @@
     </script>
 
     @stack('scripts')
+    @include('partials.cookie-consent')
 </body>
 </html>
