@@ -72,34 +72,17 @@
                 <!-- Player / Thumbnail Container -->
                 <div class="relative w-full {{ $isVertical ? 'aspect-[9/16]' : 'aspect-video' }} bg-zinc-950 overflow-hidden">
                     @if ($video->video_type === 'youtube' || $video->video_type === 'vimeo')
-                        <div id="player-container-{{ $video->id }}" class="w-full h-full relative">
-                            <!-- Thumbnail com Play Button Overlay -->
-                            <div id="thumb-cover-{{ $video->id }}" class="w-full h-full relative cursor-pointer group/thumb" onclick="playShowcaseInline({{ $video->id }}, '{{ $video->embed_url }}')">
-                                @if ($thumb)
-                                    <img src="{{ $thumb }}" alt="{{ $video->title }}" class="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300">
-                                @else
-                                    <div class="w-full h-full bg-zinc-950 flex flex-col items-center justify-center text-zinc-600">
-                                        <span class="text-3xl">{{ $isVertical ? '' : '' }}</span>
-                                        <span class="text-[11px] mt-1">{{ __('Carregar Vídeo') }}</span>
-                                    </div>
-                                @endif
-                                <div class="absolute inset-0 bg-black/40 group-hover/thumb:bg-black/20 flex items-center justify-center transition">
-                                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-orange-600/90 text-white flex items-center justify-center text-lg sm:text-xl pl-1 shadow-lg shadow-orange-950/60 group-hover/thumb:scale-110 transition-transform">
-                                        ▶
-                                    </div>
-                                </div>
-                                @if($isVertical)
-                                    <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-orange-600/95 text-white shadow flex items-center gap-1">
-                                        <span>9:16</span>
-                                    </span>
-                                @else
-                                    <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-zinc-900/90 text-zinc-300 border border-zinc-700/60 shadow flex items-center gap-1">
-                                        <span>16:9</span>
-                                    </span>
-                                @endif
-                            </div>
-                            <!-- Target Iframe Slot (Carregado sob demanda) -->
-                            <div id="iframe-slot-{{ $video->id }}" class="w-full h-full hidden"></div>
+                        {{-- Player direto: um clique no play do próprio player toca com som (capa + autoplay pedia dois cliques no Edge). --}}
+                        <div class="w-full h-full relative">
+                            <iframe src="{{ $video->embed_url }}" title="{{ $video->title }}" loading="lazy"
+                                    class="w-full h-full border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                            @if($isVertical)
+                                <span class="pointer-events-none absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-orange-600/95 text-white shadow">9:16</span>
+                            @else
+                                <span class="pointer-events-none absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-zinc-900/90 text-zinc-300 border border-zinc-700/60 shadow">16:9</span>
+                            @endif
                         </div>
                     @elseif ($video->video_url)
                         <video controls class="w-full h-full object-cover bg-black">
@@ -204,18 +187,6 @@
 </div>
 
 <script>
-function playShowcaseInline(id, embedUrl) {
-    const cover = document.getElementById('thumb-cover-' + id);
-    const slot = document.getElementById('iframe-slot-' + id);
-    if (cover && slot) {
-        cover.classList.add('hidden');
-        slot.classList.remove('hidden');
-        // Adiciona autoplay no iframe sob demanda
-        const autoplayUrl = embedUrl.includes('?') ? (embedUrl + '&autoplay=1') : (embedUrl + '?autoplay=1');
-        slot.innerHTML = `<iframe src="${autoplayUrl}" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
-    }
-}
-
 function openVideoModal(embedUrl, title, isVertical) {
     const modal = document.getElementById('video-modal');
     const iframe = document.getElementById('modal-iframe');
