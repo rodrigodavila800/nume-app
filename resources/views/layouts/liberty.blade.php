@@ -115,6 +115,10 @@
                     <div class="d-flex justify-content-center justify-content-lg-end gap-3 text-secondary small mb-2">
                         <a href="{{ route('legal.privacy') }}" class="text-secondary text-decoration-none hover:text-white">{{ __('Privacidade') }}</a>
                         <span>·</span>
+                        <a href="{{ route('legal.cookies') }}" class="text-secondary text-decoration-none hover:text-white">{{ __('Cookies') }}</a>
+                        <span>·</span>
+                        <a href="{{ route('legal.notice') }}" class="text-secondary text-decoration-none hover:text-white">{{ __('Aviso legal') }}</a>
+                        <span>·</span>
                         <a href="#pacotes" class="text-secondary text-decoration-none hover:text-white">{{ __('Pacotes & Planos') }}</a>
                         <span>·</span>
                         <a href="{{ route('portal.login') }}" class="text-secondary text-decoration-none hover:text-white">{{ __('Portal do Cliente') }}</a>

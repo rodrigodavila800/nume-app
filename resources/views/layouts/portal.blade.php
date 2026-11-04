@@ -263,8 +263,14 @@
 
             @if(!empty($portalTenant) && !empty($portalTenant->socialLinks()))
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('legal.privacy') }}" class="text-[11px] text-zinc-400 hover:text-orange-600 transition underline mr-2">
-                        Privacidade & RGPD
+                    <a href="{{ route('legal.privacy') }}" class="text-[11px] text-zinc-400 hover:text-orange-600 transition underline">
+                        {{ __('Privacidade') }}
+                    </a>
+                    <a href="{{ route('legal.cookies') }}" class="text-[11px] text-zinc-400 hover:text-orange-600 transition underline">
+                        {{ __('Cookies') }}
+                    </a>
+                    <a href="{{ route('legal.notice') }}" class="text-[11px] text-zinc-400 hover:text-orange-600 transition underline mr-2">
+                        {{ __('Aviso legal') }}
                     </a>
                     @if($portalTenant->social_instagram)
                         <a href="{{ str_starts_with($portalTenant->social_instagram, 'http') ? $portalTenant->social_instagram : 'https://instagram.com/' . ltrim($portalTenant->social_instagram, '@') }}" 

@@ -20,6 +20,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LegalPageController;
 use App\Http\Controllers\MagicApprovalController;
 use App\Http\Controllers\MagicVideoController;
 use App\Http\Controllers\MarketplaceController;
@@ -61,9 +62,10 @@ Route::get('/locale/{locale}', function ($locale) {
     return back();
 })->name('locale.change');
 
-Route::get('/privacidade', function () {
-    return view('legal.privacy');
-})->name('legal.privacy');
+// Textos legais (ES/PT conforme o idioma; titular lido das configurações fiscais)
+Route::get('/privacidade', [LegalPageController::class, 'privacy'])->name('legal.privacy');
+Route::get('/cookies', [LegalPageController::class, 'cookies'])->name('legal.cookies');
+Route::get('/aviso-legal', [LegalPageController::class, 'notice'])->name('legal.notice');
 
 Route::view('/termos', 'legal.terms')->name('legal.terms');
 Route::view('/exclusao-de-dados', 'legal.data-deletion')->name('legal.data-deletion');

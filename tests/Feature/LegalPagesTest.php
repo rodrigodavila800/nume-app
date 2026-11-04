@@ -53,8 +53,52 @@ class LegalPagesTest extends TestCase
 
     public function test_pages_have_no_inline_css(): void
     {
-        foreach (['privacy', 'terms', 'data-deletion'] as $view) {
+        foreach (['page', 'terms', 'data-deletion', 'es/privacy', 'pt/privacy', 'es/cookies', 'pt/cookies', 'es/notice', 'pt/notice'] as $view) {
             $this->assertStringNotContainsString('style="', file_get_contents(resource_path("views/legal/{$view}.blade.php")), $view);
         }
+    }
+
+    public function test_privacy_cookies_and_legal_notice_exist_in_spanish(): void
+    {
+        $this->withSession(['locale' => 'es']);
+
+        $this->get(route('legal.privacy'))->assertOk()
+            ->assertSee('Política de privacidad')
+            ->assertSee('Responsable del tratamiento')
+            ->assertSee('Cuentas de redes sociales conectadas')
+            ->assertSee('Limited Use requirements')
+            ->assertSee('Agencia Española de Protección de Datos')
+            ->assertDontSee('cookies analíticos');
+
+        $this->get(route('legal.cookies'))->assertOk()
+            ->assertSee('Política de cookies')
+            ->assertSee('no usa cookies de análisis, publicidad ni seguimiento', false)
+            ->assertSee('nume_cookie_consent')
+            ->assertSee((string) config('session.cookie'));
+
+        $this->get(route('legal.notice'))->assertOk()
+            ->assertSee('Aviso legal')
+            ->assertSee('LSSI-CE');
+    }
+
+    public function test_the_owner_comes_from_the_fiscal_settings_and_sample_values_never_show(): void
+    {
+        $tenant = \App\Models\Tenant::create(['name' => 'NUME', 'slug' => 'nume', 'status' => 'active']);
+
+        $this->get(route('legal.notice'))->assertOk()
+            ->assertDontSee('B12345678')
+            ->assertSee('pendente de configuração');
+
+        \App\Models\TenantSetting::set($tenant, 'fiscal_company_name', 'Empresa Ficticia S.L.');
+        \App\Models\TenantSetting::set($tenant, 'fiscal_company_cif', 'B00000000');
+        \App\Models\TenantSetting::set($tenant, 'fiscal_company_address', 'Calle Ficticia 1');
+        \App\Models\TenantSetting::set($tenant, 'fiscal_company_postal_code', '50001');
+        \App\Models\TenantSetting::set($tenant, 'fiscal_company_city', 'Zaragoza');
+
+        $this->get(route('legal.notice'))->assertOk()
+            ->assertSee('Empresa Ficticia S.L.')
+            ->assertSee('B00000000')
+            ->assertSee('Calle Ficticia 1, 50001 Zaragoza')
+            ->assertSee('numecreative.es@gmail.com');
     }
 }

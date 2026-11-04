@@ -152,6 +152,8 @@
                     <a href="#pacotes">{{ __('Pacotes de Vídeos') }}</a>
                     <a href="{{ route('portal.login') }}">{{ __('Portal do Cliente') }}</a>
                     <a href="{{ route('legal.privacy') }}">{{ __('Privacidade') }}</a>
+                    <a href="{{ route('legal.cookies') }}">{{ __('Cookies') }}</a>
+                    <a href="{{ route('legal.notice') }}">{{ __('Aviso legal') }}</a>
                 </div>
             </div>
             
