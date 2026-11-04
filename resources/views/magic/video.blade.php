@@ -82,7 +82,7 @@
                     <iframe src="{{ $video->embed_url }}"
                             class="w-full h-full border-0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen></iframe>
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 @elseif($video->video_url)
                     <video src="{{ $video->video_url }}"
                            controls

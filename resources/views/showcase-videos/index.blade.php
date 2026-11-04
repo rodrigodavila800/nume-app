@@ -198,7 +198,7 @@
         
         <!-- Modal Frame Container -->
         <div id="modal-frame-wrapper" class="w-full flex items-center justify-center bg-black rounded-2xl overflow-hidden min-h-[450px]">
-            <iframe id="modal-iframe" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            <iframe id="modal-iframe" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         </div>
     </div>
 </div>
@@ -212,7 +212,7 @@ function playShowcaseInline(id, embedUrl) {
         slot.classList.remove('hidden');
         // Adiciona autoplay no iframe sob demanda
         const autoplayUrl = embedUrl.includes('?') ? (embedUrl + '&autoplay=1') : (embedUrl + '?autoplay=1');
-        slot.innerHTML = `<iframe src="${autoplayUrl}" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+        slot.innerHTML = `<iframe src="${autoplayUrl}" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
     }
 }
 

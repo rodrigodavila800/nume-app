@@ -241,7 +241,7 @@
                         class="w-full h-full border-0" 
                         title="{{ $video->title }}"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        allowfullscreen>
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
                     </iframe>
                 @elseif ($video->video_url)
                     <video controls class="w-full h-full object-contain bg-black">
