@@ -11,10 +11,10 @@ use Laravel\Ai\Tools\Request;
 use Stringable;
 
 /**
- * Reenvia o PDF da proposta em aberto deste contato (por e-mail e por este WhatsApp) quando o cliente
- * pede ou diz que não recebeu. A proposta vem do telefone da conversa ou do cliente identificado,
- * nunca de um número dito pelo modelo, e sempre do tenant do construtor. No máximo um reenvio a cada
- * 10 minutos por proposta, para o cliente não receber o mesmo PDF repetidas vezes.
+ * Reenvia o PDF da proposta em aberto DESTA conversa (por e-mail e por este WhatsApp) quando o cliente
+ * pede ou diz que não recebeu. Só vale proposta criada pela Sofi para este mesmo telefone
+ * (request_details.phone), no tenant do construtor: buscar pela conta do cliente (cliente_id) mandou,
+ * em produção, a proposta de outra empresa para quem pediu. No máximo um reenvio a cada 10 minutos.
  */
 class ResendProposalPdfTool implements Tool
 {
@@ -23,7 +23,6 @@ class ResendProposalPdfTool implements Tool
     public function __construct(
         protected int $tenantId,
         protected ?string $phone = null,
-        protected ?int $clienteId = null,
     ) {}
 
     public function description(): Stringable|string
@@ -33,22 +32,20 @@ class ResendProposalPdfTool implements Tool
 
     public function handle(Request $request): Stringable|string
     {
-        if (blank($this->phone) && ! $this->clienteId) {
+        if (blank($this->phone)) {
             return 'Não encontrei proposta para este contato. Se ele quiser contratar, siga o fluxo da proposta (CreateQuoteFromPackTool).';
         }
 
         $quote = Quote::forTenant($this->tenantId)
             ->where('status', 'sent')
             ->whereDate('valid_until', '>=', now()->toDateString())
-            ->where(function ($query) {
-                $query->when(filled($this->phone), fn ($q) => $q->orWhere('request_details->phone', $this->phone))
-                    ->when($this->clienteId, fn ($q) => $q->orWhere('cliente_id', $this->clienteId));
-            })
+            ->where('request_details->source', 'whatsapp')
+            ->where('request_details->phone', $this->phone)
             ->latest('id')
             ->first();
 
         if (! $quote) {
-            return 'Não há proposta em aberto para este contato. Se ele quiser contratar, siga o fluxo da proposta (CreateQuoteFromPackTool).';
+            return 'Não há proposta em aberto criada nesta conversa. Não envie proposta de outra conversa ou cadastro; se ele quiser contratar, siga o fluxo da proposta (CreateQuoteFromPackTool).';
         }
 
         if (! Cache::add('whatsapp:proposal-pdf:'.$quote->id, true, now()->addMinutes(self::COOLDOWN_MINUTES))) {

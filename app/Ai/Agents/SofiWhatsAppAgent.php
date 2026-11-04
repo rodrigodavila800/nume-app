@@ -103,7 +103,7 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
             new QualifyLeadTool($this->tenantId, $this->leadId, $this->contactPhone),
             new CreateQuoteFromPackTool($this->tenantId, $this->clienteId, $this->contactPhone, $this->leadId, $this->isSpanish),
             new EscalateToTeamTool($this->tenantId, $this->conversationId, $this->leadId),
-            new ResendProposalPdfTool($this->tenantId, $this->contactPhone, $this->clienteId),
+            new ResendProposalPdfTool($this->tenantId, $this->contactPhone),
         ];
     }
 

@@ -5,11 +5,14 @@ namespace Tests\Feature;
 use App\Ai\Agents\SofiWhatsAppAgent;
 use App\Ai\Tools\ResendProposalPdfTool;
 use App\Jobs\SendQuoteProposalDocuments;
+use App\Mail\QuoteProposalMail;
+use App\Models\Cliente;
 use App\Models\Quote;
 use App\Models\Tenant;
 use App\Services\Quotes\QuotePdfService;
 use App\Services\WhatsApp\MetaWhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -105,5 +108,34 @@ class WhatsAppResendPdfTest extends TestCase
         $this->assertSame('Pronto! O PDF está a caminho.', (string) $agent->prompt('Não recebi o PDF'));
         Queue::assertPushed(SendQuoteProposalDocuments::class, 1);
         $this->assertStringContainsString('nunca chame a equipe para reenviar documento', (string) $agent->instructions());
+    }
+
+    public function test_a_proposal_of_the_recognized_account_but_from_another_conversation_is_never_resent(): void
+    {
+        Queue::fake([SendQuoteProposalDocuments::class]);
+        $cliente = Cliente::create(['tenant_id' => $this->tenant->id, 'name' => 'Rk', 'email' => 'rk@ficticio.test', 'password' => 'secret12345', 'phone' => '559100000000']);
+        $this->quote->delete();
+        $teamQuote = $this->quoteFor($this->tenant, '34699999999');
+        $teamQuote->forceFill(['cliente_id' => $cliente->id, 'client_name' => 'Outra Empresa S.L.'])->save();
+        $noPhone = $this->quoteFor($this->tenant, '');
+        $noPhone->forceFill(['cliente_id' => $cliente->id, 'request_details' => ['source' => 'portal']])->save();
+
+        $result = (string) (new ResendProposalPdfTool($this->tenant->id, '559100000000'))->handle(new Request([]));
+
+        $this->assertStringContainsString('Não há proposta em aberto criada nesta conversa', $result);
+        Queue::assertNothingPushed();
+    }
+
+    public function test_the_job_never_sends_the_pdf_by_whatsapp_to_a_phone_other_than_the_proposal_one(): void
+    {
+        Mail::fake();
+        Http::preventStrayRequests();
+        config(['services.whatsapp.access_token' => 'token-ficticio', 'services.whatsapp.phone_number_id' => '1234567890']);
+
+        (new SendQuoteProposalDocuments($this->quote->id, $this->tenant->id, '34611111111'))
+            ->handle(app(QuotePdfService::class), app(MetaWhatsAppService::class));
+
+        Http::assertNothingSent();
+        Mail::assertSent(QuoteProposalMail::class, fn ($mail) => $mail->hasTo('ana@ficticio.test'));
     }
 }

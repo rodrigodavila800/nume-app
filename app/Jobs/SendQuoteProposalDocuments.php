@@ -54,7 +54,16 @@ class SendQuoteProposalDocuments implements ShouldQueue
             }
         }
 
-        if (filled($this->whatsAppTo)) {
+        // Trava: o PDF só vai por WhatsApp para o MESMO telefone registrado na proposta. Qualquer outro
+        // destino (proposta da equipe, de outra conversa ou de outra empresa) fica só no e-mail dela.
+        $sameConversation = filled($this->whatsAppTo)
+            && hash_equals((string) ($quote->request_details['phone'] ?? ''), (string) $this->whatsAppTo);
+
+        if (filled($this->whatsAppTo) && ! $sameConversation) {
+            Log::warning('[MetaWhatsApp] PDF não enviado por WhatsApp: o telefone não é o da proposta.');
+        }
+
+        if ($sameConversation) {
             $tenantName = $quote->tenant?->name ?? 'NUME';
             $caption = $isSpanish
                 ? "Propuesta {$quote->number} · {$tenantName}"
