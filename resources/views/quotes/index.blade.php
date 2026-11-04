@@ -184,10 +184,10 @@
                                     <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] font-bold text-orange-400">
                                         {{ $inputs['videos'] ?? 1 }} {{ ($inputs['videos'] ?? 1) == 1 ? 'vídeo' : 'vídeos' }}
                                     </span>
-                                    @if(!empty($quote->request_details['pack_id']))
-                                        {{-- Proposta de pacote do catálogo (Sofi no WhatsApp): preço fechado, sem horas nem filmmakers. --}}
+                                    @if(!empty($quote->request_details['pack_id']) || !empty($quote->request_details['builder']))
+                                        {{-- Pacote do catálogo ou montado pelo cliente: preço fechado, sem horas nem filmmakers. --}}
                                         <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400">
-                                            {{ __('Pacote') }}
+                                            {{ !empty($quote->request_details['builder']) ? __('Pacote montado') : __('Pacote') }}
                                         </span>
                                     @else
                                         <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400 font-mono">

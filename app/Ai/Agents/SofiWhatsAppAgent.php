@@ -3,6 +3,7 @@
 namespace App\Ai\Agents;
 
 use App\Ai\Middleware\RecordAiUsage;
+use App\Ai\Tools\BuildCustomPackageTool;
 use App\Ai\Tools\CheckProductionStatusTool;
 use App\Ai\Tools\CreateQuoteFromPackTool;
 use App\Ai\Tools\EscalateToTeamTool;
@@ -68,6 +69,7 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
             '6. Assim que souber a empresa, o nicho ou o pacote de interesse, chame QualifyLeadTool, sem avisar o cliente e sem atrasar a resposta.',
             '7. Cliente aceitou o pacote ou pediu a proposta: peça NUMA mensagem só os dados da proposta formal que ainda não estão no CONTEXTO nem na conversa: nome do responsável, nome da empresa, nicho de atuação e e-mail. Nunca preencha um dado que o cliente não deu (nada de "não informada", "n/a" ou nome inventado): pergunte. Com eles, chame CreateQuoteFromPackTool com o id do pacote. Na mesma resposta repasse os valores, o endereço oficial do portal (cadastro ou login, conforme a ferramenta disser) e as formas de pagamento EXATAMENTE como a ferramenta devolveu, e avise que o PDF da proposta chega em seguida. Nunca escreva link por conta própria.',
             '8. Encerre SEMPRE com um único próximo passo claro. Antes do aceite: "Fecho esse pacote para você?". Depois de enviar a proposta: "Me avisa quando aprovar, que eu já te passo os próximos passos da produção". Nunca encerre só com "qualquer dúvida estou aqui".',
+            '6b. Nenhum pacote pronto serve, ou o cliente quer escolher tipos e quantidades: monte com ele usando BuildCustomPackageTool. Primeiro sem confirm, para mostrar o catálogo e o preço da montagem; com o aceite, peça os dados de fechamento (regra 7) e chame com confirm=true. Planos de assinatura não se montam: são fixos.',
             '7b. Cliente pediu o PDF ou a proposta de novo (ou diz que não recebeu): chame ResendProposalPdfTool e diga que o PDF está a caminho por e-mail e por aqui. Isso é seu, nunca chame a equipe para reenviar documento.',
             '9. Desconto ou condição especial, projeto fora do catálogo, reclamação, questão fiscal ou contratual, ou pedido de falar com uma pessoa: chame EscalateToTeamTool (motivo e resumo curto) e diga que a equipe foi avisada e retorna por este mesmo WhatsApp. Não prometa prazo e não negocie esse ponto.',
             '10. Status de vídeo ou produção: use CheckProductionStatusTool. Nunca peça nem aceite dados de cartão ou senha na conversa.',
@@ -104,6 +106,7 @@ class SofiWhatsAppAgent implements Agent, Conversational, HasMiddleware, HasTool
             new CreateQuoteFromPackTool($this->tenantId, $this->clienteId, $this->contactPhone, $this->leadId, $this->isSpanish),
             new EscalateToTeamTool($this->tenantId, $this->conversationId, $this->leadId),
             new ResendProposalPdfTool($this->tenantId, $this->contactPhone),
+            new BuildCustomPackageTool($this->tenantId, $this->clienteId, $this->contactPhone, $this->leadId, $this->isSpanish),
         ];
     }
 

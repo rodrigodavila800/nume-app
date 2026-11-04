@@ -2,19 +2,15 @@
 
 namespace App\Ai\Tools;
 
+use App\Ai\Tools\Concerns\ClosesWhatsAppSale;
 use App\Jobs\SendQuoteProposalDocuments;
 use App\Models\Cliente;
-use App\Models\Lead;
 use App\Models\Pack;
 use App\Models\Quote;
-use App\Models\Tenant;
 use App\Services\Crm\LeadService;
 use App\Services\Notification\SofiQuoteNotificationService;
-use App\Services\Payment\PaymentMethodAvailability;
 use App\Services\Quotes\QuoteCalculatorService;
-use App\Services\Quotes\QuoteOwnership;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Support\Str;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
@@ -34,14 +30,9 @@ use Stringable;
  */
 class CreateQuoteFromPackTool implements Tool
 {
-    public const DAILY_LIMIT = 3;
+    use ClosesWhatsAppSale;
 
-    /** Valores que a IA usa para "preencher" um dado que o cliente não deu (comparados sem acento). */
-    public const PLACEHOLDERS = [
-        'nao informada', 'nao informado', 'nao informou', 'nao sei', 'n a', 'na', 'nd', 'none', 'null', 'nenhum', 'nenhuma',
-        'sem empresa', 'sem nome', 'desconhecido', 'desconhecida', 'a definir', 'indefinido', 'pendente', 'cliente', 'empresa',
-        'responsavel', 'no informado', 'no informada', 'sin empresa', 'sin nombre', 'desconocido', 'desconocida', 'unknown',
-    ];
+    public const DAILY_LIMIT = 3;
 
     public function __construct(
         protected int $tenantId,
@@ -58,20 +49,7 @@ class CreateQuoteFromPackTool implements Tool
 
     public function handle(Request $request): Stringable|string
     {
-        $cliente = $this->clienteId ? Cliente::forTenant($this->tenantId)->find($this->clienteId) : null;
-        $email = mb_strtolower(trim((string) ($request['client_email'] ?? $cliente?->email ?? '')));
-        $responsible = $this->clean($request['responsible_name'] ?? $cliente?->name);
-        $company = $this->clean($request['company_name'] ?? $cliente?->company_name);
-        $niche = $this->clean($request['niche'] ?? $cliente?->brand_niche);
-
-        // Contato não reconhecido pelo telefone, mas com conta no e-mail: a proposta já nasce dele.
-        $cliente ??= filter_var($email, FILTER_VALIDATE_EMAIL) ? QuoteOwnership::findClienteByEmail($this->tenantId, $email) : null;
-
-        $missing = array_keys(array_filter([
-            'e-mail válido' => ! filter_var($email, FILTER_VALIDATE_EMAIL),
-            'nome do responsável' => $responsible === '',
-            'nome da empresa' => $company === '',
-        ]));
+        ['cliente' => $cliente, 'email' => $email, 'responsible' => $responsible, 'company' => $company, 'niche' => $niche, 'missing' => $missing] = $this->closingData($request);
 
         if ($missing !== []) {
             return 'Faltam dados para a proposta formal: '.implode(', ', $missing).'. Peça ao cliente numa mensagem só e chame esta ferramenta de novo.';
@@ -160,18 +138,11 @@ class CreateQuoteFromPackTool implements Tool
             default => 'Total '.$money($quote->total_amount).' com IVA ('.$money($quote->subtotal).' + IVA). Pagamento integral na aprovação. ',
         };
 
-        $methods = PaymentMethodAvailability::forTenant(Tenant::findOrFail($this->tenantId))->activeMethodLabels($pack, $this->isSpanish);
-        $account = $quote->cliente_id
-            ? 'O cliente JÁ TEM CONTA: ele entra em '.route('portal.login')." com o e-mail {$email}; a proposta está em Orçamentos para aprovar e pagar. "
-            : 'O cliente AINDA NÃO TEM CONTA: para seguir, ele faz o cadastro em '.route('portal.register')." com o mesmo e-mail ({$email}); a proposta aparece em Orçamentos para aprovar e pagar. ";
-
         return "Proposta {$quote->number} pronta para {$company} ({$responsible}): {$pack->translated_name}, {$calc['inputs_sanitized']['videos']} vídeos. "
             .$payment
             .'Válida até '.$quote->valid_until->format('d/m/Y').'. '
             .($sendDocuments ? 'O PDF formal da proposta chega em seguida por e-mail e por este WhatsApp. ' : 'O PDF desta proposta já foi enviado antes por e-mail e por este WhatsApp; se o cliente pedir de novo, use ResendProposalPdfTool. ')
-            .$account
-            .'Formas de pagamento disponíveis: '.($methods === [] ? 'a equipe informa' : implode(', ', $methods)).'. '
-            .'Repasse ao cliente os valores, o endereço do portal e as formas de pagamento exatamente como aqui, sem alterar nada e sem citar outros links ou formas de pagamento.';
+            .$this->accountAndPaymentText($quote, $email, $pack);
     }
 
     public function schema(JsonSchema $schema): array
@@ -184,32 +155,6 @@ class CreateQuoteFromPackTool implements Tool
             'niche' => $schema->string()->description('Nicho ou segmento de atuação da empresa (ex.: odontologia, restaurante, moda).'),
             'addon_names' => $schema->array()->items($schema->string())->description('Nomes exatos dos adicionais do pacote que o cliente quer, se houver.'),
         ];
-    }
-
-    /**
-     * Texto limpo do cliente. Valor de enchimento ("não informada", "n/a", "-") conta como vazio: em
-     * produção a IA preencheu a empresa obrigatória com "Não informada" em vez de perguntar, e o PDF
-     * saiu com um cliente que parecia ser outro.
-     */
-    private function clean(mixed $value): string
-    {
-        $text = mb_substr(trim(strip_tags((string) $value)), 0, 255);
-        $normalized = trim((string) preg_replace('/[^a-z0-9]+/', ' ', strtolower(Str::ascii($text))));
-
-        return mb_strlen($normalized) < 2 || in_array($normalized, self::PLACEHOLDERS, true) ? '' : $text;
-    }
-
-    private function recentRequests(): int
-    {
-        if (blank($this->phone)) {
-            return 0;
-        }
-
-        return Quote::forTenant($this->tenantId)
-            ->where('request_details->source', 'whatsapp')
-            ->where('request_details->phone', $this->phone)
-            ->where('created_at', '>=', now()->subDay())
-            ->count();
     }
 
     /**
@@ -236,16 +181,7 @@ class CreateQuoteFromPackTool implements Tool
      */
     private function createQuote(string $email, ?Cliente $cliente, Pack $pack, array $calc, array $defaults, array $closing, ?array $plan): Quote
     {
-        // O lead do WhatsApp recebe os dados de fechamento antes: o CRM (LeadAutomation) acha o lead
-        // pelo e-mail e move a mesma ficha para "proposta", em vez de abrir uma segunda.
-        $lead = $this->leadId ? Lead::forTenant($this->tenantId)->whereNull('anonymized_at')->find($this->leadId) : null;
-        if ($lead) {
-            $lead->forceFill(array_filter([
-                'email' => blank($lead->email) ? $email : null,
-                'company' => blank($lead->company) ? $closing['company'] : null,
-                'name' => blank($lead->name) || str_starts_with((string) $lead->name, 'Contato WhatsApp') ? $closing['responsible'] : null,
-            ]))->save();
-        }
+        $lead = $this->syncLead($email, $closing);
 
         $title = (string) $pack->translated_name;
         if ($plan !== null) {
