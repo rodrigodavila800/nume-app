@@ -184,12 +184,19 @@
                                     <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] font-bold text-orange-400">
                                         {{ $inputs['videos'] ?? 1 }} {{ ($inputs['videos'] ?? 1) == 1 ? 'vídeo' : 'vídeos' }}
                                     </span>
-                                    <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400 font-mono">
-                                        {{ number_format($calc['horas'] ?? 0, 1) }}h
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400">
-                                        {{ $inputs['filmmakers'] ?? 1 }} FM
-                                    </span>
+                                    @if(!empty($quote->request_details['pack_id']))
+                                        {{-- Proposta de pacote do catálogo (Sofi no WhatsApp): preço fechado, sem horas nem filmmakers. --}}
+                                        <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400">
+                                            {{ __('Pacote') }}
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400 font-mono">
+                                            {{ number_format($calc['horas'] ?? 0, 1) }}h
+                                        </span>
+                                        <span class="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-400">
+                                            {{ $inputs['filmmakers'] ?? 1 }} FM
+                                        </span>
+                                    @endif
                                     @if(!empty($inputs['drone']))
                                         <span class="px-1.5 py-0.5 rounded bg-sky-950/40 text-sky-400 border border-sky-800/30 text-[9px] font-bold">
                                             Dron

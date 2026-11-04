@@ -14,6 +14,7 @@ use App\Services\Payment\PaymentMethodAvailability;
 use App\Services\Quotes\QuoteCalculatorService;
 use App\Services\Quotes\QuoteOwnership;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Support\Str;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
@@ -34,6 +35,13 @@ use Stringable;
 class CreateQuoteFromPackTool implements Tool
 {
     public const DAILY_LIMIT = 3;
+
+    /** Valores que a IA usa para "preencher" um dado que o cliente não deu (comparados sem acento). */
+    public const PLACEHOLDERS = [
+        'nao informada', 'nao informado', 'nao informou', 'nao sei', 'n a', 'na', 'nd', 'none', 'null', 'nenhum', 'nenhuma',
+        'sem empresa', 'sem nome', 'desconhecido', 'desconhecida', 'a definir', 'indefinido', 'pendente', 'cliente', 'empresa',
+        'responsavel', 'no informado', 'no informada', 'sin empresa', 'sin nombre', 'desconocido', 'desconocida', 'unknown',
+    ];
 
     public function __construct(
         protected int $tenantId,
@@ -178,9 +186,17 @@ class CreateQuoteFromPackTool implements Tool
         ];
     }
 
+    /**
+     * Texto limpo do cliente. Valor de enchimento ("não informada", "n/a", "-") conta como vazio: em
+     * produção a IA preencheu a empresa obrigatória com "Não informada" em vez de perguntar, e o PDF
+     * saiu com um cliente que parecia ser outro.
+     */
     private function clean(mixed $value): string
     {
-        return mb_substr(trim(strip_tags((string) $value)), 0, 255);
+        $text = mb_substr(trim(strip_tags((string) $value)), 0, 255);
+        $normalized = trim((string) preg_replace('/[^a-z0-9]+/', ' ', strtolower(Str::ascii($text))));
+
+        return mb_strlen($normalized) < 2 || in_array($normalized, self::PLACEHOLDERS, true) ? '' : $text;
     }
 
     private function recentRequests(): int

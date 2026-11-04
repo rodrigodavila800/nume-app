@@ -11,6 +11,7 @@ use App\Models\Pack;
 use App\Models\Quote;
 use App\Models\Tenant;
 use App\Models\TenantSetting;
+use App\Models\User;
 use App\Services\Payment\PaymentMethodAvailability;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -275,5 +276,32 @@ class WhatsAppQuoteToolTest extends TestCase
 
         Queue::assertPushed(SendQuoteProposalDocuments::class, 2);
         $this->assertStringContainsString('chega em seguida', $second);
+    }
+
+    public function test_placeholder_names_count_as_missing_and_the_sofi_must_ask(): void
+    {
+        foreach (['Não informada', 'n/a', '-', 'Desconocido', 'NÃO INFORMADO', 'cliente'] as $placeholder) {
+            $result = (string) $this->tool()->handle(new Request([
+                'pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test', 'responsible_name' => 'Ana', 'company_name' => $placeholder,
+            ]));
+
+            $this->assertStringContainsString('nome da empresa', $result, $placeholder);
+        }
+
+        $this->assertSame(0, Quote::forTenant($this->tenant->id)->count());
+        $this->assertStringContainsString('Nunca preencha um dado que o cliente não deu', (string) (new SofiWhatsAppAgent($this->tenant->id, null, '', false))->instructions());
+    }
+
+    public function test_the_quote_list_shows_a_pack_proposal_as_a_package(): void
+    {
+        $this->tenant->forceFill(['status' => 'active', 'subscription_expires_at' => now()->addMonth()])->save();
+        $admin = User::create(['tenant_id' => $this->tenant->id, 'name' => 'Admin', 'email' => 'admin@ficticio.test', 'password' => 'secret12345', 'role' => 'admin']);
+        $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+
+        $this->actingAs($admin)->get(route('quotes.index'))
+            ->assertOk()
+            ->assertSee('Padaria Ficticia')
+            ->assertSee('Pacote')
+            ->assertDontSee('0.0h');
     }
 }
