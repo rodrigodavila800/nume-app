@@ -138,8 +138,9 @@ class CreateQuoteFromPackTool implements Tool
         // O link com token vai só no e-mail (botão de aprovação); no WhatsApp, só os endereços oficiais do portal.
         app(SofiQuoteNotificationService::class)->ensureApprovalToken($quote);
 
-        // PDF formal por e-mail e por este WhatsApp, só na primeira vez (a mesma proposta não reenvia).
-        if ($isNew) {
+        // PDF formal por e-mail e por este WhatsApp: proposta nova, ou reaproveitada que ainda não teve o PDF enviado.
+        $sendDocuments = $isNew || empty($quote->request_details['documents_sent_at']);
+        if ($sendDocuments) {
             SendQuoteProposalDocuments::dispatch($quote->id, $this->tenantId, $this->phone);
         }
         $money = fn (float $value): string => number_format($value, 2, ',', '.').' €';
@@ -159,7 +160,7 @@ class CreateQuoteFromPackTool implements Tool
         return "Proposta {$quote->number} pronta para {$company} ({$responsible}): {$pack->translated_name}, {$calc['inputs_sanitized']['videos']} vídeos. "
             .$payment
             .'Válida até '.$quote->valid_until->format('d/m/Y').'. '
-            .($isNew ? 'O PDF formal da proposta chega em seguida por e-mail e por este WhatsApp. ' : 'A proposta já tinha sido enviada antes por e-mail e por este WhatsApp. ')
+            .($sendDocuments ? 'O PDF formal da proposta chega em seguida por e-mail e por este WhatsApp. ' : 'O PDF desta proposta já foi enviado antes por e-mail e por este WhatsApp; se o cliente pedir de novo, use ResendProposalPdfTool. ')
             .$account
             .'Formas de pagamento disponíveis: '.($methods === [] ? 'a equipe informa' : implode(', ', $methods)).'. '
             .'Repasse ao cliente os valores, o endereço do portal e as formas de pagamento exatamente como aqui, sem alterar nada e sem citar outros links ou formas de pagamento.';

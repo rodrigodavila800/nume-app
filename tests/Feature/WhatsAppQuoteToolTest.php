@@ -134,10 +134,11 @@ class WhatsAppQuoteToolTest extends TestCase
     public function test_the_same_proposal_is_reused_instead_of_duplicated(): void
     {
         $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+        $this->markDocumentsSent();
         $second = $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
 
         $this->assertSame(1, Quote::forTenant($this->tenant->id)->count());
-        $this->assertStringContainsString('já tinha sido enviada', $second);
+        $this->assertStringContainsString('já foi enviado antes', $second);
     }
 
     public function test_an_existing_account_is_sent_to_the_portal_login(): void
@@ -250,6 +251,7 @@ class WhatsAppQuoteToolTest extends TestCase
     public function test_a_new_proposal_queues_the_pdf_by_email_and_whatsapp_once(): void
     {
         $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+        $this->markDocumentsSent();
         $second = $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
 
         $quote = Quote::forTenant($this->tenant->id)->sole();
@@ -258,5 +260,20 @@ class WhatsAppQuoteToolTest extends TestCase
             && $job->tenantId === $this->tenant->id
             && $job->whatsAppTo === '34600000001');
         $this->assertStringNotContainsString('PDF formal', $second, 'proposta reaproveitada não promete novo envio');
+    }
+
+    private function markDocumentsSent(): void
+    {
+        $quote = Quote::forTenant($this->tenant->id)->latest('id')->first();
+        $quote->forceFill(['request_details' => ($quote->request_details ?? []) + ['documents_sent_at' => now()->toIso8601String()]])->save();
+    }
+
+    public function test_a_reused_proposal_that_never_had_its_pdf_sent_sends_it_now(): void
+    {
+        $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+        $second = $this->callTool($this->tool(), ['pack_id' => $this->pack->id, 'client_email' => 'ana@ficticio.test']);
+
+        Queue::assertPushed(SendQuoteProposalDocuments::class, 2);
+        $this->assertStringContainsString('chega em seguida', $second);
     }
 }

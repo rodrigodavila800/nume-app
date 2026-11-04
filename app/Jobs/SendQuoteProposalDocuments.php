@@ -62,5 +62,8 @@ class SendQuoteProposalDocuments implements ShouldQueue
 
             $whatsApp->sendWhatsAppDocument((string) $this->whatsAppTo, $pdf, $filename, $caption);
         }
+
+        // Registro do envio: a Sofi só diz "já foi enviada" quando isto existe (proposta reaproveitada).
+        $quote->forceFill(['request_details' => array_merge($quote->request_details ?? [], ['documents_sent_at' => now()->toIso8601String()])])->save();
     }
 }
