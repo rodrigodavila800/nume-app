@@ -512,12 +512,22 @@
             <p class="section-subtitle">
                 {{ __('Projetos fechados e produções sob demanda, com pagamento único e sem renovação recorrente.') }}
             </p>
+            @if (! empty($builderCatalog['video_types']))
+                <a href="#monte-seu-pacote" class="builder-jump-link">{{ __('Prefere escolher os vídeos? Monte seu pacote') }} <span aria-hidden="true">→</span></a>
+            @endif
         </div>
 
         <!-- Grid 2: Produções Avulsas (One-off) -->
         <div id="storefront-grid-oneoff" class="packs-grid-container">
+            @php
+                // Visitante: cadastro com o pacote (a tela tem o link de login). Cliente da produtora: direto no portal.
+                $loggedCliente = auth('cliente')->user();
+                $packEntryUrl = fn ($pack) => $loggedCliente && (int) $loggedCliente->tenant_id === (int) $tenant->id
+                    ? route('portal.packs.index', ['pack' => $pack->slug])
+                    : route('portal.register', ['pack' => $pack->slug]);
+            @endphp
             @forelse($oneOffPacks as $pack)
-                <div id="pack-{{ $pack->id }}" class="pack-card pack-card-custom transition-all duration-300" data-base-price="{{ (float) $pack->price }}" data-currency="€" data-login-url="{{ route('portal.login', ['intended_pack_slug' => $pack->slug]) }}">
+                <div id="pack-{{ $pack->id }}" class="pack-card pack-card-custom transition-all duration-300" data-base-price="{{ (float) $pack->price }}" data-currency="€" data-login-url="{{ $packEntryUrl($pack) }}">
                     <div>
                         <!-- Header do Card -->
                         <div class="pack-card-header">
@@ -640,12 +650,11 @@
                             {{ !empty($badgeList) ? implode(' · ', $badgeList) : '' . __('Pagamento Seguro') }}
                         </div>
 
-                        <button type="button" 
-                                onclick="openStorefrontCheckout({{ $pack->id }}, '{{ addslashes($pack->name) }}', {{ (float) $pack->price }}, '{{ route('storefront.checkout', ['tenant' => $tenant->slug, 'pack' => $pack->slug]) }}', 'one_time', 1, 'month')"
-                                class="contract-btn pack-cta-link pack-cta-btn-block cursor-pointer">
+                        {{-- Contratar leva às telas oficiais do portal (cadastro, ou login se já tiver conta) com o pacote escolhido. --}}
+                        <a href="{{ $packEntryUrl($pack) }}" class="contract-btn pack-cta-link pack-cta-btn-block">
                             <span class="pack-btn-text">{{ __('Contratar Produção Avulsa') }}</span>
                             <span>→</span>
-                        </button>
+                        </a>
                     </div>
                 </div>
             @empty
