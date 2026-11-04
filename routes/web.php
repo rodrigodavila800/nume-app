@@ -275,6 +275,8 @@ Route::middleware('auth')->group(function () {
 
     // Central de Mensagens & WhatsApp Inbox
     Route::get('/inbox', [WhatsAppInboxController::class, 'index'])->name('inbox.index');
+    // Atualização automática do painel (consulta a cada 4 s com a aba aberta)
+    Route::get('/inbox/atualizacoes', [WhatsAppInboxController::class, 'poll'])->middleware('throttle:120,1')->name('inbox.poll');
     Route::post('/inbox/{conversation}/responder', [WhatsAppInboxController::class, 'reply'])->whereNumber('conversation')->name('inbox.reply');
     Route::post('/inbox/{conversation}/devolver-sofi', [WhatsAppInboxController::class, 'handBack'])->whereNumber('conversation')->name('inbox.hand-back');
 

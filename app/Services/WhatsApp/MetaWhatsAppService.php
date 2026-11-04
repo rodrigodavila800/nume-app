@@ -221,6 +221,7 @@ class MetaWhatsAppService
             'sender' => 'user',
             'content' => trim($messageBody),
         ]);
+        $conversation->touch();
 
         // Primeiro contato: boas-vindas com aviso de privacidade (RGPD) e botões. Só um cumprimento
         // ("oi", "bom dia") fica nas boas-vindas; uma pergunta de verdade a Sofi responde em seguida.

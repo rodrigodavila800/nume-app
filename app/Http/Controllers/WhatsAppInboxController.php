@@ -9,6 +9,7 @@ use App\Models\SofiMessage;
 use App\Services\Crm\LeadService;
 use App\Services\WhatsApp\HandoffService;
 use App\Services\WhatsApp\MetaWhatsAppService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -27,12 +28,7 @@ class WhatsAppInboxController extends Controller
     {
         $tenantId = (int) auth()->user()->tenant_id;
 
-        $conversations = SofiConversation::forTenant($tenantId)
-            ->where('channel', 'whatsapp')
-            ->with(['cliente', 'latestMessage'])
-            ->orderByRaw('status = ? desc', [HandoffService::STATUS_NEEDS_HUMAN])
-            ->latest('updated_at')
-            ->get();
+        $conversations = $this->conversationsFor($tenantId);
 
         // Se uma conversa específica foi solicitada ou seleciona a primeira por padrão
         $activeConversationId = $request->query('conversation_id');
@@ -88,6 +84,68 @@ class WhatsAppInboxController extends Controller
             'associatedLead' => $associatedLead,
             'associatedProductions' => $associatedProductions,
         ]);
+    }
+
+    /**
+     * Atualização automática do painel (o navegador consulta a cada poucos segundos): balões novos da
+     * conversa aberta, depois do último id que a tela já tem, e a lista lateral só quando algo mudou
+     * (assinatura = quantidade de conversas, última mensagem e status). Tudo filtrado pelo tenant.
+     */
+    public function poll(Request $request): JsonResponse
+    {
+        $tenantId = (int) auth()->user()->tenant_id;
+        $validated = $request->validate([
+            'conversation_id' => ['nullable', 'integer'],
+            'after' => ['nullable', 'integer', 'min:0'],
+            'signature' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $conversations = $this->conversationsFor($tenantId);
+        $signature = implode(':', [
+            $conversations->count(),
+            (int) SofiMessage::whereIn('sofi_conversation_id', $conversations->pluck('id'))->max('id'),
+            md5($conversations->pluck('status', 'id')->toJson()),
+        ]);
+
+        $active = filled($validated['conversation_id'] ?? null)
+            ? $conversations->firstWhere('id', (int) $validated['conversation_id'])
+            : null;
+
+        $lastId = (int) ($validated['after'] ?? 0);
+        $messagesHtml = '';
+
+        if ($active) {
+            $newMessages = $active->messages()->where('id', '>', $lastId)->get();
+            foreach ($newMessages as $message) {
+                $messagesHtml .= view('inbox._message', ['m' => $message, 'activeConversation' => $active])->render();
+            }
+            $lastId = (int) ($newMessages->last()?->id ?? $lastId);
+        }
+
+        return response()->json([
+            'messages_html' => $messagesHtml,
+            'last_id' => $lastId,
+            'status' => $active?->status,
+            'signature' => $signature,
+            'list_html' => ($validated['signature'] ?? null) === $signature
+                ? null
+                : view('inbox._conversation_list', ['conversations' => $conversations, 'activeConversation' => $active])->render(),
+        ]);
+    }
+
+    /**
+     * Conversas do WhatsApp da produtora: as que precisam de uma pessoa primeiro, depois as mais recentes.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, SofiConversation>
+     */
+    private function conversationsFor(int $tenantId)
+    {
+        return SofiConversation::forTenant($tenantId)
+            ->where('channel', 'whatsapp')
+            ->with(['cliente', 'latestMessage'])
+            ->orderByRaw('status = ? desc', [HandoffService::STATUS_NEEDS_HUMAN])
+            ->latest('updated_at')
+            ->get();
     }
 
     /**

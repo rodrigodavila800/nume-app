@@ -69,58 +69,7 @@
 
             <!-- Lista Rolável -->
             <div class="flex-1 overflow-y-auto divide-y divide-zinc-800/60" id="conversationList">
-                @forelse($conversations as $c)
-                    @php
-                        $isActive = $activeConversation && $activeConversation->id === $c->id;
-                        $displayName = $c->cliente?->name ?? ($c->contact_phone ? "+{$c->contact_phone}" : $c->title);
-                        $snippet = $c->latestMessage?->content ?? __('Sem mensagens');
-                    @endphp
-                    <a href="{{ route('inbox.index', ['conversation_id' => $c->id]) }}" 
-                       class="conversation-item block p-3 transition {{ $isActive ? 'bg-zinc-800/90 border-l-4 border-orange-500' : 'hover:bg-zinc-800/40' }}">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white text-xs font-extrabold shrink-0">
-                                    {{ mb_strtoupper(mb_substr($displayName, 0, 2)) }}
-                                </div>
-                                <div class="min-w-0">
-                                    <h4 class="text-xs font-bold text-white truncate">{{ $displayName }}</h4>
-                                    <p class="text-[11px] text-zinc-400 font-mono truncate">
-                                        {{ $c->contact_phone ? "+{$c->contact_phone}" : __('WhatsApp') }}
-                                    </p>
-                                </div>
-                            </div>
-                            <span class="text-[10px] text-zinc-500 whitespace-nowrap shrink-0">
-                                {{ $c->latestMessage?->created_at?->diffForHumans(null, true) }}
-                            </span>
-                        </div>
-                        @if($c->status === 'needs_human')
-                            <span class="inline-block mt-1.5 ml-11 px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20">
-                                {{ __('Precisa de você') }}
-                            </span>
-                        @endif
-                        @if($c->status === 'human' && $c->latestMessage?->sender === 'user')
-                            <span class="inline-block mt-1.5 ml-11 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                {{ __('Cliente respondeu') }}
-                            </span>
-                        @endif
-                        <p class="text-xs text-zinc-400 line-clamp-1 mt-1.5 pl-11">
-                            @if($c->latestMessage?->sender === 'sofi')
-                                @if(!empty($c->latestMessage->metadata['is_human']))
-                                    <span class="text-emerald-400 font-semibold">{{ __('Você:') }}</span>
-                                @else
-                                    <span class="text-orange-400 font-semibold">{{ __('Sofi:') }}</span>
-                                @endif
-                            @endif
-                            {{ $snippet }}
-                        </p>
-                    </a>
-                @empty
-                    <div class="p-8 text-center text-zinc-500 text-xs">
-                        <svg class="w-8 h-8 mx-auto text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        <p>{{ __('Nenhuma conversa no WhatsApp ainda.') }}</p>
-                        <p class="text-[11px] text-zinc-600 mt-1">{{ __('Quando um lead mandar mensagem no WhatsApp oficial, a conversa aparecerá aqui automaticamente.') }}</p>
-                    </div>
-                @endforelse
+                @include('inbox._conversation_list')
             </div>
         </div>
 
@@ -162,57 +111,9 @@
                 <!-- Lista de Balões de Mensagem -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-3.5 bg-zinc-950/20" id="messagesContainer">
                     @forelse($activeConversation->messages as $m)
-                        @php
-                            $isHuman = !empty($m->metadata['is_human']);
-                        @endphp
-                        @if($m->sender === 'user')
-                            <!-- Mensagem do Lead/Cliente (Esquerda) -->
-                            <div class="flex items-start gap-2 max-w-[85%]">
-                                <div class="w-6 h-6 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-[10px] font-bold shrink-0 mt-1">
-                                    {{ mb_strtoupper(mb_substr($activeConversation->cliente?->name ?? 'U', 0, 1)) }}
-                                </div>
-                                <div class="p-3 rounded-2xl rounded-tl-sm bg-zinc-800/90 text-white text-xs border border-zinc-700/60 shadow-sm space-y-1">
-                                    <p class="whitespace-pre-wrap leading-relaxed">{{ $m->content }}</p>
-                                    <div class="text-[9px] text-zinc-400 text-right">{{ $m->created_at->format('H:i') }}</div>
-                                </div>
-                            </div>
-                        @elseif($isHuman)
-                            <!-- Mensagem Manual da Equipe da Produtora (Direita) -->
-                            <div class="flex items-start justify-end gap-2 max-w-[85%] ml-auto">
-                                <div class="p-3 rounded-2xl rounded-tr-sm bg-emerald-950/40 border border-emerald-500/30 text-zinc-100 text-xs shadow-sm space-y-1.5">
-                                    <div class="flex items-center justify-between gap-2 border-b border-emerald-500/20 pb-1">
-                                        <span class="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                                            <span>👤</span>
-                                            <span>{{ $m->metadata['user_name'] ?? __('Sua Equipe') }}</span>
-                                        </span>
-                                        <span class="text-[9px] text-zinc-400">{{ $m->created_at->format('H:i') }}</span>
-                                    </div>
-                                    <p class="whitespace-pre-wrap leading-relaxed">{{ $m->content }}</p>
-                                </div>
-                                <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[9px] font-bold shrink-0 mt-1">
-                                    EQ
-                                </div>
-                            </div>
-                        @else
-                            <!-- Resposta Automática da Sofi IA (Direita) -->
-                            <div class="flex items-start justify-end gap-2 max-w-[85%] ml-auto">
-                                <div class="p-3 rounded-2xl rounded-tr-sm bg-gradient-to-br from-orange-950/40 to-zinc-900 border border-orange-500/30 text-zinc-100 text-xs shadow-sm space-y-1.5">
-                                    <div class="flex items-center justify-between gap-2 border-b border-orange-500/20 pb-1">
-                                        <span class="text-[10px] font-bold text-orange-400 flex items-center gap-1">
-                                            <span>🤖</span>
-                                            <span>{{ __('Sofi IA') }}</span>
-                                        </span>
-                                        <span class="text-[9px] text-zinc-400">{{ $m->created_at->format('H:i') }}</span>
-                                    </div>
-                                    <p class="whitespace-pre-wrap leading-relaxed">{{ $m->content }}</p>
-                                </div>
-                                <div class="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-[9px] font-black shrink-0 mt-1">
-                                    S
-                                </div>
-                            </div>
-                        @endif
+                        @include('inbox._message', ['m' => $m])
                     @empty
-                        <div class="text-center text-zinc-500 text-xs py-8">
+                        <div id="messagesEmpty" class="text-center text-zinc-500 text-xs py-8">
                             {{ __('Nenhuma mensagem nesta conversa.') }}
                         </div>
                     @endforelse
@@ -326,16 +227,72 @@
 
         // Filtro em tempo real de conversas
         const searchInput = document.getElementById('searchConversation');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const term = this.value.toLowerCase().trim();
-                const items = document.querySelectorAll('.conversation-item');
-                items.forEach(function(item) {
-                    const text = item.textContent.toLowerCase();
-                    item.classList.toggle('hidden', !text.includes(term));
-                });
+        function applySearch() {
+            const term = (searchInput?.value || '').toLowerCase().trim();
+            document.querySelectorAll('.conversation-item').forEach(function(item) {
+                item.classList.toggle('hidden', term !== '' && !item.textContent.toLowerCase().includes(term));
             });
         }
+        searchInput?.addEventListener('input', applySearch);
+
+        // Atualização automática: a cada 4 s (só com a aba visível) busca balões novos da conversa
+        // aberta e redesenha a lista lateral quando algo mudou. Mudança de status recarrega a página.
+        const list = document.getElementById('conversationList');
+        const state = {
+            conversationId: @json($activeConversation?->id),
+            lastId: @json($activeConversation?->messages->last()?->id ?? 0),
+            status: @json($activeConversation?->status),
+            signature: null,
+            busy: false,
+        };
+
+        async function refreshInbox() {
+            if (document.hidden || state.busy) {
+                return;
+            }
+            state.busy = true;
+
+            try {
+                const params = new URLSearchParams({ after: state.lastId });
+                if (state.conversationId) params.set('conversation_id', state.conversationId);
+                if (state.signature) params.set('signature', state.signature);
+
+                const response = await fetch(@json(route('inbox.poll')) + '?' + params.toString(), {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+
+                if (state.status && data.status && data.status !== state.status) {
+                    window.location.reload();
+                    return;
+                }
+
+                if (container && data.messages_html) {
+                    const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 160;
+                    document.getElementById('messagesEmpty')?.remove();
+                    container.insertAdjacentHTML('beforeend', data.messages_html);
+                    if (nearBottom) container.scrollTop = container.scrollHeight;
+                }
+                state.lastId = data.last_id;
+
+                if (list && state.signature !== null && data.list_html !== null) {
+                    list.innerHTML = data.list_html;
+                    applySearch();
+                }
+                state.signature = data.signature;
+            } catch (error) {
+                // Rede instável: tenta de novo na próxima volta.
+            } finally {
+                state.busy = false;
+            }
+        }
+
+        setInterval(refreshInbox, 4000);
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) refreshInbox();
+        });
     });
 </script>
 @endsection
